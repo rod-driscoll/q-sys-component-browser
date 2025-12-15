@@ -1,9 +1,10 @@
 import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { QsysExample } from './components/qsys-example/qsys-example';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, QsysExample],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

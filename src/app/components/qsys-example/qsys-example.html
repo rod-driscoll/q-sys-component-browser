@@ -1,0 +1,74 @@
+<div class="qsys-example">
+  <div class="header">
+    <h2>Q-SYS Angular Integration Example</h2>
+    <div class="connection-status" [class.connected]="qsysService.isConnected()">
+      <span class="status-indicator"></span>
+      {{ qsysService.isConnected() ? 'Connected' : 'Connecting...' }}
+    </div>
+  </div>
+
+  @if (qsysService.isConnected()) {
+    <div class="controls-container">
+      <div class="control-section">
+        <h3>System Power</h3>
+        <button
+          class="power-button"
+          [class.active]="systemPower?.state()"
+          (click)="togglePower()"
+        >
+          {{ systemPower?.state() ? 'ON' : 'OFF' }}
+        </button>
+      </div>
+
+      <div class="control-section">
+        <h3>Volume Control</h3>
+        <div class="volume-controls">
+          <button (click)="volumeDown()">−</button>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            [value]="volumePercent()"
+            (input)="setVolume($event)"
+            class="volume-slider"
+          />
+          <button (click)="volumeUp()">+</button>
+          <span class="volume-value">{{ volumePercent() }}%</span>
+        </div>
+        <button
+          class="mute-button"
+          [class.active]="volumeMute?.state()"
+          (click)="toggleMute()"
+        >
+          {{ volumeMute?.state() ? 'UNMUTE' : 'MUTE' }}
+        </button>
+      </div>
+
+      <div class="control-section">
+        <h3>Motion Mode</h3>
+        <div class="info-display">
+          {{ motionMode?.string() || 'N/A' }}
+        </div>
+      </div>
+    </div>
+
+    <div class="info-panel">
+      <h3>Using MCP Server for Discovery</h3>
+      <p>
+        Use the MCP server tools to discover available components and controls:
+      </p>
+      <ul>
+        <li><code>get_components</code> - List all available components on the Q-SYS Core</li>
+        <li><code>get_controls</code> - List all controls for a specific component</li>
+      </ul>
+      <p>
+        Current example uses the <strong>Room Controls DEV</strong> component.
+      </p>
+    </div>
+  } @else {
+    <div class="loading">
+      <p>Connecting to Q-SYS Core...</p>
+      <p class="hint">Make sure your Q-SYS Core is running and the IP address is correct.</p>
+    </div>
+  }
+</div>

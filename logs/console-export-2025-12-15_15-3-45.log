@@ -1,0 +1,437 @@
+GET
+http://localhost:4200/@vite/client
+[HTTP/1.1 304 Not Modified 1ms]
+
+GET
+http://localhost:4200/styles.css
+[HTTP/1.1 304 Not Modified 1ms]
+
+GET
+http://localhost:4200/main.js
+[HTTP/1.1 304 Not Modified 0ms]
+
+GET
+http://localhost:4200/polyfills.js
+[HTTP/1.1 304 Not Modified 0ms]
+
+GET
+http://localhost:4200/@fs/C:/src/repos/HTML dev/q-sys-angular-components/.angular/cache/20.3.13/q-sys-angular-components/vite/deps/zone__js.js?v=36af2b62
+[HTTP/1.1 200 OK 0ms]
+
+GET
+http://localhost:4200/@fs/C:/src/repos/HTML dev/q-sys-angular-components/node_modules/vite/dist/client/env.mjs
+[HTTP/1.1 304 Not Modified 1ms]
+
+GET
+http://localhost:4200/@fs/C:/src/repos/HTML dev/q-sys-angular-components/.angular/cache/20.3.13/q-sys-angular-components/vite/deps/@angular_platform-browser.js?v=36af2b62
+[HTTP/1.1 200 OK 0ms]
+
+GET
+http://localhost:4200/@fs/C:/src/repos/HTML dev/q-sys-angular-components/.angular/cache/20.3.13/q-sys-angular-components/vite/deps/@angular_core.js?v=36af2b62
+[HTTP/1.1 200 OK 0ms]
+
+GET
+http://localhost:4200/@fs/C:/src/repos/HTML dev/q-sys-angular-components/.angular/cache/20.3.13/q-sys-angular-components/vite/deps/@angular_router.js?v=36af2b62
+[HTTP/1.1 200 OK 0ms]
+
+GET
+http://localhost:4200/@fs/C:/src/repos/HTML dev/q-sys-angular-components/.angular/cache/20.3.13/q-sys-angular-components/vite/deps/@angular_common.js?v=36af2b62
+[HTTP/1.1 200 OK 0ms]
+
+GET
+http://localhost:4200/@fs/C:/src/repos/HTML dev/q-sys-angular-components/.angular/cache/20.3.13/q-sys-angular-components/vite/deps/rxjs.js?v=36af2b62
+[HTTP/1.1 200 OK 0ms]
+
+GET
+http://localhost:4200/@fs/C:/src/repos/HTML dev/q-sys-angular-components/.angular/cache/20.3.13/q-sys-angular-components/vite/deps/chunk-WDMUDEB6.js?v=e43a6769
+[HTTP/1.1 200 OK 0ms]
+
+[vite] connecting... client:733:9
+GET
+http://localhost:4200/@fs/C:/src/repos/HTML dev/q-sys-angular-components/.angular/cache/20.3.13/q-sys-angular-components/vite/deps/chunk-7MLG37IQ.js?v=e43a6769
+[HTTP/1.1 200 OK 0ms]
+
+GET
+http://localhost:4200/@fs/C:/src/repos/HTML dev/q-sys-angular-components/.angular/cache/20.3.13/q-sys-angular-components/vite/deps/chunk-DYN7Y343.js?v=e43a6769
+[HTTP/1.1 200 OK 0ms]
+
+GET
+http://localhost:4200/@fs/C:/src/repos/HTML dev/q-sys-angular-components/.angular/cache/20.3.13/q-sys-angular-components/vite/deps/chunk-NKWTGXST.js?v=e43a6769
+[HTTP/1.1 200 OK 0ms]
+
+GET
+http://localhost:4200/@fs/C:/src/repos/HTML dev/q-sys-angular-components/.angular/cache/20.3.13/q-sys-angular-components/vite/deps/chunk-RSS3ODKE.js?v=e43a6769
+[HTTP/1.1 200 OK 0ms]
+
+GET
+ws://localhost:4200/?token=0T2ZbVdMJhY1
+[HTTP/1.1 101 Switching Protocols 4ms]
+
+GET
+http://localhost:4200/@ng/component?c=src/app/components/qsys-example/qsys-example.ts@QsysExample&t=1765771399291
+[HTTP/1.1 200 OK 1ms]
+
+Angular is running in development mode. chunk-NKWTGXST.js:14746:13
+GET
+http://localhost:4200/@ng/component?c=src/app/app.ts@App&t=1765771399292
+[HTTP/1.1 200 OK 1ms]
+
+[vite] connected. client:827:12
+GET
+wss://192.168.104.227/qrc-public-api/v0
+[HTTP/1.1 101 Switching Protocols 1157ms]
+
+GET
+http://localhost:4200/favicon.ico
+[HTTP/1.1 200 OK 0ms]
+
+Connected to Q-SYS Core main.js:223:17
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.AddComponentControl", params: {…}, id: 1 }
+main.js:418:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.AddComponentControl", params: {…}, id: 2 }
+main.js:418:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.AddComponentControl", params: {…}, id: 3 }
+main.js:418:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.AddComponentControl", params: {…}, id: 4 }
+main.js:418:15
+Continuous polling not needed - Q-SYS pushes updates asynchronously main.js:445:13
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Activating ChangeGroup with initial poll main.js:436:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 5 }
+main.js:418:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: true, id: 1 }
+main.js:377:15
+Poll result with no changes: true main.js:407:17
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: true, id: 2 }
+main.js:377:15
+Poll result with no changes: true main.js:407:17
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: true, id: 3 }
+main.js:377:15
+Poll result with no changes: true main.js:407:17
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: true, id: 4 }
+main.js:377:15
+Poll result with no changes: true main.js:407:17
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 5 }
+main.js:377:15
+Received control changes: 
+Array(4) [ {…}, {…}, {…}, {…} ]
+main.js:383:17
+Processing change: 
+Object { Component: "Room Controls DEV", Name: "SystemPower", String: "false", Value: 0, Position: 0, Choices: [], Color: "", Indeterminate: false, Invisible: false, Disabled: false, … }
+main.js:385:19
+Emitting update for Room Controls DEV:SystemPower = 0 main.js:393:23
+Processing change: 
+Object { Component: "Room Controls DEV", Name: "VolumeFader", String: ".230%", Value: 0.23000082, Position: 0.0023, Choices: [], Color: "", Indeterminate: false, Invisible: false, Disabled: false, … }
+main.js:385:19
+Emitting update for Room Controls DEV:VolumeFader = 0.23000082 main.js:393:23
+Processing change: 
+Object { Component: "Room Controls DEV", Name: "VolumeMute", String: "true", Value: 1, Position: 1, Choices: [], Color: "", Indeterminate: false, Invisible: false, Disabled: false, … }
+main.js:385:19
+Emitting update for Room Controls DEV:VolumeMute = 1 main.js:393:23
+Processing change: 
+Object { Component: "Room Controls DEV", Name: "MotionMode", String: "Motion On/Off", Value: 0, Position: 0, Choices: (3) […], Color: "", Indeterminate: false, Invisible: false, Disabled: false, … }
+main.js:385:19
+Emitting update for Room Controls DEV:MotionMode = 0 main.js:393:23
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15

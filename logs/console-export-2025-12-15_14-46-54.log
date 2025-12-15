@@ -1,0 +1,1887 @@
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1505 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1506 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1489 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1490 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1491 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1492 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1493 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1494 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1495 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1507 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1496 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1508 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1509 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1510 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1511 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1512 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1513 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1514 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1515 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1516 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1517 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1518 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1519 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1520 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1521 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1522 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1523 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1524 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1525 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1526 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1527 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1528 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1529 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1530 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1497 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1498 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1499 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1500 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1501 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1502 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1503 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1504 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1505 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1506 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1507 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1508 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1509 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1510 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1511 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1512 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1513 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1514 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1515 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1516 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1517 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1531 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1532 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1533 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1534 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1535 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1536 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1537 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1538 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1539 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1540 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1541 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1542 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1543 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1544 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1545 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1546 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1547 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1548 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1549 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1550 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1518 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1519 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1520 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1521 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1522 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1523 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1524 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1525 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1526 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1527 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1528 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1529 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1530 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1531 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1532 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1533 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1534 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1535 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1536 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1537 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1538 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1539 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1551 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1540 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1552 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1541 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1553 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1542 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1554 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1543 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1555 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1556 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1544 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1545 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1557 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1558 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1559 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1560 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1561 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1562 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1563 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1564 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1565 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1566 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1567 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1568 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1569 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1570 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1571 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1572 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1573 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1574 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1575 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1576 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1577 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1578 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1579 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1580 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1581 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1582 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1583 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1584 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1585 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1586 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1587 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1546 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1547 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1548 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1549 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1550 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1551 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1552 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1553 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1554 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1588 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1589 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1590 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1591 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1592 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1593 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1594 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1555 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1556 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1557 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1558 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1559 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1560 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1561 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1562 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1563 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1564 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1565 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1566 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1567 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1568 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1569 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1570 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1571 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1572 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1573 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1574 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1575 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1576 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1577 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1578 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1579 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1580 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1581 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1582 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1583 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1595 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1584 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1596 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1585 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1597 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1598 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1586 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1599 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1587 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1600 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1588 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1589 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1601 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1602 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1603 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1604 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1605 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1606 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1607 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1608 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1609 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1610 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1611 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1612 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1613 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1614 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1615 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1590 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1591 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1592 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1593 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1594 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1616 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1617 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1595 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1596 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1597 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1598 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1599 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1600 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1601 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1602 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1603 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1604 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1605 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1606 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1607 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1608 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1618 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1619 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1620 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1621 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1622 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1609 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1610 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1623 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1611 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1624 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1612 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1625 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1626 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1613 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1614 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1615 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1627 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1616 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1628 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1617 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1618 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1629 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1630 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1619 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1631 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1632 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1620 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1621 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1633 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1634 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1622 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1623 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1635 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1624 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1636 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1625 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1637 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1638 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1626 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1639 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1627 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1628 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1640 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1629 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1641 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1642 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1643 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1630 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1644 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1631 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1632 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1633 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1634 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1635 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1645 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1636 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1646 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1637 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1647 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1648 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1638 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1639 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1649 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1640 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1650 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1651 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1652 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1653 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1654 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1641 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1642 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1655 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1643 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1644 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1656 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1657 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1645 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1646 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1658 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1647 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1659 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1660 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1648 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1649 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1661 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "Component.Set", params: {…}, id: 1662 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1650 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1663 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1651 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1664 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1652 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1665 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1653 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1666 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1654 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1667 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1655 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1668 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "Component.Set", params: {…}, id: 1669 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1670 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1656 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "Component.Set", params: {…}, id: 1671 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1657 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1672 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "Component.Set", params: {…}, id: 1673 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1658 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "Component.Set", params: {…}, id: 1674 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1675 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1659 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1676 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1660 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "Component.Set", params: {…}, id: 1677 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "Component.Set", params: {…}, id: 1678 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1679 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "Component.Set", params: {…}, id: 1680 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1681 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "Component.Set", params: {…}, id: 1682 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1683 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "Component.Set", params: {…}, id: 1684 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1685 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1686 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "Component.Set", params: {…}, id: 1687 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1688 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1689 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1690 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "Component.Set", params: {…}, id: 1691 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1692 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1693 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1694 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1695 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1696 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1697 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1661 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: true, id: 1662 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1663 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1664 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1665 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1666 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1667 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1668 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: true, id: 1669 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1670 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: true, id: 1671 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1672 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: true, id: 1673 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: true, id: 1674 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1675 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1676 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: true, id: 1677 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: true, id: 1678 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1679 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: true, id: 1680 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1681 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1698 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: true, id: 1682 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1683 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: true, id: 1684 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1685 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1699 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1700 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1701 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1686 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: true, id: 1687 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1688 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1689 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1702 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1690 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1703 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1704 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1705 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: true, id: 1691 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1692 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1693 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1706 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1707 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1708 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1709 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1710 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1711 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1712 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1713 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1714 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1715 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1716 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1717 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1694 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1695 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1718 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1719 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1696 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1697 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1698 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1699 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1700 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1701 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1702 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1703 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1704 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1705 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1706 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1707 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1708 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1720 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1721 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1722 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1723 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1709 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1710 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1711 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1712 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1724 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1725 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1726 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1727 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1713 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1714 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1715 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1728 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1716 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1717 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1729 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1718 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1730 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1719 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1731 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1720 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1732 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1733 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1734 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1721 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1722 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1735 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1736 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1737 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1738 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1739 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1723 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1724 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1725 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1726 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1727 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1740 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1741 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1742 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1743 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1744 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1745 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1746 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1747 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1748 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1749 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1750 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1751 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1752 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1753 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1754 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1755 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1756 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1757 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1758 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1759 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1760 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1761 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1762 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1728 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1729 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1730 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1731 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1732 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1733 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1734 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1735 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1736 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1737 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1738 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1739 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1740 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1741 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1742 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1743 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1763 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1764 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1765 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1766 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1767 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1768 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1769 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1770 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1771 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1772 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1773 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1774 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1775 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1776 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1777 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1744 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1745 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1746 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1747 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1748 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1749 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1750 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1751 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1752 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1753 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1754 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1755 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1756 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1757 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1758 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1759 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1760 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1761 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1762 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1763 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1764 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1765 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1766 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1778 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1779 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", method: "EngineStatus", params: {…} }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1780 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1781 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1782 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1783 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1784 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1767 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1768 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1769 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1770 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1771 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1785 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1786 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1772 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1773 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1787 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1774 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1775 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1788 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1776 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1777 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1789 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1778 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1790 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1779 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1791 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1780 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1792 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1781 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1793 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1794 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1795 }
+main.js:409:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1796 }
+main.js:409:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1782 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1783 }
+main.js:377:15
+Received message from Q-SYS: 
+Object { jsonrpc: "2.0", result: {…}, id: 1784 }
+main.js:377:15
+Sending message to Q-SYS: 
+Object { jsonrpc: "2.0", method: "ChangeGroup.Poll", params: {…}, id: 1797 }
+main.js:409:15

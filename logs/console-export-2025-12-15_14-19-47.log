@@ -1,0 +1,101 @@
+GET
+http://localhost:4200/
+[HTTP/1.1 200 OK 2007ms]
+
+Attempting to reconnect... main.js:242:21
+GET
+ws://192.168.104.222/qrc-public-api/v0
+NS_ERROR_NET_TIMEOUT
+
+GET
+http://localhost:4200/@vite/client
+[HTTP/1.1 304 Not Modified 1ms]
+
+GET
+http://localhost:4200/styles.css
+[HTTP/1.1 304 Not Modified 1ms]
+
+GET
+http://localhost:4200/polyfills.js
+[HTTP/1.1 304 Not Modified 0ms]
+
+GET
+http://localhost:4200/main.js
+[HTTP/1.1 200 OK 1ms]
+
+GET
+http://localhost:4200/@fs/C:/src/repos/HTML dev/q-sys-angular-components/.angular/cache/20.3.13/q-sys-angular-components/vite/deps/zone__js.js?v=36af2b62
+[HTTP/1.1 200 OK 0ms]
+
+GET
+http://localhost:4200/@fs/C:/src/repos/HTML dev/q-sys-angular-components/.angular/cache/20.3.13/q-sys-angular-components/vite/deps/@angular_core.js?v=36af2b62
+[HTTP/1.1 200 OK 0ms]
+
+GET
+http://localhost:4200/@fs/C:/src/repos/HTML dev/q-sys-angular-components/.angular/cache/20.3.13/q-sys-angular-components/vite/deps/@angular_platform-browser.js?v=36af2b62
+[HTTP/1.1 200 OK 0ms]
+
+GET
+http://localhost:4200/@fs/C:/src/repos/HTML dev/q-sys-angular-components/.angular/cache/20.3.13/q-sys-angular-components/vite/deps/@angular_common.js?v=36af2b62
+[HTTP/1.1 200 OK 0ms]
+
+GET
+http://localhost:4200/@fs/C:/src/repos/HTML dev/q-sys-angular-components/.angular/cache/20.3.13/q-sys-angular-components/vite/deps/@angular_router.js?v=36af2b62
+[HTTP/1.1 200 OK 0ms]
+
+GET
+http://localhost:4200/@fs/C:/src/repos/HTML dev/q-sys-angular-components/.angular/cache/20.3.13/q-sys-angular-components/vite/deps/rxjs.js?v=36af2b62
+[HTTP/1.1 200 OK 0ms]
+
+GET
+http://localhost:4200/@fs/C:/src/repos/HTML dev/q-sys-angular-components/node_modules/vite/dist/client/env.mjs
+[HTTP/1.1 304 Not Modified 2ms]
+
+GET
+http://localhost:4200/@fs/C:/src/repos/HTML dev/q-sys-angular-components/.angular/cache/20.3.13/q-sys-angular-components/vite/deps/chunk-WDMUDEB6.js?v=e43a6769
+[HTTP/1.1 200 OK 0ms]
+
+GET
+http://localhost:4200/@fs/C:/src/repos/HTML dev/q-sys-angular-components/.angular/cache/20.3.13/q-sys-angular-components/vite/deps/chunk-DYN7Y343.js?v=e43a6769
+[HTTP/1.1 200 OK 0ms]
+
+GET
+http://localhost:4200/@fs/C:/src/repos/HTML dev/q-sys-angular-components/.angular/cache/20.3.13/q-sys-angular-components/vite/deps/chunk-7MLG37IQ.js?v=e43a6769
+[HTTP/1.1 200 OK 0ms]
+
+GET
+http://localhost:4200/@fs/C:/src/repos/HTML dev/q-sys-angular-components/.angular/cache/20.3.13/q-sys-angular-components/vite/deps/chunk-RSS3ODKE.js?v=e43a6769
+[HTTP/1.1 200 OK 0ms]
+
+GET
+http://localhost:4200/@fs/C:/src/repos/HTML dev/q-sys-angular-components/.angular/cache/20.3.13/q-sys-angular-components/vite/deps/chunk-NKWTGXST.js?v=e43a6769
+[HTTP/1.1 200 OK 0ms]
+
+[vite] connecting... client:733:9
+GET
+ws://localhost:4200/?token=0T2ZbVdMJhY1
+[HTTP/1.1 101 Switching Protocols 4ms]
+
+GET
+http://localhost:4200/@ng/component?c=src/app/components/qsys-example/qsys-example.ts@QsysExample&t=1765768759385
+[HTTP/1.1 200 OK 1ms]
+
+GET
+http://localhost:4200/@ng/component?c=src/app/app.ts@App&t=1765768759385
+[HTTP/1.1 200 OK 1ms]
+
+Angular is running in development mode. chunk-NKWTGXST.js:14746:13
+[vite] connected. client:827:12
+GET
+http://localhost:4200/favicon.ico
+[HTTP/1.1 200 OK 0ms]
+
+GET
+ws://192.168.104.222/qrc-public-api/v0
+NS_ERROR_NET_TIMEOUT
+
+Disconnected from Q-SYS Core main.js:236:17
+Attempting to reconnect... main.js:242:21
+GET
+ws://192.168.104.222/qrc-public-api/v0
+
