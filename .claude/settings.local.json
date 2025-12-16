@@ -6,7 +6,14 @@
       "Bash(ng generate:*)",
       "Bash(ng build:*)",
       "Bash(ls:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nAdd Q-SYS Core integration with Angular services and components\n\nImplemented complete Q-SYS QRWC (WebSocket Remote Control) integration:\n\n- QSysService: Core WebSocket service with ChangeGroup pattern\n  - Connects via wss:// with configurable polling (35ms default)\n  - Uses ChangeGroup.AddComponentControl for control registration\n  - Uses Component.Set for bidirectional control updates\n  - Continuous polling with ChangeGroup.Poll for live updates\n  - Selective logging (control commands only, no poll spam)\n\n- Control models and wrappers with Angular signals\n  - BooleanControl, KnobControl, TextControl, TriggerControl, etc.\n  - Reactive signals for automatic UI updates\n  - Type-safe control abstractions\n\n- Example component demonstrating Q-SYS integration\n  - System power toggle (SystemOnOff)\n  - Volume control with debounced slider (150ms)\n  - Mute toggle and motion mode display\n  - Bidirectional sync with Q-SYS Core\n\n- MCP server integration for component discovery\n  - Added @q-sys/qrwc package\n  - MCP tools: get_components, get_controls\n  - Documentation for discovering available controls\n\n- Comprehensive documentation\n  - Updated README with Q-SYS setup instructions\n  - Added QSYS-MCP-SETUP.md guide\n  - Example usage patterns and control types reference\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(npm run build:*)",
+      "Bash(ng serve:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
+      "Bash(cat:*)",
+      "Bash(taskkill:*)"
     ]
   }
 }

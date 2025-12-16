@@ -1,0 +1,227 @@
+<div class="qsys-browser">
+  <!-- Header -->
+  <div class="header">
+    <h1>Q-SYS Component Browser</h1>
+    <div class="connection-status" [class.connected]="isConnected()">
+      {{ isConnected() ? 'Connected' : 'Disconnected' }}
+    </div>
+  </div>
+
+  <!-- Loading Notifications -->
+  @if (isLoadingComponents) {
+    <div class="loading-notification">
+      <div class="loading-spinner"></div>
+      <span>Loading components...</span>
+    </div>
+  }
+  @if (isLoadingControls) {
+    <div class="loading-notification">
+      <div class="loading-spinner"></div>
+      <span>Loading controls...</span>
+    </div>
+  }
+
+  <!-- Component List View -->
+  @if (currentView === 'components') {
+    <div class="view">
+      <div class="view-header">
+        <h2>Components ({{ filteredComponents.length }})</h2>
+        <button class="refresh-button" (click)="loadComponents()" [disabled]="!isConnected()">
+          🔄 Refresh
+        </button>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search components..."
+          [(ngModel)]="searchTerm"
+        />
+      </div>
+
+      <div class="component-list">
+        @for (component of filteredComponents; track component.name) {
+          <div class="component-item" (click)="selectComponent(component)">
+            <div class="component-name">{{ component.name }}</div>
+            <div class="component-meta">
+              <span class="component-type">{{ component.type }}</span>
+              <span class="component-info">{{ component.controlCount }} controls</span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Control List View -->
+  @if (currentView === 'controls') {
+    <div class="view">
+      <div class="view-header">
+        <button class="back-button" (click)="backToComponents()">← Back</button>
+        <h2>{{ browserService.selectedComponent()?.name }}</h2>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search controls..."
+          [(ngModel)]="controlSearchTerm"
+        />
+      </div>
+
+      <div class="control-list">
+        @for (control of filteredControls; track control.name) {
+          <div class="control-item" (click)="selectControl(control)">
+            <div class="control-name">{{ control.name }}</div>
+            <div class="control-meta">
+              <span class="control-type">{{ control.type }}</span>
+              <span class="control-direction">{{ control.direction }}</span>
+            </div>
+            @if (control.value !== undefined) {
+              <div class="control-value">{{ control.string || control.value }}</div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Control Editor View -->
+  @if (currentView === 'editor') {
+    <div class="view">
+      <div class="view-header">
+        <button class="back-button" (click)="backToControls()">← Back</button>
+        <div class="header-text">
+          <div class="component-name-header">{{ browserService.selectedComponent()?.name }}</div>
+          <h2>{{ browserService.selectedControl()?.name }}</h2>
+        </div>
+      </div>
+
+      @if (browserService.selectedControl(); as control) {
+        <div class="control-editor">
+          <div class="editor-section">
+            <label>Type</label>
+            <div class="info-value">{{ control.type }}</div>
+          </div>
+
+          <div class="editor-section">
+            <label>Direction</label>
+            <div class="info-value">{{ control.direction }}</div>
+          </div>
+
+          <!-- Boolean Control -->
+          @if (control.type === 'Boolean') {
+            <div class="editor-section">
+              <label>Value</label>
+              <div class="toggle-group">
+                <button
+                  class="toggle-button"
+                  [class.active]="!editValue"
+                  (click)="setBooleanValue(false)"
+                  [disabled]="control.direction === 'Read Only'"
+                >
+                  Off (0)
+                </button>
+                <button
+                  class="toggle-button"
+                  [class.active]="editValue"
+                  (click)="setBooleanValue(true)"
+                  [disabled]="control.direction === 'Read Only'"
+                >
+                  On (1)
+                </button>
+              </div>
+            </div>
+          }
+
+          <!-- Knob/Level Control -->
+          @if (control.type === 'Knob') {
+            <div class="editor-section">
+              <label>Level ({{ getDisplayValue() }})</label>
+              <input
+                type="range"
+                class="slider"
+                [(ngModel)]="editValue"
+                (input)="onSliderInput($event)"
+                (mousedown)="onSliderDragStart()"
+                (mouseup)="onSliderDragEnd()"
+                (touchstart)="onSliderDragStart()"
+                (touchend)="onSliderDragEnd()"
+                [min]="getSliderMin()"
+                [max]="getSliderMax()"
+                step="0.1"
+                [disabled]="control.direction === 'Read Only'"
+              />
+
+              <label>Ramp Time (seconds)</label>
+              <input
+                type="number"
+                class="value-input"
+                [(ngModel)]="editRamp"
+                min="0"
+                step="0.1"
+              />
+            </div>
+          }
+
+          <!-- Numeric Control (Float/Integer) -->
+          @if (control.type === 'Float' || control.type === 'Integer') {
+            <div class="editor-section">
+              <label>Value</label>
+              <input
+                type="number"
+                class="value-input"
+                [(ngModel)]="editValue"
+                (ngModelChange)="updateControl()"
+                [step]="control.type === 'Integer' ? 1 : 0.1"
+                [disabled]="control.direction === 'Read Only'"
+              />
+
+              <label>Ramp Time (seconds)</label>
+              <input
+                type="number"
+                class="value-input"
+                [(ngModel)]="editRamp"
+                min="0"
+                step="0.1"
+              />
+            </div>
+          }
+
+          <!-- Combo box Control -->
+          @if (control.type === 'Combo box' && control.choices) {
+            <div class="editor-section">
+              <label>Value</label>
+              <select
+                class="value-input"
+                [(ngModel)]="editValue"
+                (ngModelChange)="updateControl()"
+                [disabled]="control.direction === 'Read Only'"
+              >
+                @for (choice of control.choices; track choice) {
+                  <option [value]="choice">{{ choice }}</option>
+                }
+              </select>
+            </div>
+          }
+
+          <!-- Text Control -->
+          @if (control.type === 'Text') {
+            <div class="editor-section">
+              <label>Value</label>
+              <input
+                type="text"
+                class="value-input"
+                [(ngModel)]="editValue"
+                (ngModelChange)="updateControl()"
+                [disabled]="control.direction === 'Read Only'"
+              />
+            </div>
+          }
+
+          @if (control.direction === 'Read Only') {
+            <div class="editor-section">
+              <div class="read-only-notice">This control is read-only</div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

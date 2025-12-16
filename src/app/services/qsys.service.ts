@@ -1,27 +1,34 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
-import {
-  QSysComponent,
-  QSysControl,
-  QrwcMessage,
-  QrwcConnectionOptions,
-} from '../models/qsys-control.model';
+import { QrwcConnectionOptions } from '../models/qsys-control.model';
+import { Qrwc } from '@q-sys/qrwc';
+
+export interface ComponentWithControls {
+  name: string;
+  type: string;
+  controlCount: number;
+}
 
 @Injectable({
   providedIn: 'root',
 })
 export class QSysService {
-  private ws: WebSocket | null = null;
-  private components = new Map<string, QSysComponent>();
-  private messageId = 0;
-  private pollInterval: number = 35;
-  private pollTimer: any;
-  private changeGroupId: string = 'AutoPoll';
+  private qrwc: any = null;
+  private qrwcComponents: any = null;
+  private currentComponentListener: any = null;
+  private currentComponent: any = null;
 
   // Connection state
   public isConnected = signal(false);
   private connectionStatus$ = new BehaviorSubject<boolean>(false);
-  private controlUpdates$ = new Subject<{ component: string; control: string; value: any }>();
+  private controlUpdates$ = new Subject<{
+    component: string;
+    control: string;
+    value: any;
+    position?: number;
+    string?: string;
+    Bool?: boolean;
+  }>();
 
   // Store connection options
   private options: QrwcConnectionOptions | null = null;
@@ -29,10 +36,10 @@ export class QSysService {
   constructor() {}
 
   /**
-   * Connect to Q-SYS Core
+   * Connect to Q-SYS Core using QRWC library
    * @param optionsOrIp - Connection options object or IP address string
    */
-  connect(optionsOrIp: QrwcConnectionOptions | string): void {
+  async connect(optionsOrIp: QrwcConnectionOptions | string): Promise<void> {
     // Parse connection options
     if (typeof optionsOrIp === 'string') {
       this.options = {
@@ -44,49 +51,48 @@ export class QSysService {
       this.options = optionsOrIp;
     }
 
-    this.pollInterval = this.options.pollInterval || 35;
     const protocol = this.options.secure ? 'wss' : 'ws';
     const url = `${protocol}://${this.options.coreIp}/qrc-public-api/v0`;
 
     try {
-      this.ws = new WebSocket(url);
+      console.log('Connecting to Q-SYS Core via QRWC...');
 
-      this.ws.onopen = () => {
-        console.log('Connected to Q-SYS Core');
+      // Create WebSocket
+      const socket = new WebSocket(url);
+
+      // Wait for WebSocket to open
+      await new Promise<void>((resolve, reject) => {
+        socket.onopen = () => resolve();
+        socket.onerror = (error) => reject(error);
+      });
+
+      // Create QRWC instance using factory method
+      // Note: Not passing a logger to avoid verbose polling spam in console
+      // QRWC will still poll ALL components automatically - this is expected behavior
+      this.qrwc = await Qrwc.createQrwc({
+        socket,
+        pollingInterval: this.options.pollInterval || 35,
+        // No logger = no console spam from polling
+      });
+
+      console.log('Connected to Q-SYS Core');
+
+      // Note: Don't set connected status yet - wait for QRWC to be ready
+      // QRWC needs time to discover components
+
+      // Set connection status after a brief delay to allow QRWC to initialize
+      setTimeout(() => {
+        this.qrwcComponents = this.qrwc?.components || null;
         this.isConnected.set(true);
         this.connectionStatus$.next(true);
-        // Create ChangeGroup for auto-polling
-        this.createChangeGroup();
-      };
+        console.log('QRWC initialization complete');
+      }, 1000);
 
-      this.ws.onmessage = (event) => {
-        this.handleMessage(event.data);
-      };
-
-      this.ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        this.isConnected.set(false);
-        this.connectionStatus$.next(false);
-      };
-
-      this.ws.onclose = () => {
-        console.log('Disconnected from Q-SYS Core');
-        this.isConnected.set(false);
-        this.connectionStatus$.next(false);
-        this.stopPolling();
-
-        // Attempt reconnection after 5 seconds
-        setTimeout(() => {
-          if (this.options) {
-            console.log('Attempting to reconnect...');
-            this.connect(this.options);
-          }
-        }, 5000);
-      };
     } catch (error) {
       console.error('Failed to connect:', error);
       this.isConnected.set(false);
       this.connectionStatus$.next(false);
+      throw error;
     }
   }
 
@@ -94,12 +100,16 @@ export class QSysService {
    * Disconnect from Q-SYS Core
    */
   disconnect(): void {
-    this.stopPolling();
-    this.destroyChangeGroup();
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
+    if (this.currentComponentListener) {
+      this.unsubscribeFromComponent();
     }
+
+    if (this.qrwc) {
+      this.qrwc.disconnect();
+      this.qrwc = null;
+      this.qrwcComponents = null;
+    }
+
     this.isConnected.set(false);
     this.connectionStatus$.next(false);
   }
@@ -114,243 +124,272 @@ export class QSysService {
   /**
    * Get observable for control updates
    */
-  getControlUpdates(): Observable<{ component: string; control: string; value: any }> {
+  getControlUpdates(): Observable<{ component: string; control: string; value: any; position?: number; string?: string; Bool?: boolean }> {
     return this.controlUpdates$.asObservable();
   }
 
   /**
-   * Register a component for monitoring
+   * Get all components from Q-SYS Core
+   * Returns a promise that resolves with the component list
    */
-  addComponent(componentName: string): void {
-    if (!this.components.has(componentName)) {
-      this.components.set(componentName, {
-        name: componentName,
-        controls: new Map(),
-      });
-    }
-  }
-
-  /**
-   * Add a control to monitor via ChangeGroup
-   */
-  addControl(componentName: string, controlName: string): void {
-    this.addComponent(componentName);
-
-    const component = this.components.get(componentName);
-    if (component && !component.controls.has(controlName)) {
-      component.controls.set(controlName, {
-        name: controlName,
-        type: 'Text',
-        direction: 'Read/Write',
-      });
-
-      // Add control to ChangeGroup for automatic updates using the correct method
-      this.sendMessage({
-        jsonrpc: '2.0',
-        method: 'ChangeGroup.AddComponentControl',
-        params: {
-          Id: this.changeGroupId,
-          Component: {
-            Name: componentName,
-            Controls: [
-              {
-                Name: controlName,
-              },
-            ],
-          },
-        },
-        id: this.getNextId(),
-      });
-    }
-  }
-
-  /**
-   * Set a control value using Component.Set method
-   */
-  setControl(componentName: string, controlName: string, value: any, ramp?: number): void {
-    const controlData: any = {
-      Name: controlName,
-      Value: value,
-    };
-
-    if (ramp !== undefined) {
-      controlData.Ramp = ramp;
+  async getComponents(): Promise<ComponentWithControls[]> {
+    if (!this.qrwcComponents) {
+      throw new Error('Not connected to Q-SYS Core');
     }
 
-    this.sendMessage({
-      jsonrpc: '2.0',
-      method: 'Component.Set',
-      params: {
-        Name: componentName,
-        Controls: [controlData],
-      },
-      id: this.getNextId(),
-    });
-  }
-
-  /**
-   * Trigger a control (for Trigger type controls) using Component.Set
-   */
-  trigger(componentName: string, controlName: string): void {
-    this.sendMessage({
-      jsonrpc: '2.0',
-      method: 'Component.Set',
-      params: {
-        Name: componentName,
-        Controls: [
-          {
-            Name: controlName,
-            Value: 1, // Triggers are set to 1
-          },
-        ],
-      },
-      id: this.getNextId(),
-    });
-  }
-
-  /**
-   * Get a control value (returns a signal)
-   */
-  getControl(componentName: string, controlName: string): any {
-    const component = this.components.get(componentName);
-    if (component) {
-      return component.controls.get(controlName);
-    }
-    return null;
-  }
-
-  /**
-   * Handle incoming messages from Q-SYS Core
-   */
-  private handleMessage(data: string): void {
     try {
-      const message: QrwcMessage = JSON.parse(data);
+      // Get all component names
+      const componentNames = Object.keys(this.qrwcComponents);
 
-      // Log errors in detail
-      if (message.error) {
-        console.error('Q-SYS Error:', JSON.stringify(message.error, null, 2), 'for message ID:', message.id);
-        console.error('Full error message:', message);
-      }
+      // For each component, get its controls to count them
+      const componentsWithCounts: ComponentWithControls[] = [];
 
-      // Handle ChangeGroup.Poll response (contains control updates)
-      if (message.result && message.result.Changes && Array.isArray(message.result.Changes)) {
-        // Log control changes (but only if there are any)
-        if (message.result.Changes.length > 0) {
-          console.log('Q-SYS ← Control changes:', message.result.Changes.map((c: any) =>
-            `${c.Component}:${c.Name} = ${c.Value}`
-          ).join(', '));
-        }
+      for (const name of componentNames) {
+        const component = this.qrwcComponents[name];
+        // Controls are in component.controls, not directly on component
+        const componentControls = component.controls || {};
+        const controlCount = Object.keys(componentControls).length;
 
-        message.result.Changes.forEach((change: any) => {
-          const component = this.components.get(change.Component);
-          if (component) {
-            const control = component.controls.get(change.Name);
-            if (control) {
-              control.value = change.Value;
-              control.position = change.Position;
-              control.string = change.String;
 
-              // Emit update
-              this.controlUpdates$.next({
-                component: change.Component,
-                control: change.Name,
-                value: change.Value,
-              });
-            } else {
-              console.warn(`Control ${change.Name} not found in component ${change.Component}`);
-            }
-          } else {
-            console.warn(`Component ${change.Component} not found`);
-          }
+        componentsWithCounts.push({
+          name: name,
+          type: component._state?.Type || 'Unknown',
+          controlCount: controlCount
         });
       }
+
+      return componentsWithCounts;
     } catch (error) {
-      console.error('Error parsing message:', error);
+      console.error('Failed to get components:', error);
+      throw error;
     }
   }
 
   /**
-   * Send a message to Q-SYS Core
+   * Get all controls for a specific component
+   * Returns a promise that resolves with the control list
    */
-  private sendMessage(message: QrwcMessage): void {
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      // Log control commands (but not polling)
-      if (message.method && message.method !== 'ChangeGroup.Poll') {
-        console.log(`Q-SYS → ${message.method}:`, message.params);
+  async getComponentControls(componentName: string): Promise<any[]> {
+    if (!this.qrwcComponents) {
+      throw new Error('Not connected to Q-SYS Core');
+    }
+
+    try {
+      const component = this.qrwcComponents[componentName];
+      if (!component) {
+        throw new Error(`Component "${componentName}" not found`);
       }
-      this.ws.send(JSON.stringify(message));
-    } else {
-      console.warn('WebSocket not open, cannot send message:', message);
+
+      // Controls are in component.controls, not directly on component
+      const componentControls = component.controls;
+      if (!componentControls) {
+        console.warn(`Component "${componentName}" has no controls property`);
+        return [];
+      }
+
+      const controlNames = Object.keys(componentControls);
+      const controls: any[] = [];
+
+      for (const controlName of controlNames) {
+        const control = componentControls[controlName];
+
+        // Access control state
+        const state = control.state || control;
+
+        // Debug log for combo box controls
+        if (controlName.toLowerCase().includes('display') || controlName.toLowerCase().includes('call')) {
+          console.log(`Control ${controlName}:`, {
+            Type: state.Type,
+            hasChoices: !!state.Choices,
+            Choices: state.Choices,
+            allKeys: Object.keys(state)
+          });
+        }
+
+        // Debug log for knob/fader controls
+        if (controlName.toLowerCase().includes('volume') || controlName.toLowerCase().includes('fader') || state.Position !== undefined) {
+          console.log(`Control ${controlName} (has Position):`, {
+            Type: state.Type,
+            Value: state.Value,
+            ValueMin: state.ValueMin,
+            ValueMax: state.ValueMax,
+            Position: state.Position,
+            String: state.String,
+            allKeys: Object.keys(state)
+          });
+        }
+
+        // Infer/correct control type
+        let controlType = state.Type;
+
+        // Override type based on control properties (Q-SYS often reports incorrect types)
+        if (state.Choices && Array.isArray(state.Choices) && state.Choices.length > 0) {
+          // Has choices = Combo box (Q-SYS often reports as "Text")
+          controlType = 'Combo box';
+        } else if (state.Position !== undefined && controlType === 'Float') {
+          // Float with Position = Knob/Fader (use Position for control, not Value)
+          controlType = 'Knob';
+        } else if (!controlType || controlType === '') {
+          // If no type provided, infer from name patterns
+          if (/^(System|Power)(On|Off)$/i.test(controlName)) {
+            controlType = 'State Trigger';
+          } else if (controlName.endsWith('Trig') || controlName.toLowerCase().includes('trigger')) {
+            controlType = 'Trigger';
+          } else if (state.Position !== undefined) {
+            controlType = 'Knob';
+          } else {
+            controlType = 'Text';
+          }
+        }
+
+        controls.push({
+          Name: controlName,
+          Type: controlType,
+          Direction: state.Direction || 'Read/Write',
+          Value: state.Value,
+          ValueMin: state.ValueMin,
+          ValueMax: state.ValueMax,
+          Position: state.Position,
+          String: state.String,
+          Choices: state.Choices
+        });
+      }
+
+      return controls;
+    } catch (error) {
+      console.error(`Failed to get controls for ${componentName}:`, error);
+      throw error;
     }
   }
 
   /**
-   * Get next message ID
+   * Subscribe to a component's control changes using component-level event listener
    */
-  private getNextId(): number {
-    return ++this.messageId;
+  subscribeToComponent(componentName: string): void {
+    if (!this.qrwcComponents) {
+      console.error('Not connected to Q-SYS Core');
+      return;
+    }
+
+    // Unsubscribe from previous component if any
+    if (this.currentComponentListener) {
+      this.unsubscribeFromComponent();
+    }
+
+    try {
+      const component = this.qrwcComponents[componentName];
+      if (!component) {
+        console.error(`Component "${componentName}" not found`);
+        return;
+      }
+
+      console.log(`Subscribing to component: ${componentName}`);
+
+      // Store reference to component
+      this.currentComponent = component;
+
+      // Set up component-level event listener
+      // This will listen to all controls in the component
+      // QRWC is already polling this component automatically
+      this.currentComponentListener = component.on('update', (control: any, state: any) => {
+        // The first parameter is the control object (not a string), extract the name
+        const controlName = control.name || control;
+        console.log(`Control update: ${componentName}:${controlName}`, state);
+
+        this.controlUpdates$.next({
+          component: componentName,
+          control: controlName,
+          value: state.Value,
+          position: state.Position,
+          string: state.String,
+          Bool: state.Bool
+        });
+      });
+
+    } catch (error) {
+      console.error(`Failed to subscribe to component ${componentName}:`, error);
+    }
   }
 
   /**
-   * Initialize ChangeGroup and do a single poll to activate it
-   * After the initial poll, continuous polling will fetch updates
+   * Unsubscribe from the current component
    */
-  private createChangeGroup(): void {
-    // Do a single poll to get initial values
-    setTimeout(() => {
-      this.pollControls();
-    }, 100);
+  unsubscribeFromComponent(): void {
+    if (this.currentComponentListener) {
+      console.log('Unsubscribing from component');
+
+      // Remove event listener
+      this.currentComponentListener.off();
+      this.currentComponentListener = null;
+    }
+
+    // Clear component reference
+    if (this.currentComponent) {
+      this.currentComponent = null;
+    }
   }
 
   /**
-   * Enable continuous polling for control updates
-   * This is required to receive ongoing updates from Q-SYS
+   * Set a control value
+   */
+  async setControl(componentName: string, controlName: string, value: any, ramp?: number): Promise<void> {
+    if (!this.qrwcComponents) {
+      throw new Error('Not connected to Q-SYS Core');
+    }
+
+    try {
+      const component = this.qrwcComponents[componentName];
+      if (!component) {
+        throw new Error(`Component "${componentName}" not found`);
+      }
+
+      // Access control from component.controls
+      const control = component.controls?.[controlName];
+      if (!control) {
+        throw new Error(`Control "${controlName}" not found in component "${componentName}"`);
+      }
+
+      console.log(`Setting ${componentName}:${controlName} to ${value}${ramp ? ` with ramp ${ramp}s` : ''}`);
+
+      // Check control type from state
+      const state = control.state || control;
+      const controlType = state.Type;
+
+      // Identify pulse triggers:
+      // - Type must be "Trigger" (Q-SYS reports this for true pulse triggers)
+      // - Controls ending in "Trig" are usually pulse triggers
+      // - BUT: SystemOn/SystemOff/PowerOn/PowerOff are STATE triggers, not pulse triggers
+      const isStateTrigger = /^(System|Power)(On|Off)$/i.test(controlName);
+      const isPulseTrigger = (controlType === 'Trigger' || controlName.endsWith('Trig')) &&
+                            !isStateTrigger &&
+                            value === 1;
+
+      if (isPulseTrigger) {
+        // For pulse triggers, pulse high then low
+        console.log(`Triggering ${componentName}:${controlName} (pulse)`);
+        await control.update(1);
+        await control.update(0);
+      } else {
+        // For State Triggers and all other controls, just set the value
+        if (ramp !== undefined && ramp > 0) {
+          await control.update(value, ramp);
+        } else {
+          await control.update(value);
+        }
+      }
+
+    } catch (error) {
+      console.error(`Failed to set control ${componentName}:${controlName}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Enable continuous polling - not needed with event listeners
+   * Kept for compatibility
    */
   public enableContinuousPolling(): void {
-    if (!this.pollTimer) {
-      this.pollTimer = setInterval(() => {
-        this.pollControls();
-      }, this.pollInterval);
-    }
-  }
-
-  /**
-   * Start polling for control updates using ChangeGroup.Poll
-   * (Not needed - single poll activates the ChangeGroup)
-   */
-  private startPolling(): void {
-    // Not needed - single poll in createChangeGroup() activates async updates
-  }
-
-  /**
-   * Stop polling
-   */
-  private stopPolling(): void {
-    if (this.pollTimer) {
-      clearInterval(this.pollTimer);
-      this.pollTimer = null;
-    }
-  }
-
-  /**
-   * Poll ChangeGroup for control updates (manual poll if needed)
-   */
-  private pollControls(): void {
-    this.sendMessage({
-      jsonrpc: '2.0',
-      method: 'ChangeGroup.Poll',
-      params: {
-        Id: this.changeGroupId,
-      },
-      id: this.getNextId(),
-    });
-  }
-
-  /**
-   * Destroy ChangeGroup on disconnect (just stop polling, no explicit destroy needed)
-   */
-  private destroyChangeGroup(): void {
-    // No explicit ChangeGroup.Destroy needed, just stop polling
-    // The polling is already stopped by stopPolling() in disconnect()
+    // Not needed with QRWC event listeners
+    console.log('Continuous polling not needed - using event listeners');
   }
 }

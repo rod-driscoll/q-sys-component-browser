@@ -17,8 +17,6 @@ export abstract class QSysControlBase<T> {
   }
 
   protected initialize(): void {
-    this.qsysService.addControl(this.componentName, this.controlName);
-
     // Subscribe to control updates
     this.qsysService.getControlUpdates().subscribe((update) => {
       if (update.component === this.componentName && update.control === this.controlName) {
@@ -37,10 +35,7 @@ export class TextControl extends QSysControlBase<string> {
   public readonly string = computed(() => this.value() || '');
 
   protected updateValue(value: any): void {
-    const control = this.qsysService.getControl(this.componentName, this.controlName);
-    if (control) {
-      this._value.set(control.string || String(value));
-    }
+    this._value.set(String(value));
   }
 
   setValue(value: string): void {
@@ -88,12 +83,11 @@ export class TriggerControl {
     protected qsysService: QSysService,
     protected componentName: string,
     protected controlName: string
-  ) {
-    this.qsysService.addControl(this.componentName, this.controlName);
-  }
+  ) {}
 
   trigger(): void {
-    this.qsysService.trigger(this.componentName, this.controlName);
+    // Set to 1 (trigger), Q-SYS will automatically reset to 0
+    this.qsysService.setControl(this.componentName, this.controlName, 1);
   }
 }
 
@@ -108,12 +102,7 @@ export class KnobControl extends QSysControlBase<number> {
   public readonly string = this._string.asReadonly();
 
   protected updateValue(value: any): void {
-    const control = this.qsysService.getControl(this.componentName, this.controlName);
-    if (control) {
-      this._value.set(Number(value));
-      this._position.set(control.position);
-      this._string.set(control.string || String(value));
-    }
+    this._value.set(Number(value));
   }
 
   setValue(value: number, ramp?: number): void {
@@ -142,9 +131,7 @@ export class IntegerControl extends QSysControlBase<number> {
  * Component wrapper to access controls
  */
 export class QSysComponent {
-  constructor(private qsysService: QSysService, private componentName: string) {
-    this.qsysService.addComponent(componentName);
-  }
+  constructor(private qsysService: QSysService, private componentName: string) {}
 
   /**
    * Get a text control

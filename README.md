@@ -9,6 +9,10 @@ Angular 20 components for building Q-SYS control interfaces using the QRWC (Q-SY
 - 🎛️ Support for all Q-SYS control types (Text, Boolean, Trigger, Knob/Float, Integer)
 - 🔍 MCP server integration for component/control discovery
 - ⚡ Real-time control updates with configurable polling
+- 🗂️ **Component Browser**: Browse and edit all components and controls in your Q-SYS design
+  - Three-view interface: Components → Controls → Editor
+  - Search and filter capabilities
+  - Type-specific control editors (Boolean toggles, numeric inputs with ramp, text fields)
 
 ## Prerequisites
 
@@ -31,10 +35,14 @@ npm install
 
 ### 2. Configure Q-SYS Connection
 
-Update the Q-SYS Core IP address in [src/app/components/qsys-example/qsys-example.ts](src/app/components/qsys-example/qsys-example.ts:42):
+Update the Q-SYS Core IP address in [src/app/components/qsys-browser/qsys-browser.ts](src/app/components/qsys-browser/qsys-browser.ts:59):
 
 ```typescript
-this.qsysService.connect('YOUR_QSYS_CORE_IP');
+this.qsysService.connect({
+  coreIp: 'YOUR_QSYS_CORE_IP',
+  secure: true,
+  pollInterval: 35
+});
 ```
 
 ### 3. Development Server
@@ -46,6 +54,45 @@ ng serve
 ```
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+
+## Component Browser
+
+The application includes a **Q-SYS Component Browser** that allows you to browse and edit all components and controls in your Q-SYS design.
+
+### Features
+
+- **Component List**: View all available components with search/filter
+- **Control List**: View all controls for a selected component
+- **Control Editor**: Edit control values with type-specific inputs
+  - Boolean: On/Off toggle buttons
+  - Float/Integer: Number input with optional ramp time
+  - Text: Text input field
+
+### Loading Components and Controls
+
+After the app loads and connects to Q-SYS Core, you can populate the browser using MCP tools:
+
+1. **Load all components** - Use the `get_components` MCP tool, then pass the data to the browser:
+   ```javascript
+   // In browser console:
+   window.qsysBrowser.setComponentsFromMCP([
+     { name: "Room Controls DEV", controlCount: 57 },
+     { name: "Radio", controlCount: 62 },
+     // ... more components from MCP tool
+   ]);
+   ```
+
+2. **Load controls** - Select a component, then use `get_controls(componentName)` MCP tool:
+   ```javascript
+   // In browser console:
+   window.qsysBrowser.setControlsFromMCP([
+     { name: "SystemOnOff", type: "Boolean", direction: "Read/Write", value: 1 },
+     { name: "VolumeFader", type: "Float", direction: "Read/Write", value: 75.5 },
+     // ... more controls from MCP tool
+   ]);
+   ```
+
+See [BROWSER-USAGE.md](BROWSER-USAGE.md) for detailed usage instructions.
 
 ## Using the MCP Server for Component Discovery
 
