@@ -627,4 +627,87 @@ export class QsysBrowser implements OnInit, OnDestroy {
   selectControlFromGlobalSearch(control: ControlInfo): void {
     this.browserService.selectControlFromGlobalSearch(control);
   }
+
+  // Global search control interaction methods
+  onGlobalSearchControlUpdate(event: Event, control: ControlInfo, value: number): void {
+    event.stopPropagation();
+    if (control.componentName) {
+      this.qsysService.setControl(control.componentName, control.name, value);
+    }
+  }
+
+  onGlobalSearchSliderInput(event: Event, control: ControlInfo): void {
+    event.stopPropagation();
+    const input = event.target as HTMLInputElement;
+    const position = parseFloat(input.value);
+    if (control.componentName) {
+      this.qsysService.setControl(control.componentName, control.name, position);
+    }
+  }
+
+  onGlobalSearchValueChange(event: Event, control: ControlInfo): void {
+    event.stopPropagation();
+    const input = event.target as HTMLInputElement | HTMLSelectElement;
+    const value = parseFloat(input.value);
+    if (control.componentName) {
+      this.qsysService.setControl(control.componentName, control.name, value);
+    }
+  }
+
+  onGlobalSearchComboChange(event: Event, control: ControlInfo): void {
+    event.stopPropagation();
+    const select = event.target as HTMLSelectElement;
+    const value = select.value;
+    if (control.componentName) {
+      this.qsysService.setControl(control.componentName, control.name, value);
+    }
+  }
+
+  onGlobalSearchTextChange(event: Event, control: ControlInfo): void {
+    event.stopPropagation();
+    const textarea = event.target as HTMLTextAreaElement;
+    const value = textarea.value;
+    if (control.componentName) {
+      this.qsysService.setControl(control.componentName, control.name, value);
+    }
+  }
+
+  onGlobalSearchTimeChange(event: Event, control: ControlInfo, segment: 'hours' | 'minutes' | 'seconds'): void {
+    event.stopPropagation();
+    const input = event.target as HTMLInputElement;
+    const value = input.value.padStart(2, '0');
+
+    const hours = segment === 'hours' ? parseInt(value) || 0 : this.getTimeHoursValue(control);
+    const minutes = segment === 'minutes' ? parseInt(value) || 0 : this.getTimeMinutesValue(control);
+    const seconds = segment === 'seconds' ? parseInt(value) || 0 : this.getTimeSecondsValue(control);
+
+    const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+
+    if (control.componentName) {
+      this.qsysService.setControl(control.componentName, control.name, totalSeconds);
+    }
+  }
+
+  onGlobalSearchTrigger(event: Event, control: ControlInfo): void {
+    event.stopPropagation();
+    if (control.componentName) {
+      this.qsysService.setControl(control.componentName, control.name, 1);
+    }
+  }
+
+  // Helper methods to get time segment values
+  private getTimeHoursValue(control: ControlInfo): number {
+    const totalSeconds = control.value ?? 0;
+    return Math.floor(totalSeconds / 3600);
+  }
+
+  private getTimeMinutesValue(control: ControlInfo): number {
+    const totalSeconds = control.value ?? 0;
+    return Math.floor((totalSeconds % 3600) / 60);
+  }
+
+  private getTimeSecondsValue(control: ControlInfo): number {
+    const totalSeconds = control.value ?? 0;
+    return Math.floor(totalSeconds % 60);
+  }
 }

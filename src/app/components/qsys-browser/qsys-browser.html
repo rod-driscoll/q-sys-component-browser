@@ -81,29 +81,166 @@
             </div>
 
             <div class="control-editor-inline">
-              <!-- Boolean Control (Toggle) -->
+              <!-- Boolean Control -->
               @if (control.type === 'Boolean') {
                 <div class="toggle-group">
                   <button
                     class="toggle-button"
                     [class.active]="!control.value"
+                    (click)="onGlobalSearchControlUpdate($event, control, 0)"
                     [disabled]="control.direction === 'Read Only'"
                   >
-                    Off
+                    Off (0)
                   </button>
                   <button
                     class="toggle-button"
                     [class.active]="control.value"
+                    (click)="onGlobalSearchControlUpdate($event, control, 1)"
                     [disabled]="control.direction === 'Read Only'"
                   >
-                    On
+                    On (1)
                   </button>
                 </div>
               }
 
-              <!-- Display current value for other types -->
-              @if (control.type !== 'Boolean') {
-                <div class="control-value">{{ control.string || control.value }}</div>
+              <!-- Knob/Level Control -->
+              @if (control.type === 'Knob') {
+                @if (control.direction === 'Read Only') {
+                  <div class="info-value">{{ control.string || control.value }}</div>
+                } @else {
+                  <label class="inline-label">Level ({{ control.string || control.value }})</label>
+                  <input
+                    type="range"
+                    class="slider"
+                    [value]="control.position"
+                    (input)="onGlobalSearchSliderInput($event, control)"
+                    (click)="$event.stopPropagation()"
+                    [min]="0"
+                    [max]="1"
+                    step="0.01"
+                  />
+                }
+              }
+
+              <!-- Numeric Control (Float/Integer) -->
+              @if (control.type === 'Float' || control.type === 'Integer') {
+                @if (control.direction === 'Read Only') {
+                  <div class="info-value">{{ control.value }}</div>
+                } @else {
+                  <input
+                    type="number"
+                    class="value-input"
+                    [value]="control.value"
+                    (change)="onGlobalSearchValueChange($event, control)"
+                    (click)="$event.stopPropagation()"
+                    [step]="control.type === 'Integer' ? 1 : 0.1"
+                  />
+                }
+              }
+
+              <!-- Combo box Control -->
+              @if (control.type === 'Combo box' && control.choices) {
+                @if (control.direction === 'Read Only') {
+                  <div class="info-value">{{ control.string }}</div>
+                } @else {
+                  <select
+                    class="value-input"
+                    [value]="control.string"
+                    (change)="onGlobalSearchComboChange($event, control)"
+                    (click)="$event.stopPropagation()"
+                  >
+                    @for (choice of control.choices; track choice) {
+                      <option [value]="choice">{{ choice }}</option>
+                    }
+                  </select>
+                }
+              }
+
+              <!-- Text Control -->
+              @if (control.type === 'Text') {
+                @if (control.direction === 'Read Only' || control.direction === 'Write Only') {
+                  <div class="text-display">{{ control.string || control.value }}</div>
+                } @else {
+                  <textarea
+                    class="text-area-input"
+                    [value]="control.string"
+                    (change)="onGlobalSearchTextChange($event, control)"
+                    (click)="$event.stopPropagation()"
+                    rows="2"
+                  ></textarea>
+                }
+              }
+
+              <!-- Status Control -->
+              @if (control.type === 'Status') {
+                @if (control.direction === 'Read Only') {
+                  <div class="status-display" [ngClass]="getStatusColorClassForControl(control)">
+                    <div class="status-value">{{ control.string || control.value }}</div>
+                  </div>
+                } @else {
+                  <select
+                    class="status-select"
+                    [ngClass]="getStatusColorClassForControl(control)"
+                    [value]="control.value"
+                    (change)="onGlobalSearchValueChange($event, control)"
+                    (click)="$event.stopPropagation()"
+                  >
+                    <option value="0">OK (0)</option>
+                    <option value="1">Compromised (1)</option>
+                    <option value="2">Fault (2)</option>
+                    <option value="3">Not Present (3)</option>
+                    <option value="4">Missing (4)</option>
+                    <option value="5">Initializing (5)</option>
+                  </select>
+                }
+              }
+
+              <!-- State Trigger Control -->
+              @if (control.type === 'State Trigger') {
+                <select
+                  class="value-input"
+                  [value]="control.value"
+                  (change)="onGlobalSearchValueChange($event, control)"
+                  (click)="$event.stopPropagation()"
+                  [disabled]="control.direction === 'Read Only'"
+                >
+                  <option value="0">{{ control.valueMin }} (0)</option>
+                  <option value="1">{{ control.valueMax }} (1)</option>
+                </select>
+              }
+
+              <!-- Time Control -->
+              @if (control.type === 'Time') {
+                @if (control.direction === 'Read Only') {
+                  <div class="time-display">
+                    <div class="time-value">{{ control.string }}</div>
+                  </div>
+                } @else {
+                  <div class="time-input-group" (click)="$event.stopPropagation()">
+                    <input type="text" class="time-segment" [value]="getTimeHours(control)"
+                           (change)="onGlobalSearchTimeChange($event, control, 'hours')"
+                           placeholder="00" maxlength="2" pattern="[0-9]{0,2}" />
+                    <span class="time-separator">:</span>
+                    <input type="text" class="time-segment" [value]="getTimeMinutes(control)"
+                           (change)="onGlobalSearchTimeChange($event, control, 'minutes')"
+                           placeholder="00" maxlength="2" pattern="[0-9]{0,2}" />
+                    <span class="time-separator">:</span>
+                    <input type="text" class="time-segment" [value]="getTimeSeconds(control)"
+                           (change)="onGlobalSearchTimeChange($event, control, 'seconds')"
+                           placeholder="00" maxlength="2" pattern="[0-9]{0,2}" />
+                  </div>
+                }
+              }
+
+              <!-- Trigger Control -->
+              @if (control.type === 'Trigger') {
+                <button
+                  class="trigger-button"
+                  (click)="onGlobalSearchTrigger($event, control)"
+                  [disabled]="control.direction === 'Read Only'"
+                >
+                  Trigger
+                </button>
               }
             </div>
           </div>
