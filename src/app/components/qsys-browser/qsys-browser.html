@@ -173,26 +173,9 @@
 
               <!-- Status Control -->
               @if (control.type === 'Status') {
-                @if (control.direction === 'Read Only') {
-                  <div class="status-display" [ngClass]="getStatusColorClassForControl(control)">
-                    <div class="status-value">{{ control.string || control.value }}</div>
-                  </div>
-                } @else {
-                  <select
-                    class="status-select"
-                    [ngClass]="getStatusColorClassForControl(control)"
-                    [value]="control.value"
-                    (change)="onGlobalSearchValueChange($event, control)"
-                    (click)="$event.stopPropagation()"
-                  >
-                    <option value="0">OK (0)</option>
-                    <option value="1">Compromised (1)</option>
-                    <option value="2">Fault (2)</option>
-                    <option value="3">Not Present (3)</option>
-                    <option value="4">Missing (4)</option>
-                    <option value="5">Initializing (5)</option>
-                  </select>
-                }
+                <div class="status-display" [ngClass]="getStatusColorClassForControl(control)">
+                  <div class="status-value">{{ control.string || control.value }}</div>
+                </div>
               }
 
               <!-- State Trigger Control -->
@@ -414,25 +397,9 @@
 
                 <!-- Status Control -->
                 @if (control.type === 'Status') {
-                  @if (control.direction === 'Read Only') {
-                    <div class="status-display" [ngClass]="getStatusColorClassForControl(control)">
-                      <div class="status-value">{{ control.string || control.value }}</div>
-                    </div>
-                  } @else {
-                    <select
-                      class="status-select"
-                      [ngClass]="getStatusColorClassForControl(control)"
-                      [value]="control.value"
-                      (change)="onInlineValueChange($event, control)"
-                    >
-                      <option value="0">OK (0)</option>
-                      <option value="1">Compromised (1)</option>
-                      <option value="2">Fault (2)</option>
-                      <option value="3">Not Present (3)</option>
-                      <option value="4">Missing (4)</option>
-                      <option value="5">Initializing (5)</option>
-                    </select>
-                  }
+                  <div class="status-display" [ngClass]="getStatusColorClassForControl(control)">
+                    <div class="status-value">{{ control.string || control.value }}</div>
+                  </div>
                 }
 
                 <!-- State Trigger Control -->
