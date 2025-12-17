@@ -28,9 +28,18 @@ export class QsysBrowser implements OnInit, OnDestroy {
   // Track if user is dragging a slider to prevent feedback updates
   isDragging = false;
 
+  // Track expanded controls
+  expandedControls = new Set<string>();
+
   // Loading states
   isLoadingComponents = false;
   isLoadingControls = false;
+
+  // Connection details
+  coreIp = '192.168.104.227';
+  corePlatform = '';
+  coreState = '';
+  designName = '';
 
   constructor(
     protected qsysService: QSysService,
@@ -108,11 +117,23 @@ export class QsysBrowser implements OnInit, OnDestroy {
     });
 
     // Wait for connection before loading components
-    this.qsysService.getConnectionStatus().subscribe((connected) => {
+    this.qsysService.getConnectionStatus().subscribe(async (connected) => {
       if (connected) {
         // Don't enable polling yet - ChangeGroup doesn't exist until controls are added
         // Polling will be enabled when you select a component and add controls
         console.log('Connected - loading components from Q-SYS Core...');
+
+        // Load Core status to get platform, state, and design name
+        try {
+          const status = this.qsysService.getCoreStatus();
+          this.corePlatform = status.platform;
+          this.coreState = status.state;
+          this.designName = status.designName;
+          console.log(`Core: ${status.platform} (${status.state}) - Design: ${status.designName}`);
+        } catch (error) {
+          console.error('Failed to load Core status:', error);
+        }
+
         this.loadComponents();
       }
     });
@@ -424,5 +445,101 @@ export class QsysBrowser implements OnInit, OnDestroy {
 
   backToControls(): void {
     this.browserService.backToControls();
+  }
+
+  // Inline control editing methods
+  toggleControlExpanded(control: ControlInfo): void {
+    const key = `${this.browserService.selectedComponent()?.name}:${control.name}`;
+    if (this.expandedControls.has(key)) {
+      this.expandedControls.delete(key);
+    } else {
+      this.expandedControls.add(key);
+    }
+  }
+
+  isControlExpanded(control: ControlInfo): boolean {
+    const key = `${this.browserService.selectedComponent()?.name}:${control.name}`;
+    return this.expandedControls.has(key);
+  }
+
+  setControlValue(control: ControlInfo, value: number): void {
+    const componentName = this.browserService.selectedComponent()?.name;
+    if (componentName) {
+      this.qsysService.setControl(componentName, control.name, value);
+    }
+  }
+
+  onInlineSliderInput(event: Event, control: ControlInfo): void {
+    const input = event.target as HTMLInputElement;
+    const position = parseFloat(input.value);
+    const componentName = this.browserService.selectedComponent()?.name;
+    if (componentName) {
+      this.qsysService.setControl(componentName, control.name, position);
+    }
+  }
+
+  onInlineValueChange(event: Event, control: ControlInfo): void {
+    const input = event.target as HTMLInputElement | HTMLSelectElement;
+    const value = parseFloat(input.value);
+    const componentName = this.browserService.selectedComponent()?.name;
+    if (componentName) {
+      this.qsysService.setControl(componentName, control.name, value);
+    }
+  }
+
+  onInlineComboChange(event: Event, control: ControlInfo): void {
+    const select = event.target as HTMLSelectElement;
+    const value = select.value;
+    const componentName = this.browserService.selectedComponent()?.name;
+    if (componentName) {
+      this.qsysService.setControl(componentName, control.name, value);
+    }
+  }
+
+  onInlineTextChange(event: Event, control: ControlInfo): void {
+    const textarea = event.target as HTMLTextAreaElement;
+    const value = textarea.value;
+    const componentName = this.browserService.selectedComponent()?.name;
+    if (componentName) {
+      this.qsysService.setControl(componentName, control.name, value);
+    }
+  }
+
+  onInlineTimeChange(event: Event, control: ControlInfo, segment: 'hours' | 'minutes' | 'seconds'): void {
+    const input = event.target as HTMLInputElement;
+    const value = input.value.padStart(2, '0');
+
+    const hours = segment === 'hours' ? parseInt(value) || 0 : this.getTimeHours(control);
+    const minutes = segment === 'minutes' ? parseInt(value) || 0 : this.getTimeMinutes(control);
+    const seconds = segment === 'seconds' ? parseInt(value) || 0 : this.getTimeSeconds(control);
+
+    const totalSeconds = (parseInt(String(hours)) || 0) * 3600 + (parseInt(String(minutes)) || 0) * 60 + (parseInt(String(seconds)) || 0);
+
+    const componentName = this.browserService.selectedComponent()?.name;
+    if (componentName) {
+      this.qsysService.setControl(componentName, control.name, totalSeconds);
+    }
+  }
+
+  onInlineTrigger(control: ControlInfo): void {
+    const componentName = this.browserService.selectedComponent()?.name;
+    if (componentName) {
+      this.qsysService.setControl(componentName, control.name, 1);
+    }
+  }
+
+  getTimeHours(control: ControlInfo): string {
+    const totalSeconds = control.value ?? 0;
+    return String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+  }
+
+  getTimeMinutes(control: ControlInfo): string {
+    const totalSeconds = control.value ?? 0;
+    return String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+  }
+
+  getTimeSeconds(control: ControlInfo): string {
+    const totalSeconds = control.value ?? 0;
+    return String(Math.floor(totalSeconds % 60)).padStart(2, '0');
   }
 }

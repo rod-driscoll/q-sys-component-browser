@@ -1,9 +1,23 @@
 <div class="qsys-browser">
   <!-- Header -->
   <div class="header">
-    <h1>Q-SYS Component Browser</h1>
-    <div class="connection-status" [class.connected]="isConnected()">
-      {{ isConnected() ? 'Connected' : 'Disconnected' }}
+    <div class="header-main">
+      <div class="header-left">
+        <h1>Q-SYS Component Browser</h1>
+        <div class="project-detail-item">
+          <span class="detail-label">Project:</span>
+          <span class="detail-value">{{ designName || 'Loading...' }}</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="connection-status" [class.connected]="isConnected()">
+          {{ isConnected() ? 'Connected' : 'Disconnected' }}
+        </div>
+        <div class="core-ip">{{ coreIp }}</div>
+        @if (corePlatform && coreState) {
+          <div class="core-info">{{ corePlatform }} ({{ coreState }})</div>
+        }
+      </div>
     </div>
   </div>
 
@@ -48,10 +62,12 @@
       <div class="component-list">
         @for (component of filteredComponents; track component.name) {
           <div class="component-item" (click)="selectComponent(component)">
-            <div class="component-name">{{ component.name }}</div>
-            <div class="component-meta">
-              <span class="component-type">{{ component.type }}</span>
-              <span class="component-info">{{ component.controlCount }} controls</span>
+            <div class="component-header">
+              <div class="component-name">{{ component.name }}</div>
+              <div class="component-meta">
+                <span class="component-type">{{ component.type }}</span>
+                <span class="component-info">{{ component.controlCount }} controls</span>
+              </div>
             </div>
           </div>
         }
@@ -83,23 +99,172 @@
 
       <div class="control-list">
         @for (control of filteredControls; track control.name) {
-          <div class="control-item" (click)="selectControl(control)">
-            <div class="control-name">{{ control.name }}</div>
-            <div class="control-meta">
-              <span class="control-type">{{ control.type }}</span>
-              <span class="control-direction">{{ control.direction }}</span>
+          <div class="control-item">
+            <div class="control-header">
+              <div class="control-name">{{ control.name }}</div>
+              <div class="control-meta">
+                <span class="control-type">{{ control.type }}</span>
+                <span class="control-direction">{{ control.direction }}</span>
+              </div>
             </div>
-            @if (control.value !== undefined || control.string) {
-              @if (control.type === 'Text') {
-                <div class="control-value-text">{{ control.string || control.value }}</div>
-              } @else if (control.type === 'Status') {
-                <div class="control-value-status" [ngClass]="getStatusColorClassForControl(control)">
-                  {{ control.string || control.value }}
-                </div>
-              } @else {
-                <div class="control-value">{{ control.string || control.value }}</div>
-              }
-            }
+
+            <div class="control-editor-inline">
+                <!-- Boolean Control -->
+                @if (control.type === 'Boolean') {
+                  <div class="toggle-group">
+                    <button
+                      class="toggle-button"
+                      [class.active]="!control.value"
+                      (click)="setControlValue(control, 0)"
+                      [disabled]="control.direction === 'Read Only'"
+                    >
+                      Off (0)
+                    </button>
+                    <button
+                      class="toggle-button"
+                      [class.active]="control.value"
+                      (click)="setControlValue(control, 1)"
+                      [disabled]="control.direction === 'Read Only'"
+                    >
+                      On (1)
+                    </button>
+                  </div>
+                }
+
+                <!-- Knob/Level Control -->
+                @if (control.type === 'Knob') {
+                  @if (control.direction === 'Read Only') {
+                    <div class="info-value">{{ control.string || control.value }}</div>
+                  } @else {
+                    <label class="inline-label">Level ({{ control.string || control.value }})</label>
+                    <input
+                      type="range"
+                      class="slider"
+                      [value]="control.position"
+                      (input)="onInlineSliderInput($event, control)"
+                      [min]="0"
+                      [max]="1"
+                      step="0.01"
+                    />
+                  }
+                }
+
+                <!-- Numeric Control (Float/Integer) -->
+                @if (control.type === 'Float' || control.type === 'Integer') {
+                  @if (control.direction === 'Read Only') {
+                    <div class="info-value">{{ control.value }}</div>
+                  } @else {
+                    <input
+                      type="number"
+                      class="value-input"
+                      [value]="control.value"
+                      (change)="onInlineValueChange($event, control)"
+                      [step]="control.type === 'Integer' ? 1 : 0.1"
+                    />
+                  }
+                }
+
+                <!-- Combo box Control -->
+                @if (control.type === 'Combo box' && control.choices) {
+                  @if (control.direction === 'Read Only') {
+                    <div class="info-value">{{ control.string }}</div>
+                  } @else {
+                    <select
+                      class="value-input"
+                      [value]="control.string"
+                      (change)="onInlineComboChange($event, control)"
+                    >
+                      @for (choice of control.choices; track choice) {
+                        <option [value]="choice">{{ choice }}</option>
+                      }
+                    </select>
+                  }
+                }
+
+                <!-- Text Control -->
+                @if (control.type === 'Text') {
+                  @if (control.direction === 'Read Only' || control.direction === 'Write Only') {
+                    <div class="text-display">{{ control.string || control.value }}</div>
+                  } @else {
+                    <textarea
+                      class="text-area-input"
+                      [value]="control.string"
+                      (change)="onInlineTextChange($event, control)"
+                      rows="2"
+                    ></textarea>
+                  }
+                }
+
+                <!-- Status Control -->
+                @if (control.type === 'Status') {
+                  @if (control.direction === 'Read Only') {
+                    <div class="status-display" [ngClass]="getStatusColorClassForControl(control)">
+                      <div class="status-value">{{ control.string || control.value }}</div>
+                    </div>
+                  } @else {
+                    <select
+                      class="status-select"
+                      [ngClass]="getStatusColorClassForControl(control)"
+                      [value]="control.value"
+                      (change)="onInlineValueChange($event, control)"
+                    >
+                      <option value="0">OK (0)</option>
+                      <option value="1">Compromised (1)</option>
+                      <option value="2">Fault (2)</option>
+                      <option value="3">Not Present (3)</option>
+                      <option value="4">Missing (4)</option>
+                      <option value="5">Initializing (5)</option>
+                    </select>
+                  }
+                }
+
+                <!-- State Trigger Control -->
+                @if (control.type === 'State Trigger') {
+                  <select
+                    class="value-input"
+                    [value]="control.value"
+                    (change)="onInlineValueChange($event, control)"
+                    [disabled]="control.direction === 'Read Only'"
+                  >
+                    <option value="0">{{ control.valueMin }} (0)</option>
+                    <option value="1">{{ control.valueMax }} (1)</option>
+                  </select>
+                }
+
+                <!-- Time Control -->
+                @if (control.type === 'Time') {
+                  @if (control.direction === 'Read Only') {
+                    <div class="time-display">
+                      <div class="time-value">{{ control.string }}</div>
+                    </div>
+                  } @else {
+                    <div class="time-input-group">
+                      <input type="text" class="time-segment" [value]="getTimeHours(control)"
+                             (change)="onInlineTimeChange($event, control, 'hours')"
+                             placeholder="00" maxlength="2" pattern="[0-9]{0,2}" />
+                      <span class="time-separator">:</span>
+                      <input type="text" class="time-segment" [value]="getTimeMinutes(control)"
+                             (change)="onInlineTimeChange($event, control, 'minutes')"
+                             placeholder="00" maxlength="2" pattern="[0-9]{0,2}" />
+                      <span class="time-separator">:</span>
+                      <input type="text" class="time-segment" [value]="getTimeSeconds(control)"
+                             (change)="onInlineTimeChange($event, control, 'seconds')"
+                             placeholder="00" maxlength="2" pattern="[0-9]{0,2}" />
+                    </div>
+                  }
+                }
+
+                <!-- Trigger Control -->
+                @if (control.type === 'Trigger') {
+                  <button
+                    class="trigger-button"
+                    (click)="onInlineTrigger(control)"
+                    [disabled]="control.direction === 'Read Only'"
+                  >
+                    Trigger
+                  </button>
+                }
+              </div>
           </div>
         }
       </div>

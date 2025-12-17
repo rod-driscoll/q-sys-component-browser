@@ -392,4 +392,36 @@ export class QSysService {
     // Not needed with QRWC event listeners
     console.log('Continuous polling not needed - using event listeners');
   }
+
+  /**
+   * Get Core engine status information
+   * Returns information like Platform, State, DesignName, etc.
+   * Note: Firmware version is not available through QRWC
+   */
+  getCoreStatus(): any {
+    if (!this.qrwc) {
+      throw new Error('Not connected to Q-SYS Core');
+    }
+
+    try {
+      // Access engineStatus property
+      const status = this.qrwc.engineStatus;
+
+      console.log('Core Engine Status:', status);
+
+      return {
+        designName: status?.DesignName || 'Unknown',
+        platform: status?.Platform || 'Unknown',
+        state: status?.State || 'Unknown',
+        designCode: status?.DesignCode || 'Unknown',
+        isRedundant: status?.IsRedundant || false,
+        isEmulator: status?.IsEmulator || false,
+        statusCode: status?.Status?.Code,
+        statusString: status?.Status?.String
+      };
+    } catch (error) {
+      console.error('Failed to get Core status:', error);
+      throw error;
+    }
+  }
 }
