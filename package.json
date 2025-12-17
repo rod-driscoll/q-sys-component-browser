@@ -8,7 +8,8 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "deploy": "node deploy.js",
-    "build:deploy": "npm run build && npm run deploy"
+    "build:deploy": "npm run build && npm run deploy",
+    "favicon": "node create-favicon.js"
   },
   "prettier": {
     "printWidth": 100,
@@ -46,6 +47,7 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
+    "sharp": "^0.34.5",
     "typescript": "~5.9.2"
   }
 }
