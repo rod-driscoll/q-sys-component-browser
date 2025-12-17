@@ -14,10 +14,16 @@ export class QsysBrowser implements OnInit, OnDestroy {
   // Search/filter
   searchTerm = '';
   controlSearchTerm = '';
+  selectedTypeFilter = 'all';
+  selectedControlTypeFilter = 'all';
 
   // For control editing
   editValue: any = null;
-  editRamp: number = 0;
+
+  // For Time control editing (segmented input)
+  timeHours: string = '';
+  timeMinutes: string = '';
+  timeSeconds: string = '';
 
   // Track if user is dragging a slider to prevent feedback updates
   isDragging = false;
@@ -36,22 +42,54 @@ export class QsysBrowser implements OnInit, OnDestroy {
     return this.qsysService.isConnected;
   }
 
+  // Get available component types
+  get availableTypes(): string[] {
+    const components = this.browserService.components();
+    const types = new Set(components.map(c => c.type));
+    return ['all', ...Array.from(types).sort()];
+  }
+
+  // Get available control types
+  get availableControlTypes(): string[] {
+    const controls = this.browserService.controls();
+    const types = new Set(controls.map(c => c.type));
+    return ['all', ...Array.from(types).sort()];
+  }
+
   // Filtered component list
   get filteredComponents(): ComponentInfo[] {
-    const components = this.browserService.components();
-    if (!this.searchTerm) return components;
+    let components = this.browserService.components();
 
-    const search = this.searchTerm.toLowerCase();
-    return components.filter((c) => c.name.toLowerCase().includes(search));
+    // Filter by type
+    if (this.selectedTypeFilter !== 'all') {
+      components = components.filter(c => c.type === this.selectedTypeFilter);
+    }
+
+    // Filter by search term
+    if (this.searchTerm) {
+      const search = this.searchTerm.toLowerCase();
+      components = components.filter((c) => c.name.toLowerCase().includes(search));
+    }
+
+    return components;
   }
 
   // Filtered control list
   get filteredControls(): ControlInfo[] {
-    const controls = this.browserService.controls();
-    if (!this.controlSearchTerm) return controls;
+    let controls = this.browserService.controls();
 
-    const search = this.controlSearchTerm.toLowerCase();
-    return controls.filter((c) => c.name.toLowerCase().includes(search));
+    // Filter by type
+    if (this.selectedControlTypeFilter !== 'all') {
+      controls = controls.filter(c => c.type === this.selectedControlTypeFilter);
+    }
+
+    // Filter by search term
+    if (this.controlSearchTerm) {
+      const search = this.controlSearchTerm.toLowerCase();
+      controls = controls.filter((c) => c.name.toLowerCase().includes(search));
+    }
+
+    return controls;
   }
 
   // Current view
@@ -164,9 +202,23 @@ export class QsysBrowser implements OnInit, OnDestroy {
           // For combo boxes, use string value to match choices
           if (selectedControl.type === 'Combo box') {
             this.editValue = update.string ?? '';
+          } else if (selectedControl.type === 'Text') {
+            // For text controls, use string value
+            this.editValue = update.string ?? '';
           } else if (selectedControl.type === 'Knob') {
             // For knobs, use value (in ValueMin-ValueMax range) and format to 1 decimal place
             this.editValue = update.value !== undefined ? Number(update.value.toFixed(1)) : '';
+          } else if (selectedControl.type === 'Time') {
+            // For time controls, parse the value (in seconds) into hh:mm:ss segments
+            const totalSeconds = update.value ?? 0;
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = Math.floor(totalSeconds % 60);
+
+            this.timeHours = String(hours).padStart(2, '0');
+            this.timeMinutes = String(minutes).padStart(2, '0');
+            this.timeSeconds = String(seconds).padStart(2, '0');
+            this.editValue = totalSeconds;
           } else {
             this.editValue = update.value ?? update.position ?? update.string ?? '';
           }
@@ -186,13 +238,26 @@ export class QsysBrowser implements OnInit, OnDestroy {
     // For combo boxes, use string value to match choices
     if (control.type === 'Combo box') {
       this.editValue = control.string ?? '';
+    } else if (control.type === 'Text') {
+      // For text controls, use string value
+      this.editValue = control.string ?? '';
     } else if (control.type === 'Knob') {
       // For knobs, use value (in ValueMin-ValueMax range) and format to 1 decimal place
       this.editValue = control.value !== undefined ? Number(control.value.toFixed(1)) : (control.valueMin ?? 0);
+    } else if (control.type === 'Time') {
+      // For time controls, parse the value (in seconds) into hh:mm:ss segments
+      const totalSeconds = control.value ?? 0;
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = Math.floor(totalSeconds % 60);
+
+      this.timeHours = String(hours).padStart(2, '0');
+      this.timeMinutes = String(minutes).padStart(2, '0');
+      this.timeSeconds = String(seconds).padStart(2, '0');
+      this.editValue = totalSeconds;
     } else {
       this.editValue = control.value ?? control.position ?? control.string ?? '';
     }
-    this.editRamp = 0;
   }
 
   // Update the control value
@@ -215,7 +280,7 @@ export class QsysBrowser implements OnInit, OnDestroy {
         break;
     }
 
-    this.browserService.updateControlValue(value, this.editRamp > 0 ? this.editRamp : undefined);
+    this.browserService.updateControlValue(value, undefined);
     console.log(`Updated ${control.name} to ${value}`);
   }
 
@@ -223,6 +288,16 @@ export class QsysBrowser implements OnInit, OnDestroy {
   setBooleanValue(value: boolean): void {
     this.editValue = value;
     this.updateControl();
+  }
+
+  // Trigger control (sends a trigger pulse)
+  triggerControl(): void {
+    const control = this.browserService.selectedControl();
+    if (!control) return;
+
+    // Triggers typically send value 1
+    this.browserService.updateControlValue(1, undefined);
+    console.log(`Triggered ${control.name}`);
   }
 
   // Get min value for slider (valueMin or 0)
@@ -245,6 +320,63 @@ export class QsysBrowser implements OnInit, OnDestroy {
     return String(this.editValue);
   }
 
+  // Get status color class based on Q-SYS status value
+  getStatusColorClass(): string {
+    const value = this.editValue;
+    switch (Number(value)) {
+      case 0: return 'status-green';      // OK
+      case 1: return 'status-orange';     // Compromised
+      case 2: return 'status-red';        // Fault
+      case 3: return 'status-grey';       // Not Present
+      case 4: return 'status-red';        // Missing
+      case 5: return 'status-blue';       // Initializing
+      default: return 'status-grey';
+    }
+  }
+
+  // Get status color class for a control in the control list
+  getStatusColorClassForControl(control: ControlInfo): string {
+    const value = control.value;
+    switch (Number(value)) {
+      case 0: return 'status-green';      // OK
+      case 1: return 'status-orange';     // Compromised
+      case 2: return 'status-red';        // Fault
+      case 3: return 'status-grey';       // Not Present
+      case 4: return 'status-red';        // Missing
+      case 5: return 'status-blue';       // Initializing
+      default: return 'status-grey';
+    }
+  }
+
+  // Get available values for State Trigger based on min/max range
+  getStateTriggerValues(): number[] {
+    const control = this.browserService.selectedControl();
+    if (!control) return [0];
+
+    // Check if control has choices (like combo box)
+    if (control.choices && control.choices.length > 0) {
+      return control.choices.map(c => Number(c));
+    }
+
+    // Use valueMin/valueMax if available, otherwise use current value to determine range
+    let min = control.valueMin ?? 0;
+    let max = control.valueMax ?? 1;
+
+    // If current value is outside the min/max range, expand the range to include it
+    if (control.value !== undefined) {
+      const currentValue = Number(control.value);
+      if (currentValue < min) min = currentValue;
+      if (currentValue > max) max = currentValue;
+    }
+
+    const values: number[] = [];
+    for (let i = min; i <= max; i++) {
+      values.push(i);
+    }
+
+    return values;
+  }
+
   // Slider drag start - prevent feedback updates
   onSliderDragStart(): void {
     this.isDragging = true;
@@ -260,6 +392,26 @@ export class QsysBrowser implements OnInit, OnDestroy {
   onSliderInput(event: Event): void {
     const target = event.target as HTMLInputElement;
     this.editValue = Number(Number(target.value).toFixed(1));
+  }
+
+  // Time control - handle segment changes
+  onTimeChange(): void {
+    // Pad segments to 2 digits
+    const hours = this.timeHours.padStart(2, '0');
+    const minutes = this.timeMinutes.padStart(2, '0');
+    const seconds = this.timeSeconds.padStart(2, '0');
+
+    // Combine into total seconds value
+    const totalSeconds = (parseInt(hours) || 0) * 3600 + (parseInt(minutes) || 0) * 60 + (parseInt(seconds) || 0);
+
+    this.editValue = totalSeconds;
+    this.updateControl();
+  }
+
+  // Time control - select all text on focus
+  onTimeSegmentFocus(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    input.select();
   }
 
   // Navigation

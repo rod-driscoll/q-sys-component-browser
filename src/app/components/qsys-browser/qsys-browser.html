@@ -29,6 +29,14 @@
         <button class="refresh-button" (click)="loadComponents()" [disabled]="!isConnected()">
           🔄 Refresh
         </button>
+        <select
+          class="type-filter"
+          [(ngModel)]="selectedTypeFilter"
+        >
+          @for (type of availableTypes; track type) {
+            <option [value]="type">{{ type === 'all' ? 'All Types' : type }}</option>
+          }
+        </select>
         <input
           type="text"
           class="search-input"
@@ -57,6 +65,14 @@
       <div class="view-header">
         <button class="back-button" (click)="backToComponents()">← Back</button>
         <h2>{{ browserService.selectedComponent()?.name }}</h2>
+        <select
+          class="type-filter"
+          [(ngModel)]="selectedControlTypeFilter"
+        >
+          @for (type of availableControlTypes; track type) {
+            <option [value]="type">{{ type === 'all' ? 'All Types' : type }}</option>
+          }
+        </select>
         <input
           type="text"
           class="search-input"
@@ -73,8 +89,16 @@
               <span class="control-type">{{ control.type }}</span>
               <span class="control-direction">{{ control.direction }}</span>
             </div>
-            @if (control.value !== undefined) {
-              <div class="control-value">{{ control.string || control.value }}</div>
+            @if (control.value !== undefined || control.string) {
+              @if (control.type === 'Text') {
+                <div class="control-value-text">{{ control.string || control.value }}</div>
+              } @else if (control.type === 'Status') {
+                <div class="control-value-status" [ngClass]="getStatusColorClassForControl(control)">
+                  {{ control.string || control.value }}
+                </div>
+              } @else {
+                <div class="control-value">{{ control.string || control.value }}</div>
+              }
             }
           </div>
         }
@@ -98,11 +122,6 @@
           <div class="editor-section">
             <label>Type</label>
             <div class="info-value">{{ control.type }}</div>
-          </div>
-
-          <div class="editor-section">
-            <label>Direction</label>
-            <div class="info-value">{{ control.direction }}</div>
           </div>
 
           <!-- Boolean Control -->
@@ -133,30 +152,25 @@
           <!-- Knob/Level Control -->
           @if (control.type === 'Knob') {
             <div class="editor-section">
-              <label>Level ({{ getDisplayValue() }})</label>
-              <input
-                type="range"
-                class="slider"
-                [(ngModel)]="editValue"
-                (input)="onSliderInput($event)"
-                (mousedown)="onSliderDragStart()"
-                (mouseup)="onSliderDragEnd()"
-                (touchstart)="onSliderDragStart()"
-                (touchend)="onSliderDragEnd()"
-                [min]="getSliderMin()"
-                [max]="getSliderMax()"
-                step="0.1"
-                [disabled]="control.direction === 'Read Only'"
-              />
-
-              <label>Ramp Time (seconds)</label>
-              <input
-                type="number"
-                class="value-input"
-                [(ngModel)]="editRamp"
-                min="0"
-                step="0.1"
-              />
+              @if (control.direction === 'Read Only') {
+                <label>Value</label>
+                <div class="info-value">{{ getDisplayValue() }}</div>
+              } @else {
+                <label>Level ({{ getDisplayValue() }})</label>
+                <input
+                  type="range"
+                  class="slider"
+                  [(ngModel)]="editValue"
+                  (input)="onSliderInput($event)"
+                  (mousedown)="onSliderDragStart()"
+                  (mouseup)="onSliderDragEnd()"
+                  (touchstart)="onSliderDragStart()"
+                  (touchend)="onSliderDragEnd()"
+                  [min]="getSliderMin()"
+                  [max]="getSliderMax()"
+                  step="0.1"
+                />
+              }
             </div>
           }
 
@@ -164,23 +178,17 @@
           @if (control.type === 'Float' || control.type === 'Integer') {
             <div class="editor-section">
               <label>Value</label>
-              <input
-                type="number"
-                class="value-input"
-                [(ngModel)]="editValue"
-                (ngModelChange)="updateControl()"
-                [step]="control.type === 'Integer' ? 1 : 0.1"
-                [disabled]="control.direction === 'Read Only'"
-              />
-
-              <label>Ramp Time (seconds)</label>
-              <input
-                type="number"
-                class="value-input"
-                [(ngModel)]="editRamp"
-                min="0"
-                step="0.1"
-              />
+              @if (control.direction === 'Read Only') {
+                <div class="info-value">{{ editValue }}</div>
+              } @else {
+                <input
+                  type="number"
+                  class="value-input"
+                  [(ngModel)]="editValue"
+                  (ngModelChange)="updateControl()"
+                  [step]="control.type === 'Integer' ? 1 : 0.1"
+                />
+              }
             </div>
           }
 
@@ -188,16 +196,19 @@
           @if (control.type === 'Combo box' && control.choices) {
             <div class="editor-section">
               <label>Value</label>
-              <select
-                class="value-input"
-                [(ngModel)]="editValue"
-                (ngModelChange)="updateControl()"
-                [disabled]="control.direction === 'Read Only'"
-              >
-                @for (choice of control.choices; track choice) {
-                  <option [value]="choice">{{ choice }}</option>
-                }
-              </select>
+              @if (control.direction === 'Read Only') {
+                <div class="info-value">{{ editValue }}</div>
+              } @else {
+                <select
+                  class="value-input"
+                  [(ngModel)]="editValue"
+                  (ngModelChange)="updateControl()"
+                >
+                  @for (choice of control.choices; track choice) {
+                    <option [value]="choice">{{ choice }}</option>
+                  }
+                </select>
+              }
             </div>
           }
 
@@ -205,13 +216,146 @@
           @if (control.type === 'Text') {
             <div class="editor-section">
               <label>Value</label>
-              <input
-                type="text"
-                class="value-input"
-                [(ngModel)]="editValue"
-                (ngModelChange)="updateControl()"
+              @if (control.direction === 'Read Only' || control.direction === 'Write Only') {
+                <div class="text-display">{{ editValue }}</div>
+              } @else {
+                <textarea
+                  class="text-area-input"
+                  [(ngModel)]="editValue"
+                  (ngModelChange)="updateControl()"
+                  rows="4"
+                ></textarea>
+              }
+            </div>
+          }
+
+          <!-- Trigger Control -->
+          @if (control.type === 'Trigger') {
+            <div class="editor-section">
+              <label>Trigger Action</label>
+              <button
+                class="trigger-button"
+                (click)="triggerControl()"
                 [disabled]="control.direction === 'Read Only'"
-              />
+              >
+                Trigger
+              </button>
+            </div>
+          }
+
+          <!-- State Trigger Control -->
+          @if (control.type === 'State Trigger') {
+            @if (control.direction === 'Read Only') {
+              <div class="editor-section">
+                <label>Value</label>
+                <div class="info-value">{{ editValue }}</div>
+              </div>
+            } @else {
+              <div class="editor-section">
+                <label>State Value</label>
+                <select
+                  class="value-input"
+                  [(ngModel)]="editValue"
+                  (ngModelChange)="updateControl()"
+                >
+                  @for (value of getStateTriggerValues(); track value) {
+                    <option [value]="value">{{ value }}</option>
+                  }
+                </select>
+              </div>
+              <div class="editor-section">
+                <label>Trigger Action</label>
+                <button
+                  class="trigger-button"
+                  (click)="triggerControl()"
+                >
+                  Trigger
+                </button>
+              </div>
+            }
+          }
+
+          <!-- Status Control -->
+          @if (control.type === 'Status') {
+            <div class="editor-section">
+              <label>Status</label>
+              @if (control.direction === 'Read Only') {
+                <div class="status-display" [ngClass]="getStatusColorClass()">
+                  <div class="status-value">{{ control.string || control.value || 'N/A' }}</div>
+                  @if (control.value !== undefined && control.valueMin !== undefined && control.valueMax !== undefined) {
+                    <div class="status-range">
+                      Range: {{ control.valueMin }} - {{ control.valueMax }}
+                    </div>
+                  }
+                </div>
+              } @else {
+                <select
+                  class="status-select"
+                  [(ngModel)]="editValue"
+                  (ngModelChange)="updateControl()"
+                  [ngClass]="getStatusColorClass()"
+                >
+                  <option [value]="0">0 - OK</option>
+                  <option [value]="1">1 - Compromised</option>
+                  <option [value]="2">2 - Fault</option>
+                  <option [value]="3">3 - Not Present</option>
+                  <option [value]="4">4 - Missing</option>
+                  <option [value]="5">5 - Initializing</option>
+                </select>
+                @if (control.string) {
+                  <div class="status-info">{{ control.string }}</div>
+                }
+              }
+            </div>
+          }
+
+          <!-- Time Control -->
+          @if (control.type === 'Time') {
+            <div class="editor-section">
+              <label>Time Value</label>
+              @if (control.direction === 'Read Only') {
+                <div class="time-display">
+                  <div class="time-value">{{ control.string || control.value || 'N/A' }}</div>
+                  @if (control.value !== undefined) {
+                    <div class="time-info">Raw Value: {{ control.value }}</div>
+                  }
+                </div>
+              } @else {
+                <div class="time-input-group">
+                  <input
+                    type="text"
+                    class="time-segment"
+                    [(ngModel)]="timeHours"
+                    (ngModelChange)="onTimeChange()"
+                    (focus)="onTimeSegmentFocus($event)"
+                    placeholder="00"
+                    maxlength="2"
+                    pattern="[0-9]{0,2}"
+                  />
+                  <span class="time-separator">:</span>
+                  <input
+                    type="text"
+                    class="time-segment"
+                    [(ngModel)]="timeMinutes"
+                    (ngModelChange)="onTimeChange()"
+                    (focus)="onTimeSegmentFocus($event)"
+                    placeholder="00"
+                    maxlength="2"
+                    pattern="[0-9]{0,2}"
+                  />
+                  <span class="time-separator">:</span>
+                  <input
+                    type="text"
+                    class="time-segment"
+                    [(ngModel)]="timeSeconds"
+                    (ngModelChange)="onTimeChange()"
+                    (focus)="onTimeSegmentFocus($event)"
+                    placeholder="00"
+                    maxlength="2"
+                    pattern="[0-9]{0,2}"
+                  />
+                </div>
+              }
             </div>
           }
 

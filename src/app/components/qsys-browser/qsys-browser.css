@@ -142,6 +142,22 @@
   cursor: not-allowed;
 }
 
+.type-filter {
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  min-width: 180px;
+}
+
+.type-filter:focus {
+  outline: none;
+  border-color: #2196f3;
+}
+
 .search-input {
   padding: 10px 15px;
   border: 1px solid #ddd;
@@ -238,6 +254,31 @@
   font-family: 'Courier New', monospace;
 }
 
+.control-value-text {
+  font-size: 14px;
+  color: #666;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  max-height: 60px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  padding: 6px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  margin-top: 6px;
+}
+
+.control-value-status {
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+  padding: 6px 10px;
+  border-radius: 4px;
+  margin-top: 6px;
+  text-align: center;
+  color: white;
+}
+
 /* Control Editor */
 .control-editor {
   background-color: #fff;
@@ -284,6 +325,38 @@
 .value-input:focus {
   outline: none;
   border-color: #2196f3;
+}
+
+.text-area-input {
+  width: 100%;
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  transition: border-color 0.2s;
+  resize: vertical;
+  min-height: 80px;
+  max-height: 300px;
+}
+
+.text-area-input:focus {
+  outline: none;
+  border-color: #2196f3;
+}
+
+.text-display {
+  font-size: 16px;
+  color: #333;
+  padding: 10px;
+  background-color: #f5f5f5;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+  max-height: 300px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
 .toggle-group {
@@ -405,4 +478,182 @@
 
 .slider:disabled::-moz-range-thumb {
   cursor: not-allowed;
+}
+
+/* Trigger Controls */
+.trigger-button {
+  width: 100%;
+  padding: 14px;
+  background-color: #ff9800;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.trigger-button:hover:not(:disabled) {
+  background-color: #f57c00;
+}
+
+.trigger-button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.trigger-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.trigger-info {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #666;
+  font-family: 'Courier New', monospace;
+}
+
+/* Status and Time Display Controls */
+.status-display,
+.time-display {
+  padding: 12px;
+  background-color: #f5f5f5;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.status-value,
+.time-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  font-family: 'Courier New', monospace;
+  margin-bottom: 8px;
+}
+
+.status-range,
+.time-info {
+  font-size: 13px;
+  color: #666;
+  font-style: italic;
+}
+
+/* Status Control Select */
+.status-select {
+  width: 100%;
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  transition: border-color 0.2s;
+}
+
+.status-select:focus {
+  outline: none;
+  border-color: #2196f3;
+}
+
+.status-info {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #666;
+  font-style: italic;
+}
+
+/* Q-SYS Status Colors */
+.status-green {
+  background-color: #4caf50 !important;
+  color: white !important;
+  border-color: #388e3c !important;
+}
+
+.status-green .status-value,
+.status-green .status-range {
+  color: white !important;
+}
+
+.status-orange {
+  background-color: #ff9800 !important;
+  color: white !important;
+  border-color: #f57c00 !important;
+}
+
+.status-orange .status-value,
+.status-orange .status-range {
+  color: white !important;
+}
+
+.status-red {
+  background-color: #f44336 !important;
+  color: white !important;
+  border-color: #d32f2f !important;
+}
+
+.status-red .status-value,
+.status-red .status-range {
+  color: white !important;
+}
+
+.status-grey {
+  background-color: #9e9e9e !important;
+  color: white !important;
+  border-color: #757575 !important;
+}
+
+.status-grey .status-value,
+.status-grey .status-range {
+  color: white !important;
+}
+
+.status-blue {
+  background-color: #2196f3 !important;
+  color: white !important;
+  border-color: #1976d2 !important;
+}
+
+.status-blue .status-value,
+.status-blue .status-range {
+  color: white !important;
+}
+
+/* Time Input Controls */
+.time-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.time-segment {
+  width: 60px;
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 20px;
+  font-weight: 600;
+  text-align: center;
+  transition: border-color 0.2s;
+  font-family: 'Courier New', monospace;
+}
+
+.time-segment:focus {
+  outline: none;
+  border-color: #2196f3;
+  background-color: #e3f2fd;
+}
+
+.time-segment::placeholder {
+  color: #bbb;
+}
+
+.time-separator {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  font-family: 'Courier New', monospace;
 }
