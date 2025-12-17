@@ -16,6 +16,9 @@ export class QsysBrowser implements OnInit, OnDestroy {
   controlSearchTerm = '';
   selectedTypeFilter = 'all';
   selectedControlTypeFilter = 'all';
+  globalSearchTerm = '';
+  globalSearchTypeFilter = 'all';
+  private searchTimeout: any;
 
   // For control editing
   editValue: any = null;
@@ -51,6 +54,20 @@ export class QsysBrowser implements OnInit, OnDestroy {
     return this.qsysService.isConnected;
   }
 
+  // Helper method to test if a string matches a pattern (supports regex)
+  private matchesPattern(text: string, pattern: string): boolean {
+    if (!pattern) return true;
+
+    try {
+      // Try to create a regex pattern (case-insensitive)
+      const regex = new RegExp(pattern, 'i');
+      return regex.test(text);
+    } catch (e) {
+      // If regex is invalid, fall back to plain text search (case-insensitive)
+      return text.toLowerCase().includes(pattern.toLowerCase());
+    }
+  }
+
   // Get available component types
   get availableTypes(): string[] {
     const components = this.browserService.components();
@@ -74,10 +91,9 @@ export class QsysBrowser implements OnInit, OnDestroy {
       components = components.filter(c => c.type === this.selectedTypeFilter);
     }
 
-    // Filter by search term
+    // Filter by search term (supports regex)
     if (this.searchTerm) {
-      const search = this.searchTerm.toLowerCase();
-      components = components.filter((c) => c.name.toLowerCase().includes(search));
+      components = components.filter((c) => this.matchesPattern(c.name, this.searchTerm));
     }
 
     return components;
@@ -92,10 +108,9 @@ export class QsysBrowser implements OnInit, OnDestroy {
       controls = controls.filter(c => c.type === this.selectedControlTypeFilter);
     }
 
-    // Filter by search term
+    // Filter by search term (supports regex)
     if (this.controlSearchTerm) {
-      const search = this.controlSearchTerm.toLowerCase();
-      controls = controls.filter((c) => c.name.toLowerCase().includes(search));
+      controls = controls.filter((c) => this.matchesPattern(c.name, this.controlSearchTerm));
     }
 
     return controls;
@@ -541,5 +556,75 @@ export class QsysBrowser implements OnInit, OnDestroy {
   getTimeSeconds(control: ControlInfo): string {
     const totalSeconds = control.value ?? 0;
     return String(Math.floor(totalSeconds % 60)).padStart(2, '0');
+  }
+
+  // Global search methods
+  onGlobalSearchChange(): void {
+    // Clear existing timeout
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
+    }
+
+    // Debounce search - wait 300ms after user stops typing
+    this.searchTimeout = setTimeout(() => {
+      this.performGlobalSearch();
+    }, 300);
+  }
+
+  async performGlobalSearch(): Promise<void> {
+    if (!this.globalSearchTerm || this.globalSearchTerm.trim() === '') {
+      this.browserService.clearGlobalSearch();
+      return;
+    }
+
+    this.isLoadingComponents = true;
+    try {
+      await this.browserService.searchGlobalControls(this.globalSearchTerm);
+    } catch (error) {
+      console.error('Global search failed:', error);
+    } finally {
+      this.isLoadingComponents = false;
+    }
+  }
+
+  clearGlobalSearch(): void {
+    this.globalSearchTerm = '';
+    this.browserService.clearGlobalSearch();
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
+    }
+  }
+
+  // Get global search results
+  get globalSearchResults(): ControlInfo[] {
+    return this.browserService.globalSearchResults();
+  }
+
+  // Get available control types from global search results
+  get globalSearchAvailableTypes(): string[] {
+    const results = this.browserService.globalSearchResults();
+    const types = new Set(results.map(c => c.type));
+    return ['all', ...Array.from(types).sort()];
+  }
+
+  // Get filtered global search results based on type filter
+  get filteredGlobalSearchResults(): ControlInfo[] {
+    let results = this.browserService.globalSearchResults();
+
+    if (this.globalSearchTypeFilter !== 'all') {
+      results = results.filter(c => c.type === this.globalSearchTypeFilter);
+    }
+
+    return results;
+  }
+
+  // Check if we're in global search mode
+  get isGlobalSearchActive(): boolean {
+    return this.browserService.isGlobalSearch();
+  }
+
+  // Select a control from global search
+  selectControlFromGlobalSearch(control: ControlInfo): void {
+    this.browserService.selectControlFromGlobalSearch(control);
   }
 }
