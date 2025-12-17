@@ -19,6 +19,21 @@
         }
       </div>
     </div>
+
+    <!-- Global Control Search -->
+    <div class="global-search-container">
+      <input
+        type="text"
+        class="global-search-input"
+        placeholder="🔍 Search all controls (supports regex)..."
+        [(ngModel)]="globalSearchTerm"
+        (input)="onGlobalSearchChange()"
+        [disabled]="!isConnected()"
+      />
+      @if (globalSearchTerm) {
+        <button class="clear-search-button" (click)="clearGlobalSearch()">✕</button>
+      }
+    </div>
   </div>
 
   <!-- Loading Notifications -->
@@ -35,8 +50,73 @@
     </div>
   }
 
+  <!-- Global Search Results View -->
+  @if (isGlobalSearchActive) {
+    <div class="view">
+      <div class="view-header">
+        <h2>Search Results ({{ filteredGlobalSearchResults.length }} controls)</h2>
+        <button class="back-button" (click)="clearGlobalSearch()">← Clear Search</button>
+        <select
+          class="type-filter"
+          [(ngModel)]="globalSearchTypeFilter"
+        >
+          @for (type of globalSearchAvailableTypes; track type) {
+            <option [value]="type">{{ type === 'all' ? 'All Types' : type }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="control-list">
+        @for (control of filteredGlobalSearchResults; track control.name + control.componentName) {
+          <div class="control-item" (click)="selectControlFromGlobalSearch(control)">
+            <div class="control-header">
+              <div class="control-name">
+                {{ control.name }}
+                <span class="component-badge">{{ control.componentName }}</span>
+              </div>
+              <div class="control-meta">
+                <span class="control-type">{{ control.type }}</span>
+                <span class="control-direction">{{ control.direction }}</span>
+              </div>
+            </div>
+
+            <div class="control-editor-inline">
+              <!-- Boolean Control (Toggle) -->
+              @if (control.type === 'Boolean') {
+                <div class="toggle-group">
+                  <button
+                    class="toggle-button"
+                    [class.active]="!control.value"
+                    [disabled]="control.direction === 'Read Only'"
+                  >
+                    Off
+                  </button>
+                  <button
+                    class="toggle-button"
+                    [class.active]="control.value"
+                    [disabled]="control.direction === 'Read Only'"
+                  >
+                    On
+                  </button>
+                </div>
+              }
+
+              <!-- Display current value for other types -->
+              @if (control.type !== 'Boolean') {
+                <div class="control-value">{{ control.string || control.value }}</div>
+              }
+            </div>
+          </div>
+        }
+        @if (filteredGlobalSearchResults.length === 0 && !isLoadingComponents) {
+          <div class="no-results">No controls found matching "{{ globalSearchTerm }}"</div>
+        }
+      </div>
+    </div>
+  }
+
   <!-- Component List View -->
-  @if (currentView === 'components') {
+  @if (currentView === 'components' && !isGlobalSearchActive) {
     <div class="view">
       <div class="view-header">
         <h2>Components ({{ filteredComponents.length }})</h2>
@@ -54,7 +134,7 @@
         <input
           type="text"
           class="search-input"
-          placeholder="Search components..."
+          placeholder="Search components (regex)..."
           [(ngModel)]="searchTerm"
         />
       </div>
@@ -92,7 +172,7 @@
         <input
           type="text"
           class="search-input"
-          placeholder="Search controls..."
+          placeholder="Search controls (regex)..."
           [(ngModel)]="controlSearchTerm"
         />
       </div>
