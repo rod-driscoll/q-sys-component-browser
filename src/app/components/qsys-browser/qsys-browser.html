@@ -248,7 +248,9 @@
           [(ngModel)]="selectedTypeFilter"
         >
           @for (type of availableTypes; track type) {
-            <option [value]="type">{{ type === 'all' ? 'All Types' : type }}</option>
+            <option [value]="type">
+              {{ type === 'all' ? 'All Types' : type === 'plugins' ? 'Plugins' : formatComponentType(type) }}
+            </option>
           }
         </select>
         <input
@@ -265,7 +267,7 @@
             <div class="component-header">
               <div class="component-name">{{ component.name }}</div>
               <div class="component-meta">
-                <span class="component-type">{{ component.type }}</span>
+                <span class="component-type">{{ formatComponentType(component.type) }}</span>
                 <span class="component-info">{{ component.controlCount }} controls</span>
               </div>
             </div>

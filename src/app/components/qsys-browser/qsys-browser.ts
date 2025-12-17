@@ -72,7 +72,15 @@ export class QsysBrowser implements OnInit, OnDestroy {
   get availableTypes(): string[] {
     const components = this.browserService.components();
     const types = new Set(components.map(c => c.type));
-    return ['all', ...Array.from(types).sort()];
+    const sortedTypes = Array.from(types).sort();
+
+    // Add "plugins" option if there are any plugin components
+    const hasPlugins = components.some(c => c.type.startsWith('%PLUGIN%'));
+    if (hasPlugins) {
+      return ['all', 'plugins', ...sortedTypes];
+    }
+
+    return ['all', ...sortedTypes];
   }
 
   // Get available control types
@@ -88,7 +96,12 @@ export class QsysBrowser implements OnInit, OnDestroy {
 
     // Filter by type
     if (this.selectedTypeFilter !== 'all') {
-      components = components.filter(c => c.type === this.selectedTypeFilter);
+      if (this.selectedTypeFilter === 'plugins') {
+        // Show all plugin components
+        components = components.filter(c => c.type.startsWith('%PLUGIN%'));
+      } else {
+        components = components.filter(c => c.type === this.selectedTypeFilter);
+      }
     }
 
     // Filter by search term (supports regex)
@@ -709,5 +722,22 @@ export class QsysBrowser implements OnInit, OnDestroy {
   private getTimeSecondsValue(control: ControlInfo): number {
     const totalSeconds = control.value ?? 0;
     return Math.floor(totalSeconds % 60);
+  }
+
+  // Format component type for display (truncate plugin types after 2nd underscore)
+  formatComponentType(type: string): string {
+    if (!type.startsWith('%PLUGIN%')) {
+      return type;
+    }
+
+    // Find the second underscore
+    const firstUnderscoreIndex = type.indexOf('_');
+    if (firstUnderscoreIndex === -1) return type;
+
+    const secondUnderscoreIndex = type.indexOf('_', firstUnderscoreIndex + 1);
+    if (secondUnderscoreIndex === -1) return type;
+
+    // Return everything up to (but not including) the second underscore
+    return type.substring(0, secondUnderscoreIndex);
   }
 }
