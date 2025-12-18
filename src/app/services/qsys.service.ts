@@ -149,14 +149,15 @@ export class QSysService {
         const component = this.qrwcComponents[name];
 
         // Controls are in component._controls (private property in QRWC)
-        // By this point (2s after connection), QRWC should have populated controls
+        // QRWC loads controls lazily, so _controls may be empty for unaccessed components
+        // We'll show "?" for components with no cached controls
         const componentControls = component._controls || {};
         const controlCount = Object.keys(componentControls).length;
 
         componentsWithCounts.push({
           name: name,
           type: component._state?.Type || 'Unknown',
-          controlCount: controlCount
+          controlCount: controlCount // Will be 0 if not loaded yet, updated when component is selected
         });
       }
 
