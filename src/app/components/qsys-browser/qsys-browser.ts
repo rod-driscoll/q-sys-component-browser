@@ -45,6 +45,11 @@ export class QsysBrowser implements OnInit, OnDestroy {
   coreState = '';
   designName = '';
 
+  // Log history tracking
+  logHistory: string[] = [];
+  private lastLogEntry: string = '';
+  private controlUpdateSubscription: any;
+
   constructor(
     protected qsysService: QSysService,
     protected browserService: QSysBrowserService,
@@ -167,9 +172,20 @@ export class QsysBrowser implements OnInit, OnDestroy {
         this.loadComponents();
       }
     });
+
+    // Subscribe to control updates to track log.history
+    this.controlUpdateSubscription = this.qsysService.getControlUpdates()
+      .subscribe((update) => {
+        if (update.control === 'log.history' && update.string) {
+          this.appendLogEntry(update.string);
+        }
+      });
   }
 
   ngOnDestroy(): void {
+    if (this.controlUpdateSubscription) {
+      this.controlUpdateSubscription.unsubscribe();
+    }
     this.qsysService.disconnect();
   }
 
@@ -776,5 +792,27 @@ export class QsysBrowser implements OnInit, OnDestroy {
     const newCode = this.luaScriptService.removeScript(currentCode, scriptName);
     this.editValue = newCode;
     this.updateControl();
+  }
+
+  // Log History Methods
+
+  // Append a new log entry to the history
+  private appendLogEntry(entry: string): void {
+    if (entry && entry !== this.lastLogEntry) {
+      const timestamp = new Date().toLocaleTimeString();
+      this.logHistory.push(`[${timestamp}] ${entry}`);
+      this.lastLogEntry = entry;
+    }
+  }
+
+  // Clear log history
+  clearLogHistory(): void {
+    this.logHistory = [];
+    this.lastLogEntry = '';
+  }
+
+  // Get log history for display
+  getLogHistory(): string[] {
+    return this.logHistory;
   }
 }

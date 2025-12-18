@@ -613,6 +613,27 @@
                   }
                 </div>
               </div>
+
+              <!-- Log History Viewer -->
+              <div class="editor-section">
+                <div class="log-history-header">
+                  <label>Log History</label>
+                  <button class="clear-log-button" (click)="clearLogHistory()" [disabled]="getLogHistory().length === 0">
+                    Clear
+                  </button>
+                </div>
+                <div class="log-history-viewer">
+                  @if (getLogHistory().length === 0) {
+                    <div class="log-empty">No log entries yet. Logs from 'log.history' control will appear here.</div>
+                  } @else {
+                    <div class="log-entries">
+                      @for (entry of getLogHistory(); track $index) {
+                        <div class="log-entry">{{ entry }}</div>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
             }
           }
 
