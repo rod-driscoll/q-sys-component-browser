@@ -470,10 +470,12 @@
 
       @if (browserService.selectedControl(); as control) {
         <div class="control-editor">
-          <div class="editor-section">
-            <label>Type</label>
-            <div class="info-value">{{ control.type }}</div>
-          </div>
+          @if (!isCodeControl()) {
+            <div class="editor-section">
+              <label>Type</label>
+              <div class="info-value">{{ control.type }}</div>
+            </div>
+          }
 
           <!-- Boolean Control -->
           @if (control.type === 'Boolean') {
