@@ -81,12 +81,13 @@ export class QSysService {
       // QRWC needs time to discover components
 
       // Set connection status after a brief delay to allow QRWC to initialize
+      // QRWC needs time to discover and populate component.controls objects
       setTimeout(() => {
         this.qrwcComponents = this.qrwc?.components || null;
         this.isConnected.set(true);
         this.connectionStatus$.next(true);
         console.log('QRWC initialization complete');
-      }, 1000);
+      }, 2000); // Increased from 1000ms to 2000ms to allow more time for component discovery
 
     } catch (error) {
       console.error('Failed to connect:', error);
@@ -148,18 +149,9 @@ export class QSysService {
         const component = this.qrwcComponents[name];
 
         // Controls are in component.controls, not directly on component
-        // However, controls might not be loaded yet in QRWC's cache
-        // We need to actually fetch them to get accurate count
-        let controlCount = 0;
-        try {
-          const controls = await this.getComponentControls(name);
-          controlCount = controls.length;
-        } catch (error) {
-          console.warn(`Failed to get control count for ${name}:`, error);
-          // Fallback to cached count if available
-          const componentControls = component.controls || {};
-          controlCount = Object.keys(componentControls).length;
-        }
+        // By this point (2s after connection), QRWC should have populated controls
+        const componentControls = component.controls || {};
+        const controlCount = Object.keys(componentControls).length;
 
         componentsWithCounts.push({
           name: name,
