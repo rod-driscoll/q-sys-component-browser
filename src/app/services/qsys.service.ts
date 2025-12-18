@@ -84,10 +84,36 @@ export class QSysService {
       // QRWC needs time to discover and populate component.controls objects
       setTimeout(() => {
         this.qrwcComponents = this.qrwc?.components || null;
+
+        // Debug: Log which components have controls loaded at initialization
+        if (this.qrwcComponents) {
+          const componentNames = Object.keys(this.qrwcComponents);
+          let loadedCount = 0;
+          let notLoadedCount = 0;
+
+          console.log('=== Component Control Loading Status ===');
+          componentNames.forEach(name => {
+            const component = this.qrwcComponents[name];
+            const controlCount = Object.keys(component.controls || {}).length;
+
+            if (controlCount === 0) {
+              console.log(`  ⚠ ${name}: 0 controls (may not be loaded yet)`);
+              notLoadedCount++;
+            } else {
+              console.log(`  ✓ ${name}: ${controlCount} controls`);
+              loadedCount++;
+            }
+          });
+
+          console.log(`\nSummary: ${loadedCount} components with controls, ${notLoadedCount} components with 0 controls`);
+          console.log('Components with 0 controls may load their controls when accessed.');
+          console.log('========================================');
+        }
+
         this.isConnected.set(true);
         this.connectionStatus$.next(true);
         console.log('QRWC initialization complete');
-      }, 2000); // Increased from 1000ms to 2000ms to allow more time for component discovery
+      }, 5000); // Increased from 2000ms to 5000ms to allow more time for component discovery
 
     } catch (error) {
       console.error('Failed to connect:', error);
@@ -127,6 +153,23 @@ export class QSysService {
    */
   getControlUpdates(): Observable<{ component: string; control: string; value: any; position?: number; string?: string; Bool?: boolean }> {
     return this.controlUpdates$.asObservable();
+  }
+
+  /**
+   * Refresh component control counts after QRWC has had more time to load
+   * Useful for getting accurate counts after initial lazy loading
+   */
+  async refreshComponentCounts(): Promise<ComponentWithControls[]> {
+    if (!this.qrwcComponents) {
+      throw new Error('Not connected to Q-SYS Core');
+    }
+
+    console.log('Refreshing component control counts...');
+
+    // Give QRWC additional time to populate controls
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
+    return this.getComponents();
   }
 
   /**

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "qrwc-svelte": {
+      "command": "npx",
+      "args": ["-y", "qrwc-svelte-mcp", "192.168.104.227", "--no-svelte"]
+    }
+  }
+}

@@ -18,7 +18,10 @@
       "Bash(git commit:*)",
       "Bash(grep:*)",
       "Bash(convert:*)",
-      "Bash(node create-favicon.js:*)"
+      "Bash(node create-favicon.js:*)",
+      "Bash(env)",
+      "Bash(npx -y qrwc-svelte-mcp 192.168.104.227 --no-svelte)",
+      "Bash(npx:*)"
     ]
   }
 }

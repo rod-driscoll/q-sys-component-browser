@@ -268,10 +268,6 @@
   background-color: #4a5f7f;
 }
 
-.refresh-button {
-  display: none;
-}
-
 .refresh-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
