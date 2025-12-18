@@ -17,34 +17,24 @@ export class LuaScriptService {
   }
 
   /**
-   * Load available Lua scripts from the lua directory
+   * Load available Lua scripts
+   * Scripts are embedded directly to avoid async loading issues
    */
-  private async loadScripts(): Promise<void> {
-    // In production, scripts would be bundled with the app
-    // For now, we'll define them statically
+  private loadScripts(): void {
     this.scripts = [
       {
         name: 'Get System Information',
         fileName: 'GetSystemInformation.lua',
-        content: await this.fetchScript('GetSystemInformation.lua'),
+        content: `--[[
+  GetSystemInformation.lua
+  -- This script gets the hardware details of a Q-SYS Core
+]]
+json = require 'rapidjson'
+print('System information')
+local info = { System = System, Network = Network.Interfaces() }
+print(json.encode(info))`,
       },
     ];
-  }
-
-  /**
-   * Fetch a script file from the lua directory
-   */
-  private async fetchScript(fileName: string): Promise<string> {
-    try {
-      const response = await fetch(`/lua/${fileName}`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ${fileName}`);
-      }
-      return await response.text();
-    } catch (error) {
-      console.error(`Error fetching script ${fileName}:`, error);
-      return '';
-    }
   }
 
   /**
