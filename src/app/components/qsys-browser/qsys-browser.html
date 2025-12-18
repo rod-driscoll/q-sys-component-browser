@@ -301,7 +301,7 @@
 
       <div class="control-list">
         @for (control of filteredControls; track control.name) {
-          <div class="control-item">
+          <div class="control-item" (click)="selectControl(control)">
             <div class="control-header">
               <div class="control-name">{{ control.name }}</div>
               <div class="control-meta">
