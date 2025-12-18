@@ -190,11 +190,15 @@ export class QsysBrowser implements OnInit, OnDestroy {
   }
 
   // Load all components from Q-SYS Core via QRWC
-  async loadComponents(): Promise<void> {
+  async loadComponents(refresh: boolean = false): Promise<void> {
     this.isLoadingComponents = true;
     try {
-      console.log('Fetching component list from Q-SYS...');
-      const components = await this.qsysService.getComponents();
+      console.log(refresh ? 'Refreshing component list from Q-SYS...' : 'Fetching component list from Q-SYS...');
+
+      // If refreshing, use the refreshComponentCounts method to give QRWC more time
+      const components = refresh
+        ? await this.qsysService.refreshComponentCounts()
+        : await this.qsysService.getComponents();
 
       // Transform QRWC response to our ComponentInfo format
       // Now includes actual control counts from qrwc.components
@@ -211,6 +215,11 @@ export class QsysBrowser implements OnInit, OnDestroy {
     } finally {
       this.isLoadingComponents = false;
     }
+  }
+
+  // Refresh component control counts
+  async refreshComponents(): Promise<void> {
+    await this.loadComponents(true);
   }
 
   // Select a component and load its controls from Q-SYS Core

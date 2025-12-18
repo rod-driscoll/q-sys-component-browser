@@ -240,7 +240,7 @@
     <div class="view">
       <div class="view-header">
         <h2>Components ({{ filteredComponents.length }})</h2>
-        <button class="refresh-button" (click)="loadComponents()" [disabled]="!isConnected()">
+        <button class="refresh-button" (click)="refreshComponents()" [disabled]="!isConnected()" title="Refresh component control counts (waits 3s for lazy loading)">
           🔄 Refresh
         </button>
         <select
