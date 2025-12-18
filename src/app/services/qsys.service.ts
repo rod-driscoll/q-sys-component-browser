@@ -148,9 +148,9 @@ export class QSysService {
       for (const name of componentNames) {
         const component = this.qrwcComponents[name];
 
-        // Controls are in component.controls, not directly on component
+        // Controls are in component._controls (private property in QRWC)
         // By this point (2s after connection), QRWC should have populated controls
-        const componentControls = component.controls || {};
+        const componentControls = component._controls || {};
         const controlCount = Object.keys(componentControls).length;
 
         componentsWithCounts.push({
@@ -182,10 +182,10 @@ export class QSysService {
         throw new Error(`Component "${componentName}" not found`);
       }
 
-      // Controls are in component.controls, not directly on component
-      const componentControls = component.controls;
+      // Controls are in component._controls (private property in QRWC)
+      const componentControls = component._controls;
       if (!componentControls) {
-        console.warn(`Component "${componentName}" has no controls property`);
+        console.warn(`Component "${componentName}" has no _controls property`);
         return [];
       }
 
@@ -345,8 +345,8 @@ export class QSysService {
         throw new Error(`Component "${componentName}" not found`);
       }
 
-      // Access control from component.controls
-      const control = component.controls?.[controlName];
+      // Access control from component._controls
+      const control = component._controls?.[controlName];
       if (!control) {
         throw new Error(`Control "${controlName}" not found in component "${componentName}"`);
       }
