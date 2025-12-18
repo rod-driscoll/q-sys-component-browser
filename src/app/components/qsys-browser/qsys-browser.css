@@ -989,6 +989,8 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .clear-log-button {
@@ -1069,81 +1071,59 @@
   background: #555;
 }
 
-/* Script Controls */
-.script-controls-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  padding: 12px;
-  background-color: #2a2a2a;
-  border-radius: 8px;
-  border: 1px solid #404040;
-}
-
-.script-control-item {
+/* Script Controls - Inline */
+.script-controls-inline {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  background-color: #1e1e1e;
-  border-radius: 6px;
-  border: 1px solid #333;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
-.script-control-label {
+.script-control-inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.script-control-label-inline {
   font-size: 13px;
-  font-weight: 600;
   color: #aaa;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-weight: 500;
 }
 
-.script-control-button {
-  padding: 8px 16px;
-  border: 1px solid #555;
-  border-radius: 4px;
-  background-color: #444;
+.script-control-value-inline {
+  font-size: 13px;
+  color: #ddd;
+  font-family: 'Courier New', monospace;
+  padding: 4px 8px;
+  border-radius: 3px;
+  background-color: #2a2a2a;
+}
+
+.script-control-value-inline.status {
+  font-weight: 600;
+  padding-left: 8px;
+  border-left: 3px solid;
+}
+
+.script-control-button-inline {
+  padding: 6px 12px;
+  background-color: #e74c3c;
   color: #fff;
+  border: 1px solid #c0392b;
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   transition: all 0.2s ease;
 }
 
-.script-control-button:hover {
-  background-color: #555;
-  border-color: #666;
-}
-
-.script-control-button:active {
-  transform: scale(0.98);
-}
-
-.script-control-button.trigger {
-  background-color: #e74c3c;
-  border-color: #c0392b;
-}
-
-.script-control-button.trigger:hover {
+.script-control-button-inline:hover {
   background-color: #c0392b;
   border-color: #a93226;
 }
 
-.script-control-value {
-  padding: 8px 12px;
-  background-color: #252525;
-  border: 1px solid #333;
-  border-radius: 4px;
-  color: #ddd;
-  font-size: 14px;
-  font-family: 'Courier New', monospace;
-  min-height: 36px;
-  display: flex;
-  align-items: center;
-}
-
-.script-control-value.status {
-  font-weight: 600;
-  border-left-width: 4px;
+.script-control-button-inline:active {
+  transform: scale(0.98);
 }
 

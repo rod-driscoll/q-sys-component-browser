@@ -616,40 +616,34 @@
                 </div>
               </div>
 
-              <!-- Script Control Actions -->
-              <div class="editor-section">
-                <label>Script Controls</label>
-                <div class="script-controls-grid">
-                  <!-- log.clear control -->
-                  <div class="script-control-item">
-                    <span class="script-control-label">Clear Log</span>
-                    <button class="script-control-button trigger" (click)="triggerScriptControl('log.clear')">
-                      Clear
-                    </button>
-                  </div>
-
-                  <!-- script.status control -->
-                  <div class="script-control-item">
-                    <span class="script-control-label">Script Status</span>
-                    <div class="script-control-value status" [ngClass]="getScriptStatusClass()">
-                      {{ getScriptControlValue('script.status') || 'N/A' }}
-                    </div>
-                  </div>
-
-                  <!-- script.memory control -->
-                  <div class="script-control-item">
-                    <span class="script-control-label">Memory Usage</span>
-                    <div class="script-control-value">
-                      {{ getScriptControlValue('script.memory') || 'N/A' }}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               <!-- Log History Viewer -->
               <div class="editor-section">
                 <div class="log-history-header">
                   <label>Log History</label>
+
+                  <div class="script-controls-inline">
+                    <!-- script.status control -->
+                    <div class="script-control-inline">
+                      <span class="script-control-label-inline">Status:</span>
+                      <span class="script-control-value-inline status" [ngClass]="getScriptStatusClass()">
+                        {{ getScriptControlValue('script.status') || 'N/A' }}
+                      </span>
+                    </div>
+
+                    <!-- script.memory control -->
+                    <div class="script-control-inline">
+                      <span class="script-control-label-inline">Memory:</span>
+                      <span class="script-control-value-inline">
+                        {{ getScriptControlValue('script.memory') || 'N/A' }}
+                      </span>
+                    </div>
+
+                    <!-- log.clear control -->
+                    <button class="script-control-button-inline" (click)="triggerScriptControl('log.clear')">
+                      Clear Log
+                    </button>
+                  </div>
+
                   <button class="clear-log-button" (click)="clearLogHistory()" [disabled]="getLogHistory().length === 0">
                     Clear
                   </button>
