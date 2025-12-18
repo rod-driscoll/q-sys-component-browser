@@ -815,4 +815,49 @@ export class QsysBrowser implements OnInit, OnDestroy {
   getLogHistory(): string[] {
     return this.logHistory;
   }
+
+  // Script Control Methods
+
+  // Trigger a script control (like log.clear)
+  triggerScriptControl(controlName: string): void {
+    const componentName = this.browserService.selectedComponent()?.name;
+    if (componentName) {
+      this.qsysService.setControl(componentName, controlName, 1);
+      console.log(`Triggered ${controlName}`);
+    }
+  }
+
+  // Get the value of a script control
+  getScriptControlValue(controlName: string): string {
+    const controls = this.browserService.controls();
+    const control = controls.find(c => c.name === controlName);
+
+    if (!control) {
+      return '';
+    }
+
+    // Return string value if available, otherwise value
+    return control.string || (control.value !== undefined ? String(control.value) : '');
+  }
+
+  // Get CSS class for script status
+  getScriptStatusClass(): string {
+    const controls = this.browserService.controls();
+    const statusControl = controls.find(c => c.name === 'script.status');
+
+    if (!statusControl || statusControl.value === undefined) {
+      return 'status-grey';
+    }
+
+    // Map status values to color classes
+    switch (Number(statusControl.value)) {
+      case 0: return 'status-green';      // OK
+      case 1: return 'status-orange';     // Compromised
+      case 2: return 'status-red';        // Fault
+      case 3: return 'status-grey';       // Not Present
+      case 4: return 'status-red';        // Missing
+      case 5: return 'status-blue';       // Initializing
+      default: return 'status-grey';
+    }
+  }
 }

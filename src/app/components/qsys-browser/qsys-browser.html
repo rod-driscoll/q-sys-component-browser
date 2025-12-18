@@ -616,6 +616,36 @@
                 </div>
               </div>
 
+              <!-- Script Control Actions -->
+              <div class="editor-section">
+                <label>Script Controls</label>
+                <div class="script-controls-grid">
+                  <!-- log.clear control -->
+                  <div class="script-control-item">
+                    <span class="script-control-label">Clear Log</span>
+                    <button class="script-control-button trigger" (click)="triggerScriptControl('log.clear')">
+                      Clear
+                    </button>
+                  </div>
+
+                  <!-- script.status control -->
+                  <div class="script-control-item">
+                    <span class="script-control-label">Script Status</span>
+                    <div class="script-control-value status" [ngClass]="getScriptStatusClass()">
+                      {{ getScriptControlValue('script.status') || 'N/A' }}
+                    </div>
+                  </div>
+
+                  <!-- script.memory control -->
+                  <div class="script-control-item">
+                    <span class="script-control-label">Memory Usage</span>
+                    <div class="script-control-value">
+                      {{ getScriptControlValue('script.memory') || 'N/A' }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Log History Viewer -->
               <div class="editor-section">
                 <div class="log-history-header">
