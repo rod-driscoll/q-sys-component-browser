@@ -1072,7 +1072,7 @@
 /* Script Controls */
 .script-controls-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
   padding: 12px;
   background-color: #2a2a2a;
