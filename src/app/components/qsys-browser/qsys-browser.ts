@@ -833,6 +833,68 @@ export class QsysBrowser implements OnInit, OnDestroy {
     return this.logHistory;
   }
 
+  // Parse Discovery Results
+  parseDiscoveryResults(): void {
+    // Look for JSON in log history entries
+    for (const entry of this.logHistory) {
+      try {
+        // Extract JSON from log entry (remove timestamp prefix)
+        const jsonMatch = entry.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) continue;
+
+        const jsonStr = jsonMatch[0];
+        const discoveryData = JSON.parse(jsonStr);
+
+        // Validate this is discovery data
+        if (discoveryData.components && Array.isArray(discoveryData.components)) {
+          this.processDiscoveryData(discoveryData);
+          console.log('Discovery data processed successfully');
+          return;
+        }
+      } catch (error) {
+        // Not valid JSON, continue to next entry
+        continue;
+      }
+    }
+
+    console.warn('No valid discovery data found in log history');
+  }
+
+  // Process discovery data and add missing components
+  private processDiscoveryData(discoveryData: any): void {
+    const currentComponents = this.browserService.components();
+    const currentComponentNames = new Set(currentComponents.map(c => c.name));
+
+    let addedCount = 0;
+    const newComponents = [];
+
+    for (const comp of discoveryData.components) {
+      if (!currentComponentNames.has(comp.name)) {
+        // This is a new component
+        newComponents.push({
+          name: comp.name,
+          type: comp.type,
+          controlCount: comp.controlCount || 0
+        });
+        addedCount++;
+      }
+    }
+
+    if (addedCount > 0) {
+      // Add new components to the existing list
+      const updatedComponents = [...currentComponents, ...newComponents];
+      this.browserService.setComponents(updatedComponents);
+      console.log(`Added ${addedCount} new components from discovery`);
+
+      // Show success message in log
+      const message = `Discovery Complete: Found ${discoveryData.totalComponents} total components, added ${addedCount} new components`;
+      this.appendLogEntry(message);
+    } else {
+      console.log('No new components to add - all discovered components already exist');
+      this.appendLogEntry('Discovery Complete: All components already exist in browser');
+    }
+  }
+
   // Script Control Methods
 
   // Trigger a script control (like log.clear)
