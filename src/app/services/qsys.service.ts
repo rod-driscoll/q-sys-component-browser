@@ -146,10 +146,20 @@ export class QSysService {
 
       for (const name of componentNames) {
         const component = this.qrwcComponents[name];
-        // Controls are in component.controls, not directly on component
-        const componentControls = component.controls || {};
-        const controlCount = Object.keys(componentControls).length;
 
+        // Controls are in component.controls, not directly on component
+        // However, controls might not be loaded yet in QRWC's cache
+        // We need to actually fetch them to get accurate count
+        let controlCount = 0;
+        try {
+          const controls = await this.getComponentControls(name);
+          controlCount = controls.length;
+        } catch (error) {
+          console.warn(`Failed to get control count for ${name}:`, error);
+          // Fallback to cached count if available
+          const componentControls = component.controls || {};
+          controlCount = Object.keys(componentControls).length;
+        }
 
         componentsWithCounts.push({
           name: name,
