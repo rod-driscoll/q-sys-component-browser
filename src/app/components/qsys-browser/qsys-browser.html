@@ -642,6 +642,11 @@
                     <button class="script-control-button-inline" (click)="triggerScriptControl('log.clear')">
                       Clear Log
                     </button>
+
+                    <!-- Import discovered components button -->
+                    <button class="script-control-button-inline import" (click)="parseDiscoveryResults()" [disabled]="getLogHistory().length === 0">
+                      Import Components
+                    </button>
                   </div>
 
                   <button class="clear-log-button" (click)="clearLogHistory()" [disabled]="getLogHistory().length === 0">

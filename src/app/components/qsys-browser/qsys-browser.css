@@ -1127,3 +1127,18 @@
   transform: scale(0.98);
 }
 
+.script-control-button-inline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.script-control-button-inline.import {
+  background-color: #27ae60;
+  border-color: #229954;
+}
+
+.script-control-button-inline.import:hover:not(:disabled) {
+  background-color: #229954;
+  border-color: #1e8449;
+}
+
