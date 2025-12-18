@@ -302,6 +302,12 @@ export class QsysBrowser implements OnInit, OnDestroy {
   selectControl(control: ControlInfo): void {
     this.browserService.selectControl(control);
     this.isDragging = false; // Reset drag state
+
+    // If selecting the 'code' control, initialize log history from current log.history value
+    if (control.name?.toLowerCase() === 'code') {
+      this.initializeLogHistory();
+    }
+
     // For combo boxes, use string value to match choices
     if (control.type === 'Combo box') {
       this.editValue = control.string ?? '';
@@ -795,6 +801,17 @@ export class QsysBrowser implements OnInit, OnDestroy {
   }
 
   // Log History Methods
+
+  // Initialize log history from current log.history control value
+  private initializeLogHistory(): void {
+    const controls = this.browserService.controls();
+    const logHistoryControl = controls.find(c => c.name === 'log.history');
+
+    if (logHistoryControl && logHistoryControl.string) {
+      // Add the current log.history value if it's not already in the history
+      this.appendLogEntry(logHistoryControl.string);
+    }
+  }
 
   // Append a new log entry to the history
   private appendLogEntry(entry: string): void {
