@@ -871,3 +871,115 @@
   font-weight: 500;
 }
 
+/* Lua Script Management */
+.lua-script-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  background-color: #2a2a2a;
+  border-radius: 8px;
+  border: 1px solid #404040;
+}
+
+.lua-script-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background-color: #1e1e1e;
+  border-radius: 6px;
+  border: 1px solid #333;
+  transition: all 0.2s ease;
+}
+
+.lua-script-item:hover {
+  background-color: #252525;
+  border-color: #4a90e2;
+}
+
+.lua-script-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.lua-script-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.lua-script-filename {
+  font-size: 12px;
+  color: #888;
+  font-family: 'Courier New', monospace;
+}
+
+.lua-script-status {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.lua-script-status.present {
+  background-color: #27ae60;
+  color: white;
+}
+
+.lua-script-status.absent {
+  background-color: #555;
+  color: #aaa;
+}
+
+.lua-script-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.lua-action-button {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.lua-action-button.insert {
+  background-color: #4a90e2;
+  color: white;
+}
+
+.lua-action-button.insert:hover {
+  background-color: #357abd;
+}
+
+.lua-action-button.update {
+  background-color: #f39c12;
+  color: white;
+}
+
+.lua-action-button.update:hover {
+  background-color: #d68910;
+}
+
+.lua-action-button.remove {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.lua-action-button.remove:hover {
+  background-color: #c0392b;
+}
+
+.lua-action-button:active {
+  transform: scale(0.98);
+}
+

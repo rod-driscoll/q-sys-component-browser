@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { QSysService } from '../../services/qsys.service';
 import { QSysBrowserService, ComponentInfo, ControlInfo } from '../../services/qsys-browser.service';
+import { LuaScriptService, LuaScript } from '../../services/lua-script.service';
 
 @Component({
   selector: 'app-qsys-browser',
@@ -46,7 +47,8 @@ export class QsysBrowser implements OnInit, OnDestroy {
 
   constructor(
     protected qsysService: QSysService,
-    protected browserService: QSysBrowserService
+    protected browserService: QSysBrowserService,
+    protected luaScriptService: LuaScriptService
   ) {}
 
   // Connection state
@@ -739,5 +741,40 @@ export class QsysBrowser implements OnInit, OnDestroy {
 
     // Return everything up to (but not including) the second underscore
     return type.substring(0, secondUnderscoreIndex);
+  }
+
+  // Lua Script Management Methods
+
+  // Check if the current control is a code control
+  isCodeControl(): boolean {
+    const control = this.browserService.selectedControl();
+    return control?.name?.toLowerCase() === 'code';
+  }
+
+  // Get available Lua scripts
+  getAvailableLuaScripts(): LuaScript[] {
+    return this.luaScriptService.getAvailableScripts();
+  }
+
+  // Check if a script is present in the current code
+  isScriptPresent(scriptName: string): boolean {
+    const codeValue = this.editValue || '';
+    return this.luaScriptService.isScriptPresent(codeValue, scriptName);
+  }
+
+  // Insert or update a Lua script
+  insertLuaScript(script: LuaScript): void {
+    const currentCode = this.editValue || '';
+    const newCode = this.luaScriptService.insertScript(currentCode, script);
+    this.editValue = newCode;
+    this.updateControl();
+  }
+
+  // Remove a Lua script
+  removeLuaScript(scriptName: string): void {
+    const currentCode = this.editValue || '';
+    const newCode = this.luaScriptService.removeScript(currentCode, scriptName);
+    this.editValue = newCode;
+    this.updateControl();
   }
 }

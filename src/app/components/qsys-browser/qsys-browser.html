@@ -578,6 +578,42 @@
                 ></textarea>
               }
             </div>
+
+            <!-- Lua Script Management (only for 'code' controls) -->
+            @if (isCodeControl() && control.direction !== 'Read Only') {
+              <div class="editor-section">
+                <label>Lua Script Management</label>
+                <div class="lua-script-manager">
+                  @for (script of getAvailableLuaScripts(); track script.fileName) {
+                    <div class="lua-script-item">
+                      <div class="lua-script-info">
+                        <span class="lua-script-name">{{ script.name }}</span>
+                        <span class="lua-script-filename">{{ script.fileName }}</span>
+                        @if (isScriptPresent(script.name)) {
+                          <span class="lua-script-status present">✓ Present</span>
+                        } @else {
+                          <span class="lua-script-status absent">Not present</span>
+                        }
+                      </div>
+                      <div class="lua-script-actions">
+                        @if (isScriptPresent(script.name)) {
+                          <button class="lua-action-button update" (click)="insertLuaScript(script)">
+                            Update
+                          </button>
+                          <button class="lua-action-button remove" (click)="removeLuaScript(script.name)">
+                            Remove
+                          </button>
+                        } @else {
+                          <button class="lua-action-button insert" (click)="insertLuaScript(script)">
+                            Insert
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
           }
 
           <!-- Trigger Control -->
