@@ -20,8 +20,8 @@ local server = HttpServer.New()
 server:use(HttpServer.cors())
 server:use(HttpServer.json())
 
--- Serve static files from dist directory
-server:use('/', HttpServer.Static('dist/q-sys-angular-components'))
+-- Serve static files from dist directory (non-chunked for reliability)
+server:use('/', HttpServer.Static('dist/q-sys-angular-components', { chunked = false }))
 
 -- WebSocket endpoint for component discovery
 server:ws('/ws/discovery', function(ws)
