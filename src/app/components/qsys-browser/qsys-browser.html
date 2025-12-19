@@ -301,7 +301,7 @@
 
       <div class="control-list">
         @for (control of filteredControls; track control.name) {
-          <div class="control-item" (click)="selectControl(control)">
+          <div class="control-item" (click)="onControlClick(control, $event)">
             <div class="control-header">
               <div class="control-name">{{ control.name }}</div>
               <div class="control-meta">
@@ -310,7 +310,7 @@
               </div>
             </div>
 
-            <div class="control-editor-inline">
+            <div class="control-editor-inline" (click)="$event.stopPropagation()">
                 <!-- Boolean Control -->
                 @if (control.type === 'Boolean') {
                   <div class="toggle-group">
@@ -385,12 +385,17 @@
 
                 <!-- Text Control -->
                 @if (control.type === 'Text') {
-                  <textarea
-                    class="text-area-input"
-                    [value]="control.string"
-                    (change)="onInlineTextChange($event, control)"
-                    rows="2"
-                  ></textarea>
+                  @if (control.direction === 'Read Only') {
+                    <div class="info-value">{{ control.string }}</div>
+                  } @else {
+                    <textarea
+                      class="text-area-input"
+                      [value]="control.string"
+                      (change)="onInlineTextChange($event, control)"
+                      rows="2"
+                      placeholder="Enter text..."
+                    ></textarea>
+                  }
                 }
 
                 <!-- Status Control -->
