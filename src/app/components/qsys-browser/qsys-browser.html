@@ -243,6 +243,9 @@
         <button class="refresh-button" (click)="refreshComponents()" [disabled]="!isConnected()" title="Refresh component control counts (waits 3s for lazy loading)">
           🔄 Refresh
         </button>
+        <button class="refresh-button" (click)="loadComponentsViaWebSocket()" title="Discover components via WebSocket (bypasses log system)">
+          🔌 WS Discovery
+        </button>
         <select
           class="type-filter"
           [(ngModel)]="selectedTypeFilter"

@@ -1,9 +1,10 @@
-import { Component, OnInit, OnDestroy, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { QSysService } from '../../services/qsys.service';
 import { QSysBrowserService, ComponentInfo, ControlInfo } from '../../services/qsys-browser.service';
 import { LuaScriptService, LuaScript } from '../../services/lua-script.service';
+import { WebSocketDiscoveryService } from '../../services/websocket-discovery.service';
 
 @Component({
   selector: 'app-qsys-browser',
@@ -53,8 +54,17 @@ export class QsysBrowser implements OnInit, OnDestroy {
   constructor(
     protected qsysService: QSysService,
     protected browserService: QSysBrowserService,
-    protected luaScriptService: LuaScriptService
-  ) {}
+    protected luaScriptService: LuaScriptService,
+    protected wsDiscoveryService: WebSocketDiscoveryService
+  ) {
+    // Watch for WebSocket discovery data and process it
+    effect(() => {
+      const discoveryData = this.wsDiscoveryService.discoveryData();
+      if (discoveryData) {
+        this.processWebSocketDiscoveryData(discoveryData);
+      }
+    });
+  }
 
   // Connection state
   get isConnected() {
@@ -193,6 +203,7 @@ export class QsysBrowser implements OnInit, OnDestroy {
       this.controlUpdateSubscription.unsubscribe();
     }
     this.qsysService.disconnect();
+    this.wsDiscoveryService.disconnect();
   }
 
   // Load all components from Q-SYS Core via QRWC
@@ -226,6 +237,35 @@ export class QsysBrowser implements OnInit, OnDestroy {
   // Refresh component control counts
   async refreshComponents(): Promise<void> {
     await this.loadComponents(true);
+  }
+
+  // Load components via WebSocket discovery endpoint
+  loadComponentsViaWebSocket(): void {
+    console.log('Requesting component discovery via WebSocket...');
+    this.isLoadingComponents = true;
+    this.wsDiscoveryService.connect();
+  }
+
+  // Process WebSocket discovery data
+  private processWebSocketDiscoveryData(discoveryData: any): void {
+    console.log('Processing WebSocket discovery data...');
+
+    try {
+      // Convert to ComponentInfo format
+      const componentList: ComponentInfo[] = discoveryData.components.map((comp: any) => ({
+        name: comp.name,
+        type: comp.type,
+        controlCount: comp.controlCount || 0
+      }));
+
+      this.browserService.setComponents(componentList);
+      console.log(`✓ Loaded ${componentList.length} components via WebSocket`);
+
+      this.isLoadingComponents = false;
+    } catch (error) {
+      console.error('Failed to process WebSocket discovery data:', error);
+      this.isLoadingComponents = false;
+    }
   }
 
   // Select a component and load its controls from Q-SYS Core
