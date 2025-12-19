@@ -173,10 +173,16 @@ export class QsysBrowser implements OnInit, OnDestroy {
       }
     });
 
-    // Subscribe to control updates to track log.history
+    // Subscribe to control updates to track log.history for the currently selected component
     this.controlUpdateSubscription = this.qsysService.getControlUpdates()
       .subscribe((update) => {
-        if (update.control === 'log.history' && update.string) {
+        const selectedComponent = this.browserService.selectedComponent();
+
+        // Only process log.history updates for the currently selected component
+        if (selectedComponent &&
+            update.component === selectedComponent.name &&
+            update.control === 'log.history' &&
+            update.string) {
           this.appendLogEntry(update.string);
         }
       });
@@ -837,6 +843,9 @@ export class QsysBrowser implements OnInit, OnDestroy {
       const timestamp = new Date().toLocaleTimeString();
       this.logHistory.push(`[${timestamp}] ${entry}`);
       this.lastLogEntry = entry;
+      console.log(`Added log entry: ${entry.substring(0, 100)}${entry.length > 100 ? '...' : ''}`);
+    } else if (entry === this.lastLogEntry) {
+      console.log(`Skipped duplicate log entry: ${entry.substring(0, 100)}${entry.length > 100 ? '...' : ''}`);
     }
   }
 
