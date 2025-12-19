@@ -266,9 +266,14 @@
 
       <div class="component-list">
         @for (component of filteredComponents; track component.name) {
-          <div class="component-item" (click)="selectComponent(component)">
+          <div class="component-item" (click)="selectComponent(component)" [class.websocket-discovered]="component.discoveryMethod === 'websocket'">
             <div class="component-header">
-              <div class="component-name">{{ component.name }}</div>
+              <div class="component-name">
+                {{ component.name }}
+                @if (component.discoveryMethod === 'websocket') {
+                  <span class="discovery-badge" title="Discovered via WebSocket (HTTP API mode)">🔌 WS</span>
+                }
+              </div>
               <div class="component-meta">
                 <span class="component-type">{{ formatComponentType(component.type) }}</span>
                 <span class="component-info">{{ component.controlCount }} controls</span>

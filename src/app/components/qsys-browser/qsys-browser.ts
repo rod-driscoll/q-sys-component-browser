@@ -223,6 +223,7 @@ export class QsysBrowser implements OnInit, OnDestroy {
         name: comp.name,
         type: comp.type,
         controlCount: comp.controlCount,
+        discoveryMethod: 'qrwc' as const,
       }));
 
       this.browserService.setComponents(componentList);
@@ -251,11 +252,12 @@ export class QsysBrowser implements OnInit, OnDestroy {
     console.log('Processing WebSocket discovery data...');
 
     try {
-      // Convert to ComponentInfo format
+      // Convert to ComponentInfo format and mark as WebSocket-discovered
       const componentList: ComponentInfo[] = discoveryData.components.map((comp: any) => ({
         name: comp.name,
         type: comp.type,
-        controlCount: comp.controlCount || 0
+        controlCount: comp.controlCount || 0,
+        discoveryMethod: 'websocket' as const,
       }));
 
       this.browserService.setComponents(componentList);
@@ -289,17 +291,24 @@ export class QsysBrowser implements OnInit, OnDestroy {
     console.log('Loading controls for:', component.name);
 
     try {
-      // Try to get controls via QRWC first, fallback to HTTP API if component not found
       let controls;
-      try {
-        controls = await this.qsysService.getComponentControls(component.name);
-      } catch (error: any) {
-        // If component not found in QRWC (e.g., discovered via WebSocket), fetch via HTTP API
-        if (error.message?.includes('not found')) {
-          console.log(`Component not in QRWC, fetching controls via HTTP API...`);
-          controls = await this.fetchControlsViaHTTP(component.name);
-        } else {
-          throw error;
+
+      // If component was discovered via WebSocket, use HTTP API exclusively
+      if (component.discoveryMethod === 'websocket') {
+        console.log(`WebSocket-discovered component, fetching controls via HTTP API...`);
+        controls = await this.fetchControlsViaHTTP(component.name);
+      } else {
+        // For QRWC-discovered components, try QRWC first
+        try {
+          controls = await this.qsysService.getComponentControls(component.name);
+        } catch (error: any) {
+          // Fallback to HTTP API if QRWC fails
+          if (error.message?.includes('not found')) {
+            console.log(`Component not in QRWC, fetching controls via HTTP API...`);
+            controls = await this.fetchControlsViaHTTP(component.name);
+          } else {
+            throw error;
+          }
         }
       }
 
@@ -320,12 +329,15 @@ export class QsysBrowser implements OnInit, OnDestroy {
       this.browserService.setControls(controlList);
       console.log(`✓ Loaded ${controlList.length} controls for ${component.name}`);
 
-      // Subscribe to component-level event listeners for live updates (only if using QRWC)
-      // Skip subscription if controls were fetched via HTTP API
-      try {
-        this.qsysService.subscribeToComponent(component.name);
-      } catch (error) {
-        console.log('Skipping QRWC subscription (component not in QRWC)');
+      // Subscribe to component-level event listeners for live updates (only for QRWC components)
+      if (component.discoveryMethod === 'qrwc') {
+        try {
+          this.qsysService.subscribeToComponent(component.name);
+        } catch (error) {
+          console.log('Failed to subscribe to QRWC component updates:', error);
+        }
+      } else {
+        console.log('Skipping QRWC subscription (WebSocket-discovered component)');
       }
 
       // Listen for control updates

@@ -5,6 +5,7 @@ export interface ComponentInfo {
   name: string;
   type: string;
   controlCount: number;
+  discoveryMethod?: 'qrwc' | 'websocket'; // Track how component was discovered
 }
 
 export interface ControlInfo {
