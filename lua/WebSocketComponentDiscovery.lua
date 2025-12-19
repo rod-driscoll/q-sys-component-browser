@@ -63,16 +63,28 @@ server:ws('/ws/discovery', function(ws)
 
         -- Iterate through each control
         for _, ctrl in ipairs(controls) do
+          -- Safely extract choices if it's a table
+          local choices = nil
+          if ctrl.Choices and type(ctrl.Choices) == "table" then
+            choices = {}
+            for _, choice in ipairs(ctrl.Choices) do
+              -- Only include primitive values, skip complex objects
+              if type(choice) == "string" or type(choice) == "number" then
+                table.insert(choices, tostring(choice))
+              end
+            end
+          end
+
           table.insert(componentData.controls, {
             name = ctrl.Name,
             type = ctrl.Type or "Text",
             direction = ctrl.Direction or "Read/Write",
-            value = ctrl.Value,
-            valueMin = ctrl.ValueMin,
-            valueMax = ctrl.ValueMax,
-            position = ctrl.Position,
-            string = ctrl.String,
-            choices = ctrl.Choices
+            value = type(ctrl.Value) == "number" and ctrl.Value or nil,
+            valueMin = type(ctrl.ValueMin) == "number" and ctrl.ValueMin or nil,
+            valueMax = type(ctrl.ValueMax) == "number" and ctrl.ValueMax or nil,
+            position = type(ctrl.Position) == "number" and ctrl.Position or nil,
+            string = type(ctrl.String) == "string" and ctrl.String or "",
+            choices = choices
           })
         end
       else
@@ -174,16 +186,28 @@ server:get('/api/components/:componentName/controls', function(req, res)
 
   local controlList = {}
   for _, ctrl in ipairs(controls) do
+    -- Safely extract choices if it's a table
+    local choices = nil
+    if ctrl.Choices and type(ctrl.Choices) == "table" then
+      choices = {}
+      for i, choice in ipairs(ctrl.Choices) do
+        -- Only include primitive values, skip complex objects
+        if type(choice) == "string" or type(choice) == "number" then
+          table.insert(choices, tostring(choice))
+        end
+      end
+    end
+
     table.insert(controlList, {
       name = ctrl.Name,
       type = ctrl.Type or "Text",
       direction = ctrl.Direction or "Read/Write",
-      value = ctrl.Value,
-      valueMin = ctrl.ValueMin,
-      valueMax = ctrl.ValueMax,
-      position = ctrl.Position,
-      string = ctrl.String,
-      choices = ctrl.Choices
+      value = type(ctrl.Value) == "number" and ctrl.Value or nil,
+      valueMin = type(ctrl.ValueMin) == "number" and ctrl.ValueMin or nil,
+      valueMax = type(ctrl.ValueMax) == "number" and ctrl.ValueMax or nil,
+      position = type(ctrl.Position) == "number" and ctrl.Position or nil,
+      string = type(ctrl.String) == "string" and ctrl.String or "",
+      choices = choices
     })
   end
 
