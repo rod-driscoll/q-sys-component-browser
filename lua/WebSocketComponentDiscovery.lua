@@ -11,7 +11,7 @@
 ]]
 
 json = require 'rapidjson'
-HttpServer = require 'qsys-http-server'
+require 'qsys-http-server'
 
 -- Create HTTP server
 local server = HttpServer.New()
@@ -20,8 +20,13 @@ local server = HttpServer.New()
 server:use(HttpServer.cors())
 server:use(HttpServer.json())
 
--- Serve static files from dist directory (non-chunked for reliability)
-server:use('/', HttpServer.Static('dist/q-sys-angular-components', { chunked = false }))
+-- Serve static files from dist directory
+--server:use('/', HttpServer.Static('dist/q-sys-angular-components'))
+function UpdateDirectory() 
+  server:use(HttpServer.Static((System.IsEmulating and 'design' or 'media')..'/'..Controls['root-directory'].String)) 
+end
+UpdateDirectory()
+Controls['root-directory'].EventHandler = UpdateDirectory
 
 -- WebSocket endpoint for component discovery
 server:ws('/ws/discovery', function(ws)
@@ -189,10 +194,16 @@ server:get('/api/components/:componentName/controls', function(req, res)
   })
 end)
 
--- Start server on port 8080
-server:listen(8080)
-print('HTTP Server with WebSocket support started on port 8080')
-print('WebSocket endpoint: ws://[CORE-IP]:8080/ws/discovery')
-print('HTTP API endpoint: http://[CORE-IP]:8080/api/components')
+-- Start server
+function Listen()
+  if Controls.port.Value == 0 then Controls.port.Value = 9091 end
+  server:listen(Controls.port.Value)
+end
+Controls.port.EventHandler = Listen
+Listen()
+
+print(('HTTP Server with WebSocket support started on port %.f'):format(Controls.port.Value))
+print(('WebSocket endpoint: ws://[CORE-IP]:%.f/ws/discovery'):format(Controls.port.Value))
+print(('HTTP API endpoint: http://[CORE-IP]:%.f/api/components'):format(Controls.port.Value))
 
 -- ========== END: WebSocket Component Discovery ==========
