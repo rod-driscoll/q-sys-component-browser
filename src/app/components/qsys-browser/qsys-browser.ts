@@ -268,6 +268,19 @@ export class QsysBrowser implements OnInit, OnDestroy {
     }
   }
 
+  // Fetch controls via HTTP API (for WebSocket-discovered components)
+  private async fetchControlsViaHTTP(componentName: string): Promise<any[]> {
+    const url = `http://192.168.104.227:9091/api/components/${encodeURIComponent(componentName)}/controls`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.controls || [];
+  }
+
   // Select a component and load its controls from Q-SYS Core
   async selectComponent(component: ComponentInfo): Promise<void> {
     await this.browserService.selectComponent(component);
@@ -276,26 +289,44 @@ export class QsysBrowser implements OnInit, OnDestroy {
     console.log('Loading controls for:', component.name);
 
     try {
-      const controls = await this.qsysService.getComponentControls(component.name);
+      // Try to get controls via QRWC first, fallback to HTTP API if component not found
+      let controls;
+      try {
+        controls = await this.qsysService.getComponentControls(component.name);
+      } catch (error: any) {
+        // If component not found in QRWC (e.g., discovered via WebSocket), fetch via HTTP API
+        if (error.message?.includes('not found')) {
+          console.log(`Component not in QRWC, fetching controls via HTTP API...`);
+          controls = await this.fetchControlsViaHTTP(component.name);
+        } else {
+          throw error;
+        }
+      }
 
-      // Transform QRWC response to our ControlInfo format
+      // Transform response to our ControlInfo format
+      // Handle both QRWC (capitalized) and HTTP API (lowercase) property names
       const controlList: ControlInfo[] = controls.map((ctrl: any) => ({
-        name: ctrl.Name,
-        type: ctrl.Type || 'Text',
-        direction: ctrl.Direction || 'Read/Write',
-        value: ctrl.Value,
-        valueMin: ctrl.ValueMin,
-        valueMax: ctrl.ValueMax,
-        position: ctrl.Position,
-        string: ctrl.String,
-        choices: ctrl.Choices,
+        name: ctrl.Name || ctrl.name,
+        type: ctrl.Type || ctrl.type || 'Text',
+        direction: ctrl.Direction || ctrl.direction || 'Read/Write',
+        value: ctrl.Value !== undefined ? ctrl.Value : ctrl.value,
+        valueMin: ctrl.ValueMin !== undefined ? ctrl.ValueMin : ctrl.valueMin,
+        valueMax: ctrl.ValueMax !== undefined ? ctrl.ValueMax : ctrl.valueMax,
+        position: ctrl.Position !== undefined ? ctrl.Position : ctrl.position,
+        string: ctrl.String !== undefined ? ctrl.String : ctrl.string,
+        choices: ctrl.Choices || ctrl.choices,
       }));
 
       this.browserService.setControls(controlList);
       console.log(`✓ Loaded ${controlList.length} controls for ${component.name}`);
 
-      // Subscribe to component-level event listeners for live updates
-      this.qsysService.subscribeToComponent(component.name);
+      // Subscribe to component-level event listeners for live updates (only if using QRWC)
+      // Skip subscription if controls were fetched via HTTP API
+      try {
+        this.qsysService.subscribeToComponent(component.name);
+      } catch (error) {
+        console.log('Skipping QRWC subscription (component not in QRWC)');
+      }
 
       // Listen for control updates
       this.qsysService.getControlUpdates().subscribe((update) => {
