@@ -1,4 +1,5 @@
 {
+  "enabledMcpjsonServers": ["qrwc-svelte"],
   "permissions": {
     "allow": [
       "Bash(npm install:*)",

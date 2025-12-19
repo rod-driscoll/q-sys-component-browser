@@ -307,7 +307,16 @@ export class QsysBrowser implements OnInit, OnDestroy {
     }
   }
 
-  // Select a control for editing
+  // Handle control item click - only navigate to editor for 'code' controls
+  onControlClick(control: ControlInfo, event: MouseEvent): void {
+    // Only open the dedicated editor view for 'code' controls (Lua Script Management)
+    if (control.name?.toLowerCase() === 'code') {
+      this.selectControl(control);
+    }
+    // For all other controls, do nothing - let inline editing handle it
+  }
+
+  // Select a control for editing (opens dedicated editor view)
   selectControl(control: ControlInfo): void {
     this.browserService.selectControl(control);
     this.isDragging = false; // Reset drag state
