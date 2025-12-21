@@ -203,7 +203,8 @@ local function subscribeToComponent(componentName)
         local controlType = ctrlMeta.Type or "Text"
         if choices and #choices > 0 then
           controlType = "Combo box"
-        elseif ctrlMeta.ValueMin ~= nil and ctrlMeta.ValueMax ~= nil then
+        elseif (controlType ~= "Float" and controlType ~= "Integer") and (ctrlMeta.ValueMin ~= nil and ctrlMeta.ValueMax ~= nil) then
+          -- Only change to Knob if it's not already Float or Integer
           controlType = "Knob"
         end
 
@@ -367,7 +368,8 @@ server:get('/api/components/:componentName/controls', function(req, res)
       local controlType = ctrl.Type or "Text"
       if choices and #choices > 0 then
         controlType = "Combo box"
-      elseif ctrl.ValueMin ~= nil and ctrl.ValueMax ~= nil then
+      elseif (controlType ~= "Float" and controlType ~= "Integer") and (ctrl.ValueMin ~= nil and ctrl.ValueMax ~= nil) then
+        -- Only change to Knob if it's not already Float or Integer
         controlType = "Knob"
       end
       safeCtrl.type = controlType
