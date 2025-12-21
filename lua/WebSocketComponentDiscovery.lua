@@ -530,28 +530,35 @@ server:post('/api/components/:componentName/controls/:controlName', function(req
     print('value.Type: '..type(value)..', value: '..tostring(value))
     if control.Choices and #control.Choices>0 then -- Combo control
       print('Combo control.Choices ['..table.concat(control.Choices, ',')..']')
-      control.String = tostring(value)  
+      control.String = tostring(value)
     elseif control.Type=='Text' then -- String control
       print('String control')
       control.String = tostring(value)
     elseif control.Type=='Trigger' then -- Trigger control
-    --elseif type(control.Trigger) == "function" then
       print('control:Trigger()')
       control:Trigger()
     elseif control.Type=='Boolean' then --Momentary or Toggle
       print('Boolean control')
       control.Boolean = value
-    elseif control.Type=='Float' or type(value) == "number" or type(value) == "integer" then -- Numeric control
-      print('Numeric control')
+    elseif control.Type=='Knob' then -- Knob/Fader control (uses Position 0-1)
+      print('Knob control - setting Position to '..tostring(value))
+      control.Position = value
+    elseif control.Type=='Float' or control.Type=='Integer' then -- Numeric input control (uses Value)
+      print('Numeric control - setting Value to '..tostring(value))
       control.Value = value
     elseif control.Type=='State Trigger' then -- State Trigger control
       print('State Trigger control')
       control.Value = value
       control:Trigger()
     else
-      print('unspecified control type')
-      control.String = tostring(value)
-      control:Trigger()
+      -- Default: try setting Value for numeric types, otherwise treat as string
+      if type(value) == "number" then
+        print('Unspecified numeric control - setting Value')
+        control.Value = value
+      else
+        print('Unspecified control type - treating as string')
+        control.String = tostring(value)
+      end
     end
   end)
 
