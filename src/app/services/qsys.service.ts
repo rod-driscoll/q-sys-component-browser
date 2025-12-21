@@ -2,6 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { QrwcConnectionOptions } from '../models/qsys-control.model';
 import { Qrwc } from '@q-sys/qrwc';
+import { environment } from '../../environments/environment';
 
 export interface ComponentWithControls {
   name: string;
@@ -371,6 +372,28 @@ export class QSysService {
     if (this.currentComponent) {
       this.currentComponent = null;
     }
+  }
+
+  /**
+   * Set a control value via HTTP API (for WebSocket-discovered components)
+   */
+  async setControlViaHTTP(componentName: string, controlName: string, value: any): Promise<void> {
+    const url = `${environment.QSYS_HTTP_API_URL}/components/${encodeURIComponent(componentName)}/controls/${encodeURIComponent(controlName)}`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ value }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: response.statusText }));
+      throw new Error(`HTTP ${response.status}: ${errorData.error || response.statusText}`);
+    }
+
+    console.log(`Set ${componentName}:${controlName} to ${value} via HTTP`);
   }
 
   /**

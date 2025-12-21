@@ -1,4 +1,5 @@
 import { Injectable, signal } from '@angular/core';
+import { environment } from '../../environments/environment';
 
 export interface DiscoveryMessage {
   type: string;
@@ -31,8 +32,8 @@ export interface ComponentUpdate {
 export class WebSocketDiscoveryService {
   private ws: WebSocket | null = null;
   private updatesWs: WebSocket | null = null;
-  private readonly wsUrl = 'ws://192.168.104.227:9091/ws/discovery';
-  private readonly updatesUrl = 'ws://192.168.104.227:9091/ws/updates';
+  private readonly wsUrl = environment.QSYS_WS_DISCOVERY_URL;
+  private readonly updatesUrl = environment.QSYS_WS_UPDATES_URL;
 
   // Signals for reactive state
   public isConnected = signal<boolean>(false);

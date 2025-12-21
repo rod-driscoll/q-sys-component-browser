@@ -8,6 +8,7 @@ import {
   BooleanControl,
   KnobControl,
 } from '../../models/qsys-components';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-qsys-example',
@@ -44,7 +45,7 @@ export class QsysExample implements OnInit, OnDestroy {
   ngOnInit(): void {
     // Connect to Q-SYS Core with secure WebSocket (wss://)
     this.qsysService.connect({
-      coreIp: '192.168.104.227',
+      coreIp: environment.QSYS_CORE_IP,
       secure: true, // Use wss:// instead of ws://
       pollInterval: 35
     });

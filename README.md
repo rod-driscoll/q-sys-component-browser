@@ -35,15 +35,21 @@ npm install
 
 ### 2. Configure Q-SYS Connection
 
-Update the Q-SYS Core IP address in [src/app/components/qsys-browser/qsys-browser.ts](src/app/components/qsys-browser/qsys-browser.ts:59):
+Update the Q-SYS Core IP address in [src/environments/environment.ts](src/environments/environment.ts):
 
 ```typescript
-this.qsysService.connect({
-  coreIp: 'YOUR_QSYS_CORE_IP',
-  secure: true,
-  pollInterval: 35
-});
+export const environment = {
+  production: false,
+
+  // Change this IP address to match your Q-SYS Core
+  QSYS_CORE_IP: '192.168.104.220',
+  QSYS_CORE_PORT: 9091,
+
+  // ... rest of configuration
+};
 ```
+
+This is the single source of truth for all Q-SYS Core connection settings (WebSocket discovery, HTTP API, and QRWC connections).
 
 ### 3. Development Server
 
