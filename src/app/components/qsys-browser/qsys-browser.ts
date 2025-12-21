@@ -464,8 +464,8 @@ export class QsysBrowser implements OnInit, OnDestroy {
             // For text controls, use string value
             this.editValue = update.string ?? '';
           } else if (selectedControl.type === 'Knob') {
-            // For knobs, use value (in ValueMin-ValueMax range) and format to 1 decimal place
-            this.editValue = update.value !== undefined ? Number(update.value.toFixed(1)) : '';
+            // For knobs, use position (0-1) for slider control
+            this.editValue = update.position ?? 0;
           } else if (selectedControl.type === 'Time') {
             // For time controls, parse the value (in seconds) into hh:mm:ss segments
             const totalSeconds = update.value ?? 0;
@@ -491,8 +491,10 @@ export class QsysBrowser implements OnInit, OnDestroy {
 
   // Handle control item click - only navigate to editor for 'code' controls
   onControlClick(control: ControlInfo, event: MouseEvent): void {
-    // Only open the dedicated editor view for 'code' controls (Lua Script Management)
+    // Open dedicated editor view for 'code' controls (Lua Script Management) and 'Knob' controls
     if (control.name?.toLowerCase() === 'code') {
+      this.selectControl(control);
+    } else if (control.type === 'Knob') {
       this.selectControl(control);
     }
     // For all other controls, do nothing - let inline editing handle it
@@ -515,8 +517,8 @@ export class QsysBrowser implements OnInit, OnDestroy {
       // For text controls, use string value
       this.editValue = control.string ?? '';
     } else if (control.type === 'Knob') {
-      // For knobs, use value (in ValueMin-ValueMax range) and format to 1 decimal place
-      this.editValue = control.value !== undefined ? Number(control.value.toFixed(1)) : (control.valueMin ?? 0);
+      // For knobs, use position (0-1) for slider control
+      this.editValue = control.position ?? 0;
     } else if (control.type === 'Time') {
       // For time controls, parse the value (in seconds) into hh:mm:ss segments
       const totalSeconds = control.value ?? 0;
@@ -550,6 +552,13 @@ export class QsysBrowser implements OnInit, OnDestroy {
         break;
       case 'Float':
         value = Number(value);
+        break;
+      case 'Knob':
+        // For Knob controls, editValue stores position (0-1)
+        // Convert position to absolute value in the control's range for QRWC
+        const valueMin = control.valueMin ?? 0;
+        const valueMax = control.valueMax ?? 1;
+        value = valueMin + (this.editValue * (valueMax - valueMin));
         break;
     }
 
@@ -585,8 +594,70 @@ export class QsysBrowser implements OnInit, OnDestroy {
     return control?.valueMax ?? 1;
   }
 
+  // Get absolute value for Knob control from current position
+  getKnobAbsoluteValue(): number {
+    const control = this.browserService.selectedControl();
+    if (!control) return 0;
+
+    const valueMin = control.valueMin ?? 0;
+    const valueMax = control.valueMax ?? 1;
+    const position = this.editValue ?? 0;
+
+    // Convert position (0-1) to absolute value in range
+    const absoluteValue = valueMin + (position * (valueMax - valueMin));
+
+    // Round to 2 decimal places to avoid floating point precision issues
+    return Math.round(absoluteValue * 100) / 100;
+  }
+
+  // Get appropriate step value for Knob absolute value input
+  getKnobValueStep(): number {
+    const control = this.browserService.selectedControl();
+    if (!control) return 0.1;
+
+    const valueMin = control.valueMin ?? 0;
+    const valueMax = control.valueMax ?? 1;
+    const range = valueMax - valueMin;
+
+    // Use smaller step for larger ranges
+    if (range > 1000) return 10;
+    if (range > 100) return 1;
+    if (range > 10) return 0.1;
+    return 0.01;
+  }
+
+  // Handle absolute value change for Knob control
+  onKnobAbsoluteValueChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const absoluteValue = parseFloat(input.value);
+    const control = this.browserService.selectedControl();
+
+    if (!control) return;
+
+    const valueMin = control.valueMin ?? 0;
+    const valueMax = control.valueMax ?? 1;
+
+    // Clamp to valid range
+    const clampedValue = Math.max(valueMin, Math.min(valueMax, absoluteValue));
+
+    // Convert absolute value to position (0-1)
+    const position = (clampedValue - valueMin) / (valueMax - valueMin);
+
+    // Update the position
+    this.editValue = position;
+    this.updateControl();
+  }
+
   // Get display value with 1 decimal place
   getDisplayValue(): string {
+    const control = this.browserService.selectedControl();
+
+    // For Knob controls, show the absolute value instead of position
+    if (control?.type === 'Knob') {
+      const absoluteValue = this.getKnobAbsoluteValue();
+      return absoluteValue.toFixed(1);
+    }
+
     if (typeof this.editValue === 'number') {
       return this.editValue.toFixed(1);
     }
@@ -664,7 +735,8 @@ export class QsysBrowser implements OnInit, OnDestroy {
   // Slider input - update value without sending to Q-SYS (for display only)
   onSliderInput(event: Event): void {
     const target = event.target as HTMLInputElement;
-    this.editValue = Number(Number(target.value).toFixed(1));
+    // For Knob controls, editValue stores position (0-1), use full precision
+    this.editValue = parseFloat(target.value);
   }
 
   // Time control - handle segment changes
