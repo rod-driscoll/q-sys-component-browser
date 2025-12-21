@@ -397,15 +397,20 @@ export class QsysBrowser implements OnInit, OnDestroy {
 
       // Listen for control updates
       this.qsysService.getControlUpdates().subscribe((update) => {
-        // Skip update if user is currently dragging this control
-        if (this.isDragging && this.draggingControlName === update.control) {
-          return;
-        }
-
         // Update the control in the browser service
         const currentControls = this.browserService.controls();
         const updatedControls = currentControls.map((ctrl) => {
           if (ctrl.name === update.control) {
+            // If user is dragging this control, only update value/string but NOT position
+            if (this.isDragging && this.draggingControlName === update.control) {
+              return {
+                ...ctrl,
+                value: update.value,
+                string: update.string,
+                // Keep existing position (don't update slider while dragging)
+              };
+            }
+            // Normal update: update everything
             return {
               ...ctrl,
               value: update.value,
@@ -416,6 +421,34 @@ export class QsysBrowser implements OnInit, OnDestroy {
           return ctrl;
         });
         this.browserService.setControls(updatedControls);
+
+        // Also update global search results if they contain this control
+        const globalResults = this.browserService.globalSearchResults();
+        if (globalResults.length > 0) {
+          const updatedGlobalResults = globalResults.map((ctrl) => {
+            // Match by control name AND component name from the update
+            if (ctrl.name === update.control && ctrl.componentName === update.component) {
+              // If user is dragging this control, only update value/string but NOT position
+              if (this.isDragging && this.draggingControlName === update.control) {
+                return {
+                  ...ctrl,
+                  value: update.value,
+                  string: update.string,
+                  // Keep existing position (don't update slider while dragging)
+                };
+              }
+              // Normal update: update everything
+              return {
+                ...ctrl,
+                value: update.value,
+                position: update.position,
+                string: update.string,
+              };
+            }
+            return ctrl;
+          });
+          this.browserService.globalSearchResults.set(updatedGlobalResults);
+        }
 
         // If this is the currently selected control, update the edit value
         const selectedControl = this.browserService.selectedControl();
@@ -713,7 +746,7 @@ export class QsysBrowser implements OnInit, OnDestroy {
       this.isDragging = false;
       this.draggingControlName = null;
       this.dragEndTimeout = null;
-    }, 100); // 100ms delay
+    }, 500); // 500ms delay
   }
 
   onInlineSliderInput(event: Event, control: ControlInfo): void {
@@ -909,11 +942,20 @@ export class QsysBrowser implements OnInit, OnDestroy {
     const input = event.target as HTMLInputElement;
     const position = parseFloat(input.value);
     if (control.componentName) {
-      // Convert position (0-1) to value (valueMin-valueMax) for QRWC
-      const valueMin = control.valueMin ?? 0;
-      const valueMax = control.valueMax ?? 1;
-      const value = valueMin + (position * (valueMax - valueMin));
-      this.qsysService.setControl(control.componentName, control.name, value);
+      // Find the component to check its discovery method
+      const component = this.browserService.components().find(c => c.name === control.componentName);
+
+      if (component?.discoveryMethod === 'websocket') {
+        // WebSocket components use HTTP API which expects position (0-1)
+        this.qsysService.setControlViaHTTP(control.componentName, control.name, position);
+      } else {
+        // QRWC expects the actual value in the control's range (not position)
+        // Convert position (0-1) to value (valueMin-valueMax)
+        const valueMin = control.valueMin ?? 0;
+        const valueMax = control.valueMax ?? 1;
+        const value = valueMin + (position * (valueMax - valueMin));
+        this.qsysService.setControl(control.componentName, control.name, value);
+      }
     }
   }
 
@@ -922,7 +964,12 @@ export class QsysBrowser implements OnInit, OnDestroy {
     const input = event.target as HTMLInputElement | HTMLSelectElement;
     const value = parseFloat(input.value);
     if (control.componentName) {
-      this.qsysService.setControl(control.componentName, control.name, value);
+      const component = this.browserService.components().find(c => c.name === control.componentName);
+      if (component?.discoveryMethod === 'websocket') {
+        this.qsysService.setControlViaHTTP(control.componentName, control.name, value);
+      } else {
+        this.qsysService.setControl(control.componentName, control.name, value);
+      }
     }
   }
 
@@ -931,7 +978,12 @@ export class QsysBrowser implements OnInit, OnDestroy {
     const select = event.target as HTMLSelectElement;
     const value = select.value;
     if (control.componentName) {
-      this.qsysService.setControl(control.componentName, control.name, value);
+      const component = this.browserService.components().find(c => c.name === control.componentName);
+      if (component?.discoveryMethod === 'websocket') {
+        this.qsysService.setControlViaHTTP(control.componentName, control.name, value);
+      } else {
+        this.qsysService.setControl(control.componentName, control.name, value);
+      }
     }
   }
 
@@ -940,7 +992,12 @@ export class QsysBrowser implements OnInit, OnDestroy {
     const textarea = event.target as HTMLTextAreaElement;
     const value = textarea.value;
     if (control.componentName) {
-      this.qsysService.setControl(control.componentName, control.name, value);
+      const component = this.browserService.components().find(c => c.name === control.componentName);
+      if (component?.discoveryMethod === 'websocket') {
+        this.qsysService.setControlViaHTTP(control.componentName, control.name, value);
+      } else {
+        this.qsysService.setControl(control.componentName, control.name, value);
+      }
     }
   }
 
@@ -956,14 +1013,24 @@ export class QsysBrowser implements OnInit, OnDestroy {
     const totalSeconds = hours * 3600 + minutes * 60 + seconds;
 
     if (control.componentName) {
-      this.qsysService.setControl(control.componentName, control.name, totalSeconds);
+      const component = this.browserService.components().find(c => c.name === control.componentName);
+      if (component?.discoveryMethod === 'websocket') {
+        this.qsysService.setControlViaHTTP(control.componentName, control.name, totalSeconds);
+      } else {
+        this.qsysService.setControl(control.componentName, control.name, totalSeconds);
+      }
     }
   }
 
   onGlobalSearchTrigger(event: Event, control: ControlInfo): void {
     event.stopPropagation();
     if (control.componentName) {
-      this.qsysService.setControl(control.componentName, control.name, 1);
+      const component = this.browserService.components().find(c => c.name === control.componentName);
+      if (component?.discoveryMethod === 'websocket') {
+        this.qsysService.setControlViaHTTP(control.componentName, control.name, 1);
+      } else {
+        this.qsysService.setControl(control.componentName, control.name, 1);
+      }
     }
   }
 
