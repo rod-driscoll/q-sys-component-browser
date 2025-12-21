@@ -536,12 +536,27 @@
                   (mouseup)="onSliderDragEnd()"
                   (touchstart)="onSliderDragStart()"
                   (touchend)="onSliderDragEnd()"
-                  [min]="getSliderMin()"
-                  [max]="getSliderMax()"
-                  step="0.1"
+                  [min]="0"
+                  [max]="1"
+                  step="0.01"
                 />
               }
             </div>
+
+            @if (control.direction !== 'Read Only') {
+              <div class="editor-section">
+                <label>Absolute Value ({{ control.valueMin ?? 0 }} - {{ control.valueMax ?? 1 }})</label>
+                <input
+                  type="number"
+                  class="value-input"
+                  [value]="getKnobAbsoluteValue()"
+                  (change)="onKnobAbsoluteValueChange($event)"
+                  [min]="control.valueMin ?? 0"
+                  [max]="control.valueMax ?? 1"
+                  [step]="getKnobValueStep()"
+                />
+              </div>
+            }
           }
 
           <!-- Numeric Control (Float/Integer) -->
