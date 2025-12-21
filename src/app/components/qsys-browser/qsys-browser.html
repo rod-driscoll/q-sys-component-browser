@@ -150,7 +150,7 @@
                     (click)="$event.stopPropagation()"
                   >
                     @for (choice of control.choices; track choice) {
-                      <option [value]="choice">{{ choice }}</option>
+                      <option [value]="choice" [selected]="choice === control.string">{{ choice }}</option>
                     }
                   </select>
                 }
@@ -385,7 +385,7 @@
                       (change)="onInlineComboChange($event, control)"
                     >
                       @for (choice of control.choices; track choice) {
-                        <option [value]="choice">{{ choice }}</option>
+                        <option [value]="choice" [selected]="choice === control.string">{{ choice }}</option>
                       }
                     </select>
                   }
