@@ -19,17 +19,26 @@ export interface DiscoveryData {
   }>;
 }
 
+export interface ComponentUpdate {
+  type: 'componentUpdate';
+  componentName: string;
+  controls: Array<any>;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class WebSocketDiscoveryService {
   private ws: WebSocket | null = null;
+  private updatesWs: WebSocket | null = null;
   private readonly wsUrl = 'ws://192.168.104.227:9091/ws/discovery';
+  private readonly updatesUrl = 'ws://192.168.104.227:9091/ws/updates';
 
   // Signals for reactive state
   public isConnected = signal<boolean>(false);
   public discoveryData = signal<DiscoveryData | null>(null);
   public error = signal<string | null>(null);
+  public componentUpdate = signal<ComponentUpdate | null>(null);
 
   constructor() {}
 
@@ -83,6 +92,49 @@ export class WebSocketDiscoveryService {
   }
 
   /**
+   * Connect to the WebSocket updates endpoint
+   * Receives real-time component control updates
+   */
+  connectUpdates(): void {
+    if (this.updatesWs && this.updatesWs.readyState === WebSocket.OPEN) {
+      console.log('Updates WebSocket already connected');
+      return;
+    }
+
+    console.log('Connecting to WebSocket updates endpoint:', this.updatesUrl);
+    this.updatesWs = new WebSocket(this.updatesUrl);
+
+    this.updatesWs.onopen = () => {
+      console.log('✓ Connected to WebSocket updates endpoint');
+    };
+
+    this.updatesWs.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        console.log('Received update message:', message.type, message.componentName || '');
+
+        if (message.type === 'componentUpdate') {
+          console.log(`Component update: ${message.componentName} - ${message.controls?.length || 0} controls`);
+          this.componentUpdate.set(message);
+        } else if (message.type === 'connected') {
+          console.log('Updates WebSocket acknowledged:', message.message);
+        }
+      } catch (error) {
+        console.error('Error parsing update message:', error);
+      }
+    };
+
+    this.updatesWs.onerror = (error) => {
+      console.error('Updates WebSocket error:', error);
+    };
+
+    this.updatesWs.onclose = () => {
+      console.log('Updates WebSocket connection closed');
+      this.updatesWs = null;
+    };
+  }
+
+  /**
    * Disconnect from the WebSocket
    */
   disconnect(): void {
@@ -91,6 +143,11 @@ export class WebSocketDiscoveryService {
       this.ws.close();
       this.ws = null;
       this.isConnected.set(false);
+    }
+    if (this.updatesWs) {
+      console.log('Disconnecting Updates WebSocket');
+      this.updatesWs.close();
+      this.updatesWs = null;
     }
   }
 
