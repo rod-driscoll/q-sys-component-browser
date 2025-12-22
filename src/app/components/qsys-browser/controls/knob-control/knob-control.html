@@ -4,7 +4,7 @@
   @if (mode === 'inline') {
     <label class="inline-label">Level ({{ control.string || control.value }})</label>
   } @else {
-    <label>Level ({{ getDisplayValue() }})</label>
+    <label>Level ({{ control.string || getDisplayValue() }})</label>
   }
   <input
     type="range"

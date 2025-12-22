@@ -34,7 +34,7 @@ export class QSysService {
   // Store connection options
   private options: QrwcConnectionOptions | null = null;
 
-  constructor() {}
+  constructor() { }
 
   /**
    * Connect to Q-SYS Core using QRWC library
@@ -61,10 +61,22 @@ export class QSysService {
       // Create WebSocket
       const socket = new WebSocket(url);
 
+      // Add close handler to update connection status
+      socket.onclose = () => {
+        console.log('QRWC WebSocket closed');
+        this.isConnected.set(false);
+        this.connectionStatus$.next(false);
+      };
+
       // Wait for WebSocket to open
       await new Promise<void>((resolve, reject) => {
         socket.onopen = () => resolve();
-        socket.onerror = (error) => reject(error);
+        socket.onerror = (error) => {
+          console.error('QRWC WebSocket error:', error);
+          this.isConnected.set(false);
+          this.connectionStatus$.next(false);
+          reject(error);
+        };
       });
 
       // Create QRWC instance using factory method
@@ -211,6 +223,53 @@ export class QSysService {
   }
 
   /**
+   * Infer additional Q-SYS control properties that are not reported by the API
+   * Based on Q-SYS documentation: Controls Properties
+   */
+  private inferControlProperties(state: any, controlName: string): { units?: string; pushAction?: string; indicatorType?: string } {
+    const result: { units?: string; pushAction?: string; indicatorType?: string } = {};
+
+    // Infer Units for Knob controls
+    if (state.Position !== undefined) {
+      const stringValue = state.String || '';
+      const type = state.Type;
+
+      if (type === 'Float') {
+        if (stringValue.endsWith('Hz')) {
+          result.units = 'Hz';
+        } else if (stringValue.endsWith('dB')) {
+          result.units = 'Meter';
+        } else if (stringValue.endsWith('%')) {
+          result.units = 'Percent';
+        } else if (stringValue.startsWith('L') || stringValue.startsWith('R') || stringValue === 'C') {
+          result.units = 'Pan';
+        } else if (stringValue.includes('.') && !/[a-zA-Z]/.test(stringValue)) {
+          result.units = 'Float';
+        }
+      } else if (type === 'Integer' || (type === 'Array' && state.ValueMin !== undefined && state.ValueMax !== undefined)) {
+        result.units = 'Integer';
+      } else if (type === 'Time') {
+        result.units = 'Seconds';
+      }
+    }
+
+    // Infer Push Action for Button controls
+    const type = state.Type;
+    if (type === 'Trigger') {
+      result.pushAction = 'Trigger';
+    } else if (type === '' || type === 'State Trigger') {
+      result.pushAction = 'State Trigger';
+    }
+
+    // Infer Type for Text controls that are actually Combo Boxes
+    if (type === 'Text' && state.Position !== undefined) {
+      result.indicatorType = 'Combo Box';
+    }
+
+    return result;
+  }
+
+  /**
    * Get all controls for a specific component
    * Returns a promise that resolves with the control list
    */
@@ -268,12 +327,13 @@ export class QSysService {
         let controlType = state.Type;
 
         // Override type based on control properties (Q-SYS often reports incorrect types)
-        if (state.Choices && Array.isArray(state.Choices) && state.Choices.length > 0) {
+        // Check for Position first - Array types with Position are Integer Knobs, not Combo boxes
+        if (state.Position !== undefined && (controlType === 'Float' || controlType === 'Array')) {
+          // Float or Array with Position = Knob/Fader (use Position for control, not Value)
+          controlType = 'Knob';
+        } else if (state.Choices && Array.isArray(state.Choices) && state.Choices.length > 0) {
           // Has choices = Combo box (Q-SYS often reports as "Text")
           controlType = 'Combo box';
-        } else if (state.Position !== undefined && controlType === 'Float') {
-          // Float with Position = Knob/Fader (use Position for control, not Value)
-          controlType = 'Knob';
         } else if (!controlType || controlType === '') {
           // If no type provided, infer from name patterns
           if (/^(System|Power)(On|Off)$/i.test(controlName)) {
@@ -287,6 +347,9 @@ export class QSysService {
           }
         }
 
+        // Infer additional properties
+        const inferredProps = this.inferControlProperties(state, controlName);
+
         controls.push({
           Name: controlName,
           Type: controlType,
@@ -296,7 +359,11 @@ export class QSysService {
           ValueMax: state.ValueMax,
           Position: state.Position,
           String: state.String,
-          Choices: state.Choices
+          Choices: state.Choices,
+          // Add inferred properties
+          Units: inferredProps.units,
+          PushAction: inferredProps.pushAction,
+          IndicatorType: inferredProps.indicatorType
         });
       }
 
@@ -428,8 +495,8 @@ export class QSysService {
       // - BUT: SystemOn/SystemOff/PowerOn/PowerOff are STATE triggers, not pulse triggers
       const isStateTrigger = /^(System|Power)(On|Off)$/i.test(controlName);
       const isPulseTrigger = (controlType === 'Trigger' || controlName.endsWith('Trig')) &&
-                            !isStateTrigger &&
-                            value === 1;
+        !isStateTrigger &&
+        value === 1;
 
       if (isPulseTrigger) {
         // For pulse triggers, pulse high then low

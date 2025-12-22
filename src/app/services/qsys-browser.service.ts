@@ -19,6 +19,10 @@ export interface ControlInfo {
   string?: string;
   choices?: string[];
   componentName?: string; // Added for global search results
+  // Inferred properties (not directly from Q-SYS API)
+  units?: string; // Hz, Float, Integer, Meter (dB), Percent, Pan, Seconds
+  pushAction?: string; // State Trigger, Trigger
+  indicatorType?: string; // Combo Box (for Text controls that are actually combo boxes)
 }
 
 @Injectable({
@@ -41,7 +45,7 @@ export class QSysBrowserService {
   public globalSearchResults = signal<ControlInfo[]>([]);
   public isGlobalSearch = signal<boolean>(false);
 
-  constructor(private qsysService: QSysService) {}
+  constructor(private qsysService: QSysService) { }
 
   /**
    * Load all components from Q-SYS design
@@ -152,7 +156,10 @@ export class QSysBrowserService {
             position: control.Position,
             string: control.String,
             choices: control.Choices,
-            componentName: component.name // Include component name for display
+            componentName: component.name, // Include component name for display
+            units: control.Units,
+            pushAction: control.PushAction,
+            indicatorType: control.IndicatorType
           }));
 
         allControls.push(...matchingControls);
@@ -197,7 +204,10 @@ export class QSysBrowserService {
         valueMax: c.ValueMax,
         position: c.Position,
         string: c.String,
-        choices: c.Choices
+        choices: c.Choices,
+        units: c.Units,
+        pushAction: c.PushAction,
+        indicatorType: c.IndicatorType
       }));
 
       this.controls.set(controlInfos);

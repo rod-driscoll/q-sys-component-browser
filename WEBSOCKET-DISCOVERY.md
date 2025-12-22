@@ -31,7 +31,7 @@ This script:
 Automatically sends full component discovery data when client connects:
 
 ```typescript
-const ws = new WebSocket('ws://192.168.104.227:8080/ws/discovery');
+const ws = new WebSocket('ws://192.168.104.220:8080/ws/discovery');
 
 ws.onopen = () => {
   console.log('Connected to discovery endpoint');
@@ -55,7 +55,7 @@ For future use - will provide real-time component/control value updates.
 Returns lightweight component list with control counts:
 
 ```typescript
-fetch('http://192.168.104.227:8080/api/components')
+fetch('http://192.168.104.220:8080/api/components')
   .then(res => res.json())
   .then(data => {
     console.log(`Found ${data.totalComponents} components`);
@@ -67,7 +67,7 @@ fetch('http://192.168.104.227:8080/api/components')
 Returns full control list for a specific component:
 
 ```typescript
-fetch('http://192.168.104.227:8080/api/components/Display%201/controls')
+fetch('http://192.168.104.220:8080/api/components/Display%201/controls')
   .then(res => res.json())
   .then(data => {
     console.log(`Component has ${data.controlCount} controls`);
@@ -86,7 +86,7 @@ Update the component browser to use WebSocket for discovery:
 private discoveryWebSocket?: WebSocket;
 
 connectToDiscoveryWebSocket(): void {
-  this.discoveryWebSocket = new WebSocket('ws://192.168.104.227:8080/ws/discovery');
+  this.discoveryWebSocket = new WebSocket('ws://192.168.104.220:8080/ws/discovery');
 
   this.discoveryWebSocket.onmessage = (event) => {
     const message = JSON.parse(event.data);
@@ -119,7 +119,7 @@ For simpler integration, use the HTTP API endpoints:
 
 ```typescript
 async loadComponentsViaAPI(): Promise<void> {
-  const response = await fetch('http://192.168.104.227:8080/api/components');
+  const response = await fetch('http://192.168.104.220:8080/api/components');
   const data = await response.json();
 
   const componentList: ComponentInfo[] = data.components.map((comp: any) => ({
@@ -133,7 +133,7 @@ async loadComponentsViaAPI(): Promise<void> {
 
 async loadComponentControls(componentName: string): Promise<void> {
   const response = await fetch(
-    `http://192.168.104.227:8080/api/components/${encodeURIComponent(componentName)}/controls`
+    `http://192.168.104.220:8080/api/components/${encodeURIComponent(componentName)}/controls`
   );
   const data = await response.json();
 
@@ -161,12 +161,12 @@ async loadComponentControls(componentName: string): Promise<void> {
 2. Test WebSocket connection:
    ```bash
    # Using wscat (npm install -g wscat)
-   wscat -c ws://192.168.104.227:8080/ws/discovery
+   wscat -c ws://192.168.104.220:8080/ws/discovery
    ```
 
 3. Test HTTP API:
    ```bash
-   curl http://192.168.104.227:8080/api/components
+   curl http://192.168.104.220:8080/api/components
    ```
 
 ## Troubleshooting

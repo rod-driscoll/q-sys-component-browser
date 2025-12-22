@@ -50,6 +50,13 @@ export class KnobControl {
   }
 
   getAbsoluteValue(): number {
+    // Use the actual value from QRWC instead of calculating from position
+    // QRWC already provides the correct absolute value
+    if (this.control.value !== undefined) {
+      return Math.round(this.control.value * 100) / 100;
+    }
+
+    // Fallback to position-based calculation if value is not available
     const valueMin = this.control.valueMin ?? 0;
     const valueMax = this.control.valueMax ?? 1;
     const position = this.control.position ?? 0;
