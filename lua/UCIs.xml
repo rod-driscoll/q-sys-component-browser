@@ -1,0 +1,4 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<UCIs DesignName="Command TxRx Utility HTTP Example" DesignGuid="w1Lepx6srPSF">
+  <UCI IsPrivate="False" Name="Challenge UCI" Port="1702" FileName="1.UCI.xml" BeaconMajor="0" BeaconMinor="0" />
+</UCIs>

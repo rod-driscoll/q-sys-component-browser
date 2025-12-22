@@ -1,0 +1,26 @@
+2025-12-20T00:49:13.468	userdata: 0x7f57243288f8	EOF	
+2025-12-20T00:49:33.348	CONNECTION
+2025-12-20T00:49:33.350	WEBSOCKET (v13)
+2025-12-20T00:49:33.350	WebSocket client connected to /ws/discovery
+2025-12-20T00:49:33.355	Starting component discovery via WebSocket...
+2025-12-20T00:49:33.355	Found 41 components
+2025-12-20T00:49:33.520	Component Discovery Complete - sending 417277 bytes via WebSocket
+2025-12-20T00:49:33.536	WebSocket client disconnected from /ws/discovery
+2025-12-20T00:49:33.537	WebSocket client disconnected from /ws/updates
+2025-12-20T00:49:33.568	CONNECTION
+2025-12-20T00:49:34.428	CONNECTION
+2025-12-20T00:49:34.430	WEBSOCKET (v13)
+2025-12-20T00:49:34.430	WebSocket client connected to /ws/updates
+2025-12-20T00:49:34.683	CONNECTION
+2025-12-20T00:49:38.701	userdata: 0x7f57246b3e78	EOF	
+2025-12-20T00:49:39.726	userdata: 0x7f57248e56c8	EOF	
+2025-12-20T00:49:46.105	CONNECTION
+2025-12-20T00:49:46.106	Fetching controls for component: Room 1 controller
+2025-12-20T00:49:46.111	Got 62 controls for Room 1 controller
+2025-12-20T00:49:46.130	Encoded response type: string, length: 25771
+2025-12-20T00:49:46.132	Send completed successfully
+2025-12-20T00:49:46.132	Setting up EventHandler for component: Room 1 controller
+2025-12-20T00:49:46.133	SERVER ERROR: :247: attempt to index a userdata value (local 'component')
+2025-12-20T00:49:46.354	CONNECTION
+2025-12-20T00:49:47.021	userdata: 0x7f57249088a8	EOF	
+2025-12-20T00:49:51.573	userdata: 0x7f57247fff58	EOF	

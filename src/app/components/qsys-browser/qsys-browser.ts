@@ -247,13 +247,39 @@ export class QsysBrowser implements OnInit, OnDestroy {
     this.controlUpdateSubscription = this.qsysService.getControlUpdates()
       .subscribe((update) => {
         const selectedComponent = this.browserService.selectedComponent();
+        const selectedControl = this.browserService.selectedControl();
 
-        // Only process log.history updates for the currently selected component
-        if (selectedComponent &&
-          update.component === selectedComponent.name &&
-          update.control === 'log.history' &&
-          update.string) {
-          this.appendLogEntry(update.string);
+        // Only process updates for the currently selected component
+        if (selectedComponent && update.component === selectedComponent.name) {
+          // Handle log.history updates
+          if (update.control === 'log.history' && update.string) {
+            this.appendLogEntry(update.string);
+          }
+
+          // Update the selected control's value in editor view
+          if (selectedControl && update.control === selectedControl.name) {
+            // Update the control object with new values
+            selectedControl.value = update.value;
+            selectedControl.position = update.position;
+            selectedControl.string = update.string;
+
+            // Trigger change detection by creating a new reference
+            this.browserService.selectedControl.set({ ...selectedControl });
+          }
+
+          // Also update the control in the controls list
+          const controls = this.browserService.controls();
+          const controlIndex = controls.findIndex(c => c.name === update.control);
+          if (controlIndex !== -1) {
+            const updatedControls = [...controls];
+            updatedControls[controlIndex] = {
+              ...updatedControls[controlIndex],
+              value: update.value,
+              position: update.position,
+              string: update.string
+            };
+            this.browserService.controls.set(updatedControls);
+          }
         }
       });
   }
@@ -646,6 +672,12 @@ export class QsysBrowser implements OnInit, OnDestroy {
     const control = this.browserService.selectedControl();
     if (!control) return 0;
 
+    // Use the actual value from QRWC instead of calculating from position
+    // QRWC already provides the correct absolute value (handling logarithmic scales, etc.)
+    if (control.value !== undefined) {
+      return Math.round(control.value * 100) / 100;
+    }
+
     const valueMin = control.valueMin ?? 0;
     const valueMax = control.valueMax ?? 1;
     const position = this.editValue ?? 0;
@@ -699,8 +731,12 @@ export class QsysBrowser implements OnInit, OnDestroy {
   getDisplayValue(): string {
     const control = this.browserService.selectedControl();
 
-    // For Knob controls, show the absolute value instead of position
+    // For Knob controls, use the string representation from server if available
+    // This includes units (e.g. "558Hz") and proper formatting
     if (control?.type === 'Knob') {
+      if (control.string) {
+        return control.string;
+      }
       const absoluteValue = this.getKnobAbsoluteValue();
       return absoluteValue.toFixed(1);
     }
