@@ -1,0 +1,11 @@
+@if (control.direction === 'Read Only') {
+  <div class="info-value">{{ control.value }}</div>
+} @else {
+  <input
+    type="number"
+    class="value-input"
+    [value]="control.value"
+    (change)="onValueChange($event)"
+    [step]="getStep()"
+  />
+}

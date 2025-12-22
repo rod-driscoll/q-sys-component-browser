@@ -1,0 +1,33 @@
+@if (mode === 'inline') {
+  <div class="status-display" [ngClass]="getStatusColorClass()">
+    <div class="status-value">{{ control.string || control.value }}</div>
+  </div>
+} @else {
+  @if (control.direction === 'Read Only') {
+    <div class="status-display" [ngClass]="getStatusColorClass()">
+      <div class="status-value">{{ control.string || control.value || 'N/A' }}</div>
+      @if (control.value !== undefined && control.valueMin !== undefined && control.valueMax !== undefined) {
+        <div class="status-range">
+          Range: {{ control.valueMin }} - {{ control.valueMax }}
+        </div>
+      }
+    </div>
+  } @else {
+    <select
+      class="status-select"
+      [value]="control.value"
+      (change)="onValueChange($event)"
+      [ngClass]="getStatusColorClass()"
+    >
+      <option [value]="0">0 - OK</option>
+      <option [value]="1">1 - Compromised</option>
+      <option [value]="2">2 - Fault</option>
+      <option [value]="3">3 - Not Present</option>
+      <option [value]="4">4 - Missing</option>
+      <option [value]="5">5 - Initializing</option>
+    </select>
+    @if (control.string) {
+      <div class="status-info">{{ control.string }}</div>
+    }
+  }
+}

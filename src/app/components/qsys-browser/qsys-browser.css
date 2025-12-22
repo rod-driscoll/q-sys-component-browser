@@ -199,6 +199,7 @@
     opacity: 0;
     transform: translateX(-50%) translateY(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
@@ -220,6 +221,124 @@
   }
 }
 
+/* Certificate Error Notification */
+.certificate-error-notification {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1001;
+  max-width: 600px;
+  width: 90%;
+  animation: slideDown 0.3s ease-out;
+}
+
+.notification-content {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  border: 2px solid #ff4757;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(255, 75, 87, 0.3);
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  position: relative;
+}
+
+.notification-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.notification-message {
+  flex: 1;
+  color: white;
+}
+
+.notification-message strong {
+  display: block;
+  font-size: 18px;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.notification-message p {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  opacity: 0.95;
+}
+
+.notification-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.accept-cert-button {
+  padding: 10px 20px;
+  background-color: white;
+  color: #ff4757;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.accept-cert-button:hover {
+  background-color: #f8f9fa;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.accept-cert-button:active {
+  transform: translateY(0);
+}
+
+.dismiss-button {
+  padding: 10px 20px;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dismiss-button:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.close-notification {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 20px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  line-height: 1;
+}
+
+.close-notification:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
 .view {
   animation: fadeIn 0.2s ease-in;
   width: 100%;
@@ -232,6 +351,7 @@
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1153,4 +1273,3 @@
   background-color: #229954;
   border-color: #1e8449;
 }
-

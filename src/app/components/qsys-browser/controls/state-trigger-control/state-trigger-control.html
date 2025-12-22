@@ -1,0 +1,33 @@
+@if (mode === 'inline') {
+  <select
+    class="value-input"
+    [value]="control.value"
+    (change)="onValueChange($event)"
+    [disabled]="control.direction === 'Read Only'"
+  >
+    <option value="0">{{ control.valueMin }} (0)</option>
+    <option value="1">{{ control.valueMax }} (1)</option>
+  </select>
+} @else {
+  @if (control.direction === 'Read Only') {
+    <div class="info-value">{{ control.value }}</div>
+  } @else {
+    <div class="state-value-section">
+      <label>State Value</label>
+      <select
+        class="value-input"
+        [value]="control.value"
+        (change)="onValueChange($event)"
+      >
+        <option value="0">{{ control.valueMin }} (0)</option>
+        <option value="1">{{ control.valueMax }} (1)</option>
+      </select>
+    </div>
+    <div class="trigger-section">
+      <label>Trigger Action</label>
+      <button class="trigger-button" (click)="onTrigger()">
+        Trigger
+      </button>
+    </div>
+  }
+}

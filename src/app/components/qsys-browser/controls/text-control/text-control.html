@@ -1,0 +1,11 @@
+@if (control.direction === 'Read Only' || control.direction === 'Write Only') {
+  <div class="text-display">{{ control.string || control.value }}</div>
+} @else {
+  <textarea
+    class="text-area-input"
+    [value]="control.string"
+    (change)="onTextChange($event)"
+    [rows]="getRows()"
+    placeholder="Enter text..."
+  ></textarea>
+}
