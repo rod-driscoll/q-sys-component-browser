@@ -1,0 +1,32 @@
+.toggle-group {
+  display: flex;
+  gap: 10px;
+}
+
+.toggle-button {
+  flex: 1;
+  padding: 12px;
+  background-color: #f5f5f5;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.toggle-button:hover:not(:disabled) {
+  background-color: #e0e0e0;
+}
+
+.toggle-button.active {
+  background-color: #2196f3;
+  border-color: #2196f3;
+  color: white;
+}
+
+.toggle-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

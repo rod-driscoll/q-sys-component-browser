@@ -1,0 +1,13 @@
+@if (control.direction === 'Read Only') {
+  <div class="info-value">{{ control.string }}</div>
+} @else {
+  <select
+    class="value-input"
+    [value]="control.string"
+    (change)="onComboChange($event)"
+  >
+    @for (choice of control.choices; track choice) {
+      <option [value]="choice" [selected]="choice === control.string">{{ choice }}</option>
+    }
+  </select>
+}

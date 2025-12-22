@@ -1,0 +1,37 @@
+@if (control.direction === 'Read Only') {
+  <div class="info-value">{{ control.string || control.value }}</div>
+} @else {
+  @if (mode === 'inline') {
+    <label class="inline-label">Level ({{ control.string || control.value }})</label>
+  } @else {
+    <label>Level ({{ getDisplayValue() }})</label>
+  }
+  <input
+    type="range"
+    class="slider"
+    [value]="control.position"
+    (input)="onSliderInput($event)"
+    (mousedown)="onDragStart()"
+    (mouseup)="onDragEnd()"
+    (touchstart)="onDragStart()"
+    (touchend)="onDragEnd()"
+    [min]="0"
+    [max]="1"
+    step="0.01"
+  />
+  
+  @if (mode === 'editor') {
+    <div class="absolute-value-section">
+      <label>Absolute Value ({{ control.valueMin ?? 0 }} - {{ control.valueMax ?? 1 }})</label>
+      <input
+        type="number"
+        class="value-input"
+        [value]="getAbsoluteValue()"
+        (change)="onAbsoluteValueChange($event)"
+        [min]="control.valueMin ?? 0"
+        [max]="control.valueMax ?? 1"
+        [step]="getValueStep()"
+      />
+    </div>
+  }
+}

@@ -1,0 +1,64 @@
+.info-value {
+  font-size: 16px;
+  color: #666;
+  padding: 10px;
+  background-color: #f5f5f5;
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+}
+
+.value-input {
+  width: 100%;
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 16px;
+  transition: border-color 0.2s;
+}
+
+.value-input:focus {
+  outline: none;
+  border-color: #2196f3;
+}
+
+.state-value-section {
+  margin-bottom: 24px;
+}
+
+.trigger-section {
+  margin-bottom: 0;
+}
+
+label {
+  display: block;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.trigger-button {
+  width: 100%;
+  padding: 14px;
+  background-color: #ff9800;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.trigger-button:hover:not(:disabled) {
+  background-color: #f57c00;
+}
+
+.trigger-button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.trigger-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

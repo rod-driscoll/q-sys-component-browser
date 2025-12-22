@@ -1,0 +1,40 @@
+@if (control.direction === 'Read Only') {
+  <div class="time-display">
+    <div class="time-value">{{ control.string || control.value || 'N/A' }}</div>
+    @if (mode === 'editor' && control.value !== undefined) {
+      <div class="time-info">Raw Value: {{ control.value }}</div>
+    }
+  </div>
+} @else {
+  <div class="time-input-group">
+    <input
+      type="text"
+      class="time-segment"
+      [value]="getHoursString()"
+      (change)="onTimeChange($event, 'hours')"
+      placeholder="00"
+      maxlength="2"
+      pattern="[0-9]{0,2}"
+    />
+    <span class="time-separator">:</span>
+    <input
+      type="text"
+      class="time-segment"
+      [value]="getMinutesString()"
+      (change)="onTimeChange($event, 'minutes')"
+      placeholder="00"
+      maxlength="2"
+      pattern="[0-9]{0,2}"
+    />
+    <span class="time-separator">:</span>
+    <input
+      type="text"
+      class="time-segment"
+      [value]="getSecondsString()"
+      (change)="onTimeChange($event, 'seconds')"
+      placeholder="00"
+      maxlength="2"
+      pattern="[0-9]{0,2}"
+    />
+  </div>
+}

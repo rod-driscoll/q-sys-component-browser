@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, computed, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, computed, effect, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { QSysService } from '../../services/qsys.service';
@@ -6,10 +6,31 @@ import { QSysBrowserService, ComponentInfo, ControlInfo } from '../../services/q
 import { LuaScriptService, LuaScript } from '../../services/lua-script.service';
 import { WebSocketDiscoveryService } from '../../services/websocket-discovery.service';
 import { environment } from '../../../environments/environment';
+import { BooleanControl } from './controls/boolean-control/boolean-control';
+import { KnobControl } from './controls/knob-control/knob-control';
+import { NumericControl } from './controls/numeric-control/numeric-control';
+import { ComboControl } from './controls/combo-control/combo-control';
+import { TextControl } from './controls/text-control/text-control';
+import { StatusControl } from './controls/status-control/status-control';
+import { StateTriggerControl } from './controls/state-trigger-control/state-trigger-control';
+import { TimeControl } from './controls/time-control/time-control';
+import { TriggerControl } from './controls/trigger-control/trigger-control';
 
 @Component({
   selector: 'app-qsys-browser',
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    BooleanControl,
+    KnobControl,
+    NumericControl,
+    ComboControl,
+    TextControl,
+    StatusControl,
+    StateTriggerControl,
+    TimeControl,
+    TriggerControl,
+  ],
   templateUrl: './qsys-browser.html',
   styleUrl: './qsys-browser.css',
 })
@@ -159,6 +180,23 @@ export class QsysBrowser implements OnInit, OnDestroy {
     return controls;
   }
 
+  // Certificate error notification
+  showCertificateErrorNotification = signal<boolean>(false);
+  certificateUrl = `https://${environment.QSYS_CORE_IP}`;
+
+  showCertificateError(): void {
+    this.showCertificateErrorNotification.set(true);
+    console.error('SSL Certificate Error: Please accept the Q-SYS Core certificate');
+  }
+
+  dismissCertificateError(): void {
+    this.showCertificateErrorNotification.set(false);
+  }
+
+  openCertificateUrl(): void {
+    window.open(this.certificateUrl, '_blank');
+  }
+
   // Current view
   get currentView(): 'components' | 'controls' | 'editor' {
     if (this.browserService.selectedControl()) return 'editor';
@@ -172,6 +210,15 @@ export class QsysBrowser implements OnInit, OnDestroy {
       coreIp: environment.QSYS_CORE_IP,
       secure: true,
       pollInterval: 35,
+    }).catch((error) => {
+      // Check if this is a certificate error
+      const isCertError = error?.message?.includes('certificate') ||
+        error?.type === 'error' ||
+        error?.toString().includes('ERR_CERT');
+
+      if (isCertError) {
+        this.showCertificateError();
+      }
     });
 
     // Wait for connection before loading components
@@ -203,9 +250,9 @@ export class QsysBrowser implements OnInit, OnDestroy {
 
         // Only process log.history updates for the currently selected component
         if (selectedComponent &&
-            update.component === selectedComponent.name &&
-            update.control === 'log.history' &&
-            update.string) {
+          update.component === selectedComponent.name &&
+          update.control === 'log.history' &&
+          update.string) {
           this.appendLogEntry(update.string);
         }
       });
@@ -821,29 +868,21 @@ export class QsysBrowser implements OnInit, OnDestroy {
     }, 500); // 500ms delay
   }
 
-  onInlineSliderInput(event: Event, control: ControlInfo): void {
-    const input = event.target as HTMLInputElement;
-    const position = parseFloat(input.value);
+  onInlineSliderInput(control: ControlInfo, value: number): void {
     const componentName = this.browserService.selectedComponent()?.name;
     if (componentName) {
       const component = this.browserService.selectedComponent();
       if (component?.discoveryMethod === 'websocket') {
-        // WebSocket components use HTTP API which expects position (0-1)
-        this.qsysService.setControlViaHTTP(componentName, control.name, position);
+        // For WebSocket components, value is already in the correct format
+        this.qsysService.setControlViaHTTP(componentName, control.name, value);
       } else {
-        // QRWC expects the actual value in the control's range (not position)
-        // Convert position (0-1) to value (valueMin-valueMax)
-        const valueMin = control.valueMin ?? 0;
-        const valueMax = control.valueMax ?? 1;
-        const value = valueMin + (position * (valueMax - valueMin));
+        // For QRWC components, value is already converted by the control component
         this.qsysService.setControl(componentName, control.name, value);
       }
     }
   }
 
-  onInlineValueChange(event: Event, control: ControlInfo): void {
-    const input = event.target as HTMLInputElement | HTMLSelectElement;
-    const value = parseFloat(input.value);
+  onInlineValueChange(control: ControlInfo, value: number): void {
     const componentName = this.browserService.selectedComponent()?.name;
     if (componentName) {
       const component = this.browserService.selectedComponent();
@@ -855,9 +894,7 @@ export class QsysBrowser implements OnInit, OnDestroy {
     }
   }
 
-  onInlineComboChange(event: Event, control: ControlInfo): void {
-    const select = event.target as HTMLSelectElement;
-    const value = select.value;
+  onInlineComboChange(control: ControlInfo, value: string): void {
     const componentName = this.browserService.selectedComponent()?.name;
     if (componentName) {
       const component = this.browserService.selectedComponent();
@@ -869,9 +906,7 @@ export class QsysBrowser implements OnInit, OnDestroy {
     }
   }
 
-  onInlineTextChange(event: Event, control: ControlInfo): void {
-    const textarea = event.target as HTMLTextAreaElement;
-    const value = textarea.value;
+  onInlineTextChange(control: ControlInfo, value: string): void {
     const componentName = this.browserService.selectedComponent()?.name;
     if (componentName) {
       const component = this.browserService.selectedComponent();
@@ -883,16 +918,7 @@ export class QsysBrowser implements OnInit, OnDestroy {
     }
   }
 
-  onInlineTimeChange(event: Event, control: ControlInfo, segment: 'hours' | 'minutes' | 'seconds'): void {
-    const input = event.target as HTMLInputElement;
-    const value = input.value.padStart(2, '0');
-
-    const hours = segment === 'hours' ? parseInt(value) || 0 : this.getTimeHours(control);
-    const minutes = segment === 'minutes' ? parseInt(value) || 0 : this.getTimeMinutes(control);
-    const seconds = segment === 'seconds' ? parseInt(value) || 0 : this.getTimeSeconds(control);
-
-    const totalSeconds = (parseInt(String(hours)) || 0) * 3600 + (parseInt(String(minutes)) || 0) * 60 + (parseInt(String(seconds)) || 0);
-
+  onInlineTimeChange(control: ControlInfo, totalSeconds: number): void {
     const componentName = this.browserService.selectedComponent()?.name;
     if (componentName) {
       const component = this.browserService.selectedComponent();
@@ -914,21 +940,6 @@ export class QsysBrowser implements OnInit, OnDestroy {
         this.qsysService.setControl(componentName, control.name, 1);
       }
     }
-  }
-
-  getTimeHours(control: ControlInfo): string {
-    const totalSeconds = control.value ?? 0;
-    return String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
-  }
-
-  getTimeMinutes(control: ControlInfo): string {
-    const totalSeconds = control.value ?? 0;
-    return String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
-  }
-
-  getTimeSeconds(control: ControlInfo): string {
-    const totalSeconds = control.value ?? 0;
-    return String(Math.floor(totalSeconds % 60)).padStart(2, '0');
   }
 
   // Global search methods
@@ -1002,39 +1013,13 @@ export class QsysBrowser implements OnInit, OnDestroy {
   }
 
   // Global search control interaction methods
-  onGlobalSearchControlUpdate(event: Event, control: ControlInfo, value: number): void {
-    event.stopPropagation();
+  onGlobalSearchControlUpdate(control: ControlInfo, value: number): void {
     if (control.componentName) {
       this.qsysService.setControl(control.componentName, control.name, value);
     }
   }
 
-  onGlobalSearchSliderInput(event: Event, control: ControlInfo): void {
-    event.stopPropagation();
-    const input = event.target as HTMLInputElement;
-    const position = parseFloat(input.value);
-    if (control.componentName) {
-      // Find the component to check its discovery method
-      const component = this.browserService.components().find(c => c.name === control.componentName);
-
-      if (component?.discoveryMethod === 'websocket') {
-        // WebSocket components use HTTP API which expects position (0-1)
-        this.qsysService.setControlViaHTTP(control.componentName, control.name, position);
-      } else {
-        // QRWC expects the actual value in the control's range (not position)
-        // Convert position (0-1) to value (valueMin-valueMax)
-        const valueMin = control.valueMin ?? 0;
-        const valueMax = control.valueMax ?? 1;
-        const value = valueMin + (position * (valueMax - valueMin));
-        this.qsysService.setControl(control.componentName, control.name, value);
-      }
-    }
-  }
-
-  onGlobalSearchValueChange(event: Event, control: ControlInfo): void {
-    event.stopPropagation();
-    const input = event.target as HTMLInputElement | HTMLSelectElement;
-    const value = parseFloat(input.value);
+  onGlobalSearchSliderInput(control: ControlInfo, value: number): void {
     if (control.componentName) {
       const component = this.browserService.components().find(c => c.name === control.componentName);
       if (component?.discoveryMethod === 'websocket') {
@@ -1045,10 +1030,7 @@ export class QsysBrowser implements OnInit, OnDestroy {
     }
   }
 
-  onGlobalSearchComboChange(event: Event, control: ControlInfo): void {
-    event.stopPropagation();
-    const select = event.target as HTMLSelectElement;
-    const value = select.value;
+  onGlobalSearchValueChange(control: ControlInfo, value: number): void {
     if (control.componentName) {
       const component = this.browserService.components().find(c => c.name === control.componentName);
       if (component?.discoveryMethod === 'websocket') {
@@ -1059,10 +1041,7 @@ export class QsysBrowser implements OnInit, OnDestroy {
     }
   }
 
-  onGlobalSearchTextChange(event: Event, control: ControlInfo): void {
-    event.stopPropagation();
-    const textarea = event.target as HTMLTextAreaElement;
-    const value = textarea.value;
+  onGlobalSearchComboChange(control: ControlInfo, value: string): void {
     if (control.componentName) {
       const component = this.browserService.components().find(c => c.name === control.componentName);
       if (component?.discoveryMethod === 'websocket') {
@@ -1073,17 +1052,18 @@ export class QsysBrowser implements OnInit, OnDestroy {
     }
   }
 
-  onGlobalSearchTimeChange(event: Event, control: ControlInfo, segment: 'hours' | 'minutes' | 'seconds'): void {
-    event.stopPropagation();
-    const input = event.target as HTMLInputElement;
-    const value = input.value.padStart(2, '0');
+  onGlobalSearchTextChange(control: ControlInfo, value: string): void {
+    if (control.componentName) {
+      const component = this.browserService.components().find(c => c.name === control.componentName);
+      if (component?.discoveryMethod === 'websocket') {
+        this.qsysService.setControlViaHTTP(control.componentName, control.name, value);
+      } else {
+        this.qsysService.setControl(control.componentName, control.name, value);
+      }
+    }
+  }
 
-    const hours = segment === 'hours' ? parseInt(value) || 0 : this.getTimeHoursValue(control);
-    const minutes = segment === 'minutes' ? parseInt(value) || 0 : this.getTimeMinutesValue(control);
-    const seconds = segment === 'seconds' ? parseInt(value) || 0 : this.getTimeSecondsValue(control);
-
-    const totalSeconds = hours * 3600 + minutes * 60 + seconds;
-
+  onGlobalSearchTimeChange(control: ControlInfo, totalSeconds: number): void {
     if (control.componentName) {
       const component = this.browserService.components().find(c => c.name === control.componentName);
       if (component?.discoveryMethod === 'websocket') {
@@ -1094,8 +1074,7 @@ export class QsysBrowser implements OnInit, OnDestroy {
     }
   }
 
-  onGlobalSearchTrigger(event: Event, control: ControlInfo): void {
-    event.stopPropagation();
+  onGlobalSearchTrigger(control: ControlInfo): void {
     if (control.componentName) {
       const component = this.browserService.components().find(c => c.name === control.componentName);
       if (component?.discoveryMethod === 'websocket') {

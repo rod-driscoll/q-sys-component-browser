@@ -50,6 +50,26 @@
     </div>
   }
 
+  <!-- Certificate Error Notification -->
+  @if (showCertificateErrorNotification()) {
+    <div class="certificate-error-notification">
+      <div class="notification-content">
+        <div class="notification-icon">⚠️</div>
+        <div class="notification-message">
+          <strong>SSL Certificate Error</strong>
+          <p>Unable to connect to Q-SYS Core. Please accept the security certificate.</p>
+          <div class="notification-actions">
+            <button class="accept-cert-button" (click)="openCertificateUrl()">
+              Open {{ coreIp }} & Accept Certificate
+            </button>
+            <button class="dismiss-button" (click)="dismissCertificateError()">Dismiss</button>
+          </div>
+        </div>
+        <button class="close-notification" (click)="dismissCertificateError()">✕</button>
+      </div>
+    </div>
+  }
+
   <!-- Global Search Results View -->
   @if (isGlobalSearchActive) {
     <div class="view">
@@ -80,154 +100,78 @@
               </div>
             </div>
 
-            <div class="control-editor-inline">
-              <!-- Boolean Control -->
-              @if (control.type === 'Boolean') {
-                <div class="toggle-group">
-                  <button
-                    class="toggle-button"
-                    [class.active]="!control.value"
-                    (click)="onGlobalSearchControlUpdate($event, control, 0)"
-                    [disabled]="control.direction === 'Read Only'"
-                  >
-                    Off (0)
-                  </button>
-                  <button
-                    class="toggle-button"
-                    [class.active]="control.value"
-                    (click)="onGlobalSearchControlUpdate($event, control, 1)"
-                    [disabled]="control.direction === 'Read Only'"
-                  >
-                    On (1)
-                  </button>
-                </div>
-              }
-
-              <!-- Knob/Level Control -->
-              @if (control.type === 'Knob') {
-                @if (control.direction === 'Read Only') {
-                  <div class="info-value">{{ control.string || control.value }}</div>
-                } @else {
-                  <label class="inline-label">Level ({{ control.string || control.value }})</label>
-                  <input
-                    type="range"
-                    class="slider"
-                    [value]="control.position"
-                    (input)="onGlobalSearchSliderInput($event, control)"
-                    (mousedown)="onInlineSliderDragStart(control); $event.stopPropagation()"
-                    (mouseup)="onInlineSliderDragEnd()"
-                    (touchstart)="onInlineSliderDragStart(control); $event.stopPropagation()"
-                    (touchend)="onInlineSliderDragEnd()"
-                    (click)="$event.stopPropagation()"
-                    [min]="0"
-                    [max]="1"
-                    step="0.01"
+            <div class="control-editor-inline" (click)="$event.stopPropagation()">
+              @switch (control.type) {
+                @case ('Boolean') {
+                  <app-boolean-control
+                    [control]="control"
+                    [mode]="'inline'"
+                    (valueChange)="onGlobalSearchControlUpdate(control, $event)"
                   />
                 }
-              }
-
-              <!-- Numeric Control (Float/Integer) -->
-              @if (control.type === 'Float' || control.type === 'Integer') {
-                @if (control.direction === 'Read Only') {
-                  <div class="info-value">{{ control.value }}</div>
-                } @else {
-                  <input
-                    type="number"
-                    class="value-input"
-                    [value]="control.value"
-                    (change)="onGlobalSearchValueChange($event, control)"
-                    (click)="$event.stopPropagation()"
-                    [step]="control.type === 'Integer' ? 1 : 0.1"
+                @case ('Knob') {
+                  <app-knob-control
+                    [control]="control"
+                    [mode]="'inline'"
+                    (valueChange)="onGlobalSearchSliderInput(control, $event)"
+                    (dragStart)="onInlineSliderDragStart(control)"
+                    (dragEnd)="onInlineSliderDragEnd()"
                   />
                 }
-              }
-
-              <!-- Combo box Control -->
-              @if (control.type === 'Combo box' && control.choices) {
-                @if (control.direction === 'Read Only') {
-                  <div class="info-value">{{ control.string }}</div>
-                } @else {
-                  <select
-                    class="value-input"
-                    [value]="control.string"
-                    (change)="onGlobalSearchComboChange($event, control)"
-                    (click)="$event.stopPropagation()"
-                  >
-                    @for (choice of control.choices; track choice) {
-                      <option [value]="choice" [selected]="choice === control.string">{{ choice }}</option>
-                    }
-                  </select>
+                @case ('Float') {
+                  <app-numeric-control
+                    [control]="control"
+                    [mode]="'inline'"
+                    (valueChange)="onGlobalSearchValueChange(control, $event)"
+                  />
                 }
-              }
-
-              <!-- Text Control -->
-              @if (control.type === 'Text') {
-                @if (control.direction === 'Read Only' || control.direction === 'Write Only') {
-                  <div class="text-display">{{ control.string || control.value }}</div>
-                } @else {
-                  <textarea
-                    class="text-area-input"
-                    [value]="control.string"
-                    (change)="onGlobalSearchTextChange($event, control)"
-                    (click)="$event.stopPropagation()"
-                    rows="2"
-                  ></textarea>
+                @case ('Integer') {
+                  <app-numeric-control
+                    [control]="control"
+                    [mode]="'inline'"
+                    (valueChange)="onGlobalSearchValueChange(control, $event)"
+                  />
                 }
-              }
-
-              <!-- Status Control -->
-              @if (control.type === 'Status') {
-                <div class="status-display" [ngClass]="getStatusColorClassForControl(control)">
-                  <div class="status-value">{{ control.string || control.value }}</div>
-                </div>
-              }
-
-              <!-- State Trigger Control -->
-              @if (control.type === 'State Trigger') {
-                <select
-                  class="value-input"
-                  [value]="control.value"
-                  (change)="onGlobalSearchValueChange($event, control)"
-                  (click)="$event.stopPropagation()"
-                  [disabled]="control.direction === 'Read Only'"
-                >
-                  <option value="0">{{ control.valueMin }} (0)</option>
-                  <option value="1">{{ control.valueMax }} (1)</option>
-                </select>
-              }
-
-              <!-- Time Control -->
-              @if (control.type === 'Time') {
-                @if (control.direction === 'Read Only') {
-                  <div class="time-display">
-                    <div class="time-value">{{ control.string }}</div>
-                  </div>
-                } @else {
-                  <div class="time-input-group" (click)="$event.stopPropagation()">
-                    <input type="text" class="time-segment" [value]="getTimeHours(control)"
-                           (change)="onGlobalSearchTimeChange($event, control, 'hours')"
-                           placeholder="00" maxlength="2" pattern="[0-9]{0,2}" />
-                    <span class="time-separator">:</span>
-                    <input type="text" class="time-segment" [value]="getTimeMinutes(control)"
-                           (change)="onGlobalSearchTimeChange($event, control, 'minutes')"
-                           placeholder="00" maxlength="2" pattern="[0-9]{0,2}" />
-                    <span class="time-separator">:</span>
-                    <input type="text" class="time-segment" [value]="getTimeSeconds(control)"
-                           (change)="onGlobalSearchTimeChange($event, control, 'seconds')"
-                           placeholder="00" maxlength="2" pattern="[0-9]{0,2}" />
-                  </div>
+                @case ('Combo box') {
+                  <app-combo-control
+                    [control]="control"
+                    [mode]="'inline'"
+                    (valueChange)="onGlobalSearchComboChange(control, $event)"
+                  />
                 }
-              }
-
-              <!-- Trigger Control -->
-              @if (control.type === 'Trigger') {
-                <button
-                  class="trigger-button"
-                  (click)="onGlobalSearchTrigger($event, control)"
-                  [disabled]="control.direction === 'Read Only'"
-                >
-                  Trigger
-                </button>
+                @case ('Text') {
+                  <app-text-control
+                    [control]="control"
+                    [mode]="'inline'"
+                    (valueChange)="onGlobalSearchTextChange(control, $event)"
+                  />
+                }
+                @case ('Status') {
+                  <app-status-control
+                    [control]="control"
+                    [mode]="'inline'"
+                  />
+                }
+                @case ('State Trigger') {
+                  <app-state-trigger-control
+                    [control]="control"
+                    [mode]="'inline'"
+                    (valueChange)="onGlobalSearchValueChange(control, $event)"
+                  />
+                }
+                @case ('Time') {
+                  <app-time-control
+                    [control]="control"
+                    [mode]="'inline'"
+                    (valueChange)="onGlobalSearchTimeChange(control, $event)"
+                  />
+                }
+                @case ('Trigger') {
+                  <app-trigger-control
+                    [control]="control"
+                    (trigger)="onGlobalSearchTrigger(control)"
+                  />
+                }
               }
             </div>
           </div>
@@ -263,7 +207,7 @@
         <input
           type="text"
           class="search-input"
-          placeholder="Search components (regex)..."
+          placeholder="Search components (supports regex)..."
           [(ngModel)]="searchTerm"
         />
       </div>
@@ -306,7 +250,7 @@
         <input
           type="text"
           class="search-input"
-          placeholder="Search controls (regex)..."
+          placeholder="Search controls (supprts regex)..."
           [(ngModel)]="controlSearchTerm"
         />
       </div>
@@ -323,151 +267,79 @@
             </div>
 
             <div class="control-editor-inline" (click)="$event.stopPropagation()">
-                <!-- Boolean Control -->
-                @if (control.type === 'Boolean') {
-                  <div class="toggle-group">
-                    <button
-                      class="toggle-button"
-                      [class.active]="!control.value"
-                      (click)="setControlValue(control, 0)"
-                      [disabled]="control.direction === 'Read Only'"
-                    >
-                      Off (0)
-                    </button>
-                    <button
-                      class="toggle-button"
-                      [class.active]="control.value"
-                      (click)="setControlValue(control, 1)"
-                      [disabled]="control.direction === 'Read Only'"
-                    >
-                      On (1)
-                    </button>
-                  </div>
+              @switch (control.type) {
+                @case ('Boolean') {
+                  <app-boolean-control
+                    [control]="control"
+                    [mode]="'inline'"
+                    (valueChange)="setControlValue(control, $event)"
+                  />
                 }
-
-                <!-- Knob/Level Control -->
-                @if (control.type === 'Knob') {
-                  @if (control.direction === 'Read Only') {
-                    <div class="info-value">{{ control.string || control.value }}</div>
-                  } @else {
-                    <label class="inline-label">Level ({{ control.string || control.value }})</label>
-                    <input
-                      type="range"
-                      class="slider"
-                      [value]="control.position"
-                      (input)="onInlineSliderInput($event, control)"
-                      (mousedown)="onInlineSliderDragStart(control)"
-                      (mouseup)="onInlineSliderDragEnd()"
-                      (touchstart)="onInlineSliderDragStart(control)"
-                      (touchend)="onInlineSliderDragEnd()"
-                      [min]="0"
-                      [max]="1"
-                      step="0.01"
-                    />
-                  }
+                @case ('Knob') {
+                  <app-knob-control
+                    [control]="control"
+                    [mode]="'inline'"
+                    (valueChange)="onInlineSliderInput(control, $event)"
+                    (dragStart)="onInlineSliderDragStart(control)"
+                    (dragEnd)="onInlineSliderDragEnd()"
+                  />
                 }
-
-                <!-- Numeric Control (Float/Integer) -->
-                @if (control.type === 'Float' || control.type === 'Integer') {
-                  @if (control.direction === 'Read Only') {
-                    <div class="info-value">{{ control.value }}</div>
-                  } @else {
-                    <input
-                      type="number"
-                      class="value-input"
-                      [value]="control.value"
-                      (change)="onInlineValueChange($event, control)"
-                      [step]="control.type === 'Integer' ? 1 : 0.1"
-                    />
-                  }
+                @case ('Float') {
+                  <app-numeric-control
+                    [control]="control"
+                    [mode]="'inline'"
+                    (valueChange)="onInlineValueChange(control, $event)"
+                  />
                 }
-
-                <!-- Combo box Control -->
-                @if (control.type === 'Combo box' && control.choices) {
-                  @if (control.direction === 'Read Only') {
-                    <div class="info-value">{{ control.string }}</div>
-                  } @else {
-                    <select
-                      class="value-input"
-                      [value]="control.string"
-                      (change)="onInlineComboChange($event, control)"
-                    >
-                      @for (choice of control.choices; track choice) {
-                        <option [value]="choice" [selected]="choice === control.string">{{ choice }}</option>
-                      }
-                    </select>
-                  }
+                @case ('Integer') {
+                  <app-numeric-control
+                    [control]="control"
+                    [mode]="'inline'"
+                    (valueChange)="onInlineValueChange(control, $event)"
+                  />
                 }
-
-                <!-- Text Control -->
-                @if (control.type === 'Text') {
-                  @if (control.direction === 'Read Only') {
-                    <div class="info-value">{{ control.string }}</div>
-                  } @else {
-                    <textarea
-                      class="text-area-input"
-                      [value]="control.string"
-                      (change)="onInlineTextChange($event, control)"
-                      rows="2"
-                      placeholder="Enter text..."
-                    ></textarea>
-                  }
+                @case ('Combo box') {
+                  <app-combo-control
+                    [control]="control"
+                    [mode]="'inline'"
+                    (valueChange)="onInlineComboChange(control, $event)"
+                  />
                 }
-
-                <!-- Status Control -->
-                @if (control.type === 'Status') {
-                  <div class="status-display" [ngClass]="getStatusColorClassForControl(control)">
-                    <div class="status-value">{{ control.string || control.value }}</div>
-                  </div>
+                @case ('Text') {
+                  <app-text-control
+                    [control]="control"
+                    [mode]="'inline'"
+                    (valueChange)="onInlineTextChange(control, $event)"
+                  />
                 }
-
-                <!-- State Trigger Control -->
-                @if (control.type === 'State Trigger') {
-                  <select
-                    class="value-input"
-                    [value]="control.value"
-                    (change)="onInlineValueChange($event, control)"
-                    [disabled]="control.direction === 'Read Only'"
-                  >
-                    <option value="0">{{ control.valueMin }} (0)</option>
-                    <option value="1">{{ control.valueMax }} (1)</option>
-                  </select>
+                @case ('Status') {
+                  <app-status-control
+                    [control]="control"
+                    [mode]="'inline'"
+                  />
                 }
-
-                <!-- Time Control -->
-                @if (control.type === 'Time') {
-                  @if (control.direction === 'Read Only') {
-                    <div class="time-display">
-                      <div class="time-value">{{ control.string }}</div>
-                    </div>
-                  } @else {
-                    <div class="time-input-group">
-                      <input type="text" class="time-segment" [value]="getTimeHours(control)"
-                             (change)="onInlineTimeChange($event, control, 'hours')"
-                             placeholder="00" maxlength="2" pattern="[0-9]{0,2}" />
-                      <span class="time-separator">:</span>
-                      <input type="text" class="time-segment" [value]="getTimeMinutes(control)"
-                             (change)="onInlineTimeChange($event, control, 'minutes')"
-                             placeholder="00" maxlength="2" pattern="[0-9]{0,2}" />
-                      <span class="time-separator">:</span>
-                      <input type="text" class="time-segment" [value]="getTimeSeconds(control)"
-                             (change)="onInlineTimeChange($event, control, 'seconds')"
-                             placeholder="00" maxlength="2" pattern="[0-9]{0,2}" />
-                    </div>
-                  }
+                @case ('State Trigger') {
+                  <app-state-trigger-control
+                    [control]="control"
+                    [mode]="'inline'"
+                    (valueChange)="onInlineValueChange(control, $event)"
+                  />
                 }
-
-                <!-- Trigger Control -->
-                @if (control.type === 'Trigger') {
-                  <button
-                    class="trigger-button"
-                    (click)="onInlineTrigger(control)"
-                    [disabled]="control.direction === 'Read Only'"
-                  >
-                    Trigger
-                  </button>
+                @case ('Time') {
+                  <app-time-control
+                    [control]="control"
+                    [mode]="'inline'"
+                    (valueChange)="onInlineTimeChange(control, $event)"
+                  />
                 }
-              </div>
+                @case ('Trigger') {
+                  <app-trigger-control
+                    [control]="control"
+                    (trigger)="onInlineTrigger(control)"
+                  />
+                }
+              }
+            </div>
           </div>
         }
       </div>
