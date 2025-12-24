@@ -106,14 +106,14 @@
                   <app-boolean-control
                     [control]="control"
                     [mode]="'inline'"
-                    (valueChange)="onGlobalSearchControlUpdate(control, $event)"
+                    (valueChange)="handleControlValueChange(control, $event)"
                   />
                 }
                 @case ('Knob') {
                   <app-knob-control
                     [control]="control"
                     [mode]="'inline'"
-                    (valueChange)="onGlobalSearchSliderInput(control, $event)"
+                    (positionChange)="handleControlPositionChange(control, $event)"
                     (dragStart)="onInlineSliderDragStart(control)"
                     (dragEnd)="onInlineSliderDragEnd()"
                   />
@@ -122,28 +122,28 @@
                   <app-numeric-control
                     [control]="control"
                     [mode]="'inline'"
-                    (valueChange)="onGlobalSearchValueChange(control, $event)"
+                    (valueChange)="handleControlValueChange(control, $event)"
                   />
                 }
                 @case ('Integer') {
                   <app-numeric-control
                     [control]="control"
                     [mode]="'inline'"
-                    (valueChange)="onGlobalSearchValueChange(control, $event)"
+                    (valueChange)="handleControlValueChange(control, $event)"
                   />
                 }
                 @case ('Combo box') {
                   <app-combo-control
                     [control]="control"
                     [mode]="'inline'"
-                    (valueChange)="onGlobalSearchComboChange(control, $event)"
+                    (valueChange)="handleControlValueChange(control, $event)"
                   />
                 }
                 @case ('Text') {
                   <app-text-control
                     [control]="control"
                     [mode]="'inline'"
-                    (valueChange)="onGlobalSearchTextChange(control, $event)"
+                    (valueChange)="handleControlValueChange(control, $event)"
                   />
                 }
                 @case ('Status') {
@@ -156,20 +156,20 @@
                   <app-state-trigger-control
                     [control]="control"
                     [mode]="'inline'"
-                    (valueChange)="onGlobalSearchValueChange(control, $event)"
+                    (valueChange)="handleControlValueChange(control, $event)"
                   />
                 }
                 @case ('Time') {
                   <app-time-control
                     [control]="control"
                     [mode]="'inline'"
-                    (valueChange)="onGlobalSearchTimeChange(control, $event)"
+                    (valueChange)="handleControlValueChange(control, $event)"
                   />
                 }
                 @case ('Trigger') {
                   <app-trigger-control
                     [control]="control"
-                    (trigger)="onGlobalSearchTrigger(control)"
+                    (trigger)="handleControlTrigger(control)"
                   />
                 }
               }
@@ -272,14 +272,14 @@
                   <app-boolean-control
                     [control]="control"
                     [mode]="'inline'"
-                    (valueChange)="setControlValue(control, $event)"
+                    (valueChange)="handleControlValueChange(control, $event)"
                   />
                 }
                 @case ('Knob') {
                   <app-knob-control
                     [control]="control"
                     [mode]="'inline'"
-                    (valueChange)="onInlineSliderInput(control, $event)"
+                    (positionChange)="handleControlPositionChange(control, $event)"
                     (dragStart)="onInlineSliderDragStart(control)"
                     (dragEnd)="onInlineSliderDragEnd()"
                   />
@@ -288,28 +288,28 @@
                   <app-numeric-control
                     [control]="control"
                     [mode]="'inline'"
-                    (valueChange)="onInlineValueChange(control, $event)"
+                    (valueChange)="handleControlValueChange(control, $event)"
                   />
                 }
                 @case ('Integer') {
                   <app-numeric-control
                     [control]="control"
                     [mode]="'inline'"
-                    (valueChange)="onInlineValueChange(control, $event)"
+                    (valueChange)="handleControlValueChange(control, $event)"
                   />
                 }
                 @case ('Combo box') {
                   <app-combo-control
                     [control]="control"
                     [mode]="'inline'"
-                    (valueChange)="onInlineComboChange(control, $event)"
+                    (valueChange)="handleControlValueChange(control, $event)"
                   />
                 }
                 @case ('Text') {
                   <app-text-control
                     [control]="control"
                     [mode]="'inline'"
-                    (valueChange)="onInlineTextChange(control, $event)"
+                    (valueChange)="handleControlValueChange(control, $event)"
                   />
                 }
                 @case ('Status') {
@@ -322,20 +322,20 @@
                   <app-state-trigger-control
                     [control]="control"
                     [mode]="'inline'"
-                    (valueChange)="onInlineValueChange(control, $event)"
+                    (valueChange)="handleControlValueChange(control, $event)"
                   />
                 }
                 @case ('Time') {
                   <app-time-control
                     [control]="control"
                     [mode]="'inline'"
-                    (valueChange)="onInlineTimeChange(control, $event)"
+                    (valueChange)="handleControlValueChange(control, $event)"
                   />
                 }
                 @case ('Trigger') {
                   <app-trigger-control
                     [control]="control"
-                    (trigger)="onInlineTrigger(control)"
+                    (trigger)="handleControlTrigger(control)"
                   />
                 }
               }
@@ -369,120 +369,57 @@
           <!-- Boolean Control -->
           @if (control.type === 'Boolean') {
             <div class="editor-section">
-              <label>Value</label>
-              <div class="toggle-group">
-                <button
-                  class="toggle-button"
-                  [class.active]="!editValue"
-                  (click)="setBooleanValue(false)"
-                  [disabled]="control.direction === 'Read Only'"
-                >
-                  Off (0)
-                </button>
-                <button
-                  class="toggle-button"
-                  [class.active]="editValue"
-                  (click)="setBooleanValue(true)"
-                  [disabled]="control.direction === 'Read Only'"
-                >
-                  On (1)
-                </button>
-              </div>
+              <app-boolean-control
+                [control]="control"
+                mode="editor"
+                (valueChange)="handleControlValueChange(control, $event)"
+              ></app-boolean-control>
             </div>
           }
 
           <!-- Knob/Level Control -->
           @if (control.type === 'Knob') {
             <div class="editor-section">
-              @if (control.direction === 'Read Only') {
-                <label>Value</label>
-                <div class="info-value">{{ getDisplayValue() }}</div>
-              } @else {
-                <label>Level ({{ getDisplayValue() }})</label>
-                <input
-                  type="range"
-                  class="slider"
-                  [(ngModel)]="editValue"
-                  (input)="onSliderInput($event)"
-                  (mousedown)="onSliderDragStart()"
-                  (mouseup)="onSliderDragEnd()"
-                  (touchstart)="onSliderDragStart()"
-                  (touchend)="onSliderDragEnd()"
-                  [min]="0"
-                  [max]="1"
-                  step="0.01"
-                />
-              }
+              <app-knob-control
+                [control]="control"
+                mode="editor"
+                (positionChange)="handleControlPositionChange(control, $event)"
+                (dragStart)="onInlineSliderDragStart(control)"
+                (dragEnd)="onInlineSliderDragEnd()"
+              ></app-knob-control>
             </div>
-
-            @if (control.direction !== 'Read Only') {
-              <div class="editor-section">
-                <label>Absolute Value ({{ control.valueMin ?? 0 }} - {{ control.valueMax ?? 1 }})</label>
-                <input
-                  type="number"
-                  class="value-input"
-                  [value]="getKnobAbsoluteValue()"
-                  (change)="onKnobAbsoluteValueChange($event)"
-                  [min]="control.valueMin ?? 0"
-                  [max]="control.valueMax ?? 1"
-                  [step]="getKnobValueStep()"
-                />
-              </div>
-            }
           }
 
           <!-- Numeric Control (Float/Integer) -->
           @if (control.type === 'Float' || control.type === 'Integer') {
             <div class="editor-section">
-              <label>Value</label>
-              @if (control.direction === 'Read Only') {
-                <div class="info-value">{{ editValue }}</div>
-              } @else {
-                <input
-                  type="number"
-                  class="value-input"
-                  [(ngModel)]="editValue"
-                  (ngModelChange)="updateControl()"
-                  [step]="control.type === 'Integer' ? 1 : 0.1"
-                />
-              }
+              <app-numeric-control
+                [control]="control"
+                mode="editor"
+                (valueChange)="handleControlValueChange(control, $event)"
+              ></app-numeric-control>
             </div>
           }
 
           <!-- Combo box Control -->
           @if (control.type === 'Combo box' && control.choices) {
             <div class="editor-section">
-              <label>Value</label>
-              @if (control.direction === 'Read Only') {
-                <div class="info-value">{{ editValue }}</div>
-              } @else {
-                <select
-                  class="value-input"
-                  [(ngModel)]="editValue"
-                  (ngModelChange)="updateControl()"
-                >
-                  @for (choice of control.choices; track choice) {
-                    <option [value]="choice">{{ choice }}</option>
-                  }
-                </select>
-              }
+              <app-combo-control
+                [control]="control"
+                mode="editor"
+                (valueChange)="handleControlValueChange(control, $event)"
+              ></app-combo-control>
             </div>
           }
 
           <!-- Text Control -->
           @if (control.type === 'Text') {
             <div class="editor-section">
-              <label>Value</label>
-              @if (control.direction === 'Read Only' || control.direction === 'Write Only') {
-                <div class="text-display">{{ editValue }}</div>
-              } @else {
-                <textarea
-                  class="text-area-input"
-                  [(ngModel)]="editValue"
-                  (ngModelChange)="updateControl()"
-                  rows="4"
-                ></textarea>
-              }
+              <app-text-control
+                [control]="control"
+                mode="editor"
+                (valueChange)="onTextControlValueChange($event)"
+              ></app-text-control>
             </div>
 
             <!-- Lua Script Management (only for 'code' controls) -->
@@ -575,130 +512,45 @@
           <!-- Trigger Control -->
           @if (control.type === 'Trigger') {
             <div class="editor-section">
-              <label>Trigger Action</label>
-              <button
-                class="trigger-button"
-                (click)="triggerControl()"
-                [disabled]="control.direction === 'Read Only'"
-              >
-                Trigger
-              </button>
+              <app-trigger-control
+                [control]="control"
+                mode="editor"
+                (trigger)="handleControlTrigger(control)"
+              ></app-trigger-control>
             </div>
           }
 
           <!-- State Trigger Control -->
           @if (control.type === 'State Trigger') {
-            @if (control.direction === 'Read Only') {
-              <div class="editor-section">
-                <label>Value</label>
-                <div class="info-value">{{ editValue }}</div>
-              </div>
-            } @else {
-              <div class="editor-section">
-                <label>State Value</label>
-                <select
-                  class="value-input"
-                  [(ngModel)]="editValue"
-                  (ngModelChange)="updateControl()"
-                >
-                  @for (value of getStateTriggerValues(); track value) {
-                    <option [value]="value">{{ value }}</option>
-                  }
-                </select>
-              </div>
-              <div class="editor-section">
-                <label>Trigger Action</label>
-                <button
-                  class="trigger-button"
-                  (click)="triggerControl()"
-                >
-                  Trigger
-                </button>
-              </div>
-            }
+            <div class="editor-section">
+              <app-state-trigger-control
+                [control]="control"
+                mode="editor"
+                (valueChange)="handleControlValueChange(control, $event)"
+                (trigger)="handleControlTrigger(control)"
+              ></app-state-trigger-control>
+            </div>
           }
 
           <!-- Status Control -->
           @if (control.type === 'Status') {
             <div class="editor-section">
-              <label>Status</label>
-              @if (control.direction === 'Read Only') {
-                <div class="status-display" [ngClass]="getStatusColorClass()">
-                  <div class="status-value">{{ control.string || control.value || 'N/A' }}</div>
-                  @if (control.value !== undefined && control.valueMin !== undefined && control.valueMax !== undefined) {
-                    <div class="status-range">
-                      Range: {{ control.valueMin }} - {{ control.valueMax }}
-                    </div>
-                  }
-                </div>
-              } @else {
-                <select
-                  class="status-select"
-                  [(ngModel)]="editValue"
-                  (ngModelChange)="updateControl()"
-                  [ngClass]="getStatusColorClass()"
-                >
-                  <option [value]="0">0 - OK</option>
-                  <option [value]="1">1 - Compromised</option>
-                  <option [value]="2">2 - Fault</option>
-                  <option [value]="3">3 - Not Present</option>
-                  <option [value]="4">4 - Missing</option>
-                  <option [value]="5">5 - Initializing</option>
-                </select>
-                @if (control.string) {
-                  <div class="status-info">{{ control.string }}</div>
-                }
-              }
+              <app-status-control
+                [control]="control"
+                mode="editor"
+                (valueChange)="handleControlValueChange(control, $event)"
+              ></app-status-control>
             </div>
           }
 
           <!-- Time Control -->
           @if (control.type === 'Time') {
             <div class="editor-section">
-              <label>Time Value</label>
-              @if (control.direction === 'Read Only') {
-                <div class="time-display">
-                  <div class="time-value">{{ control.string || control.value || 'N/A' }}</div>
-                  @if (control.value !== undefined) {
-                    <div class="time-info">Raw Value: {{ control.value }}</div>
-                  }
-                </div>
-              } @else {
-                <div class="time-input-group">
-                  <input
-                    type="text"
-                    class="time-segment"
-                    [(ngModel)]="timeHours"
-                    (ngModelChange)="onTimeChange()"
-                    (focus)="onTimeSegmentFocus($event)"
-                    placeholder="00"
-                    maxlength="2"
-                    pattern="[0-9]{0,2}"
-                  />
-                  <span class="time-separator">:</span>
-                  <input
-                    type="text"
-                    class="time-segment"
-                    [(ngModel)]="timeMinutes"
-                    (ngModelChange)="onTimeChange()"
-                    (focus)="onTimeSegmentFocus($event)"
-                    placeholder="00"
-                    maxlength="2"
-                    pattern="[0-9]{0,2}"
-                  />
-                  <span class="time-separator">:</span>
-                  <input
-                    type="text"
-                    class="time-segment"
-                    [(ngModel)]="timeSeconds"
-                    (ngModelChange)="onTimeChange()"
-                    (focus)="onTimeSegmentFocus($event)"
-                    placeholder="00"
-                    maxlength="2"
-                    pattern="[0-9]{0,2}"
-                  />
-                </div>
-              }
+              <app-time-control
+                [control]="control"
+                mode="editor"
+                (valueChange)="handleControlValueChange(control, $event)"
+              ></app-time-control>
             </div>
           }
 

@@ -452,6 +452,8 @@ export class QsysBrowser implements OnInit, OnDestroy {
         position: ctrl.Position !== undefined ? ctrl.Position : ctrl.position,
         string: ctrl.String !== undefined ? ctrl.String : ctrl.string,
         choices: ctrl.Choices || ctrl.choices,
+        stringMin: ctrl.StringMin || ctrl.stringMin,
+        stringMax: ctrl.StringMax || ctrl.stringMax,
       }));
 
       this.browserService.setControls(controlList);
@@ -562,15 +564,10 @@ export class QsysBrowser implements OnInit, OnDestroy {
     }
   }
 
-  // Handle control item click - only navigate to editor for 'code' controls
+  // Handle control item click - navigate to editor
   onControlClick(control: ControlInfo, event: MouseEvent): void {
-    // Open dedicated editor view for 'code' controls (Lua Script Management) and 'Knob' controls
-    if (control.name?.toLowerCase() === 'code') {
-      this.selectControl(control);
-    } else if (control.type === 'Knob') {
-      this.selectControl(control);
-    }
-    // For all other controls, do nothing - let inline editing handle it
+    //console.log('Control clicked:', control);
+    this.selectControl(control);
   }
 
   // Select a control for editing (opens dedicated editor view)
@@ -583,168 +580,18 @@ export class QsysBrowser implements OnInit, OnDestroy {
       this.initializeLogHistory();
     }
 
-    // For combo boxes, use string value to match choices
-    if (control.type === 'Combo box') {
+    // For Lua script management (Text/Code controls), we still use editValue
+    // For other controls (Knob, Time, Combo, etc.), components handle their own state
+    if (control.type === 'Text' || control.name?.toLowerCase() === 'code') {
       this.editValue = control.string ?? '';
-    } else if (control.type === 'Text') {
-      // For text controls, use string value
-      this.editValue = control.string ?? '';
-    } else if (control.type === 'Knob') {
-      // For knobs, use position (0-1) for slider control
-      this.editValue = control.position ?? 0;
-    } else if (control.type === 'Time') {
-      // For time controls, parse the value (in seconds) into hh:mm:ss segments
-      const totalSeconds = control.value ?? 0;
-      const hours = Math.floor(totalSeconds / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = Math.floor(totalSeconds % 60);
-
-      this.timeHours = String(hours).padStart(2, '0');
-      this.timeMinutes = String(minutes).padStart(2, '0');
-      this.timeSeconds = String(seconds).padStart(2, '0');
-      this.editValue = totalSeconds;
     } else {
-      this.editValue = control.value ?? control.position ?? control.string ?? '';
-    }
-  }
-
-  // Update the control value
-  updateControl(): void {
-    const control = this.browserService.selectedControl();
-    if (!control) return;
-
-    let value = this.editValue;
-
-    // Convert value based on control type
-    switch (control.type) {
-      case 'Boolean':
-        value = value ? 1 : 0;
-        break;
-      case 'Integer':
-        value = Math.floor(Number(value));
-        break;
-      case 'Float':
-        value = Number(value);
-        break;
-      case 'Knob':
-        // For Knob controls, editValue stores position (0-1)
-        // Convert position to absolute value in the control's range for QRWC
-        const valueMin = control.valueMin ?? 0;
-        const valueMax = control.valueMax ?? 1;
-        value = valueMin + (this.editValue * (valueMax - valueMin));
-        break;
+      this.editValue = null;
     }
 
-    this.browserService.updateControlValue(value, undefined);
-    console.log(`Updated ${control.name} to ${value}`);
-  }
-
-  // Set boolean value and update immediately
-  setBooleanValue(value: boolean): void {
-    this.editValue = value;
-    this.updateControl();
-  }
-
-  // Trigger control (sends a trigger pulse)
-  triggerControl(): void {
-    const control = this.browserService.selectedControl();
-    if (!control) return;
-
-    // Triggers typically send value 1
-    this.browserService.updateControlValue(1, undefined);
-    console.log(`Triggered ${control.name}`);
-  }
-
-  // Get min value for slider (valueMin or 0)
-  getSliderMin(): number {
-    const control = this.browserService.selectedControl();
-    return control?.valueMin ?? 0;
-  }
-
-  // Get max value for slider (valueMax or 1)
-  getSliderMax(): number {
-    const control = this.browserService.selectedControl();
-    return control?.valueMax ?? 1;
-  }
-
-  // Get absolute value for Knob control from current position
-  getKnobAbsoluteValue(): number {
-    const control = this.browserService.selectedControl();
-    if (!control) return 0;
-
-    // Use the actual value from QRWC instead of calculating from position
-    // QRWC already provides the correct absolute value (handling logarithmic scales, etc.)
-    if (control.value !== undefined) {
-      return Math.round(control.value * 100) / 100;
-    }
-
-    const valueMin = control.valueMin ?? 0;
-    const valueMax = control.valueMax ?? 1;
-    const position = this.editValue ?? 0;
-
-    // Convert position (0-1) to absolute value in range
-    const absoluteValue = valueMin + (position * (valueMax - valueMin));
-
-    // Round to 2 decimal places to avoid floating point precision issues
-    return Math.round(absoluteValue * 100) / 100;
-  }
-
-  // Get appropriate step value for Knob absolute value input
-  getKnobValueStep(): number {
-    const control = this.browserService.selectedControl();
-    if (!control) return 0.1;
-
-    const valueMin = control.valueMin ?? 0;
-    const valueMax = control.valueMax ?? 1;
-    const range = valueMax - valueMin;
-
-    // Use smaller step for larger ranges
-    if (range > 1000) return 10;
-    if (range > 100) return 1;
-    if (range > 10) return 0.1;
-    return 0.01;
-  }
-
-  // Handle absolute value change for Knob control
-  onKnobAbsoluteValueChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const absoluteValue = parseFloat(input.value);
-    const control = this.browserService.selectedControl();
-
-    if (!control) return;
-
-    const valueMin = control.valueMin ?? 0;
-    const valueMax = control.valueMax ?? 1;
-
-    // Clamp to valid range
-    const clampedValue = Math.max(valueMin, Math.min(valueMax, absoluteValue));
-
-    // Convert absolute value to position (0-1)
-    const position = (clampedValue - valueMin) / (valueMax - valueMin);
-
-    // Update the position
-    this.editValue = position;
-    this.updateControl();
-  }
-
-  // Get display value with 1 decimal place
-  getDisplayValue(): string {
-    const control = this.browserService.selectedControl();
-
-    // For Knob controls, use the string representation from server if available
-    // This includes units (e.g. "558Hz") and proper formatting
-    if (control?.type === 'Knob') {
-      if (control.string) {
-        return control.string;
-      }
-      const absoluteValue = this.getKnobAbsoluteValue();
-      return absoluteValue.toFixed(1);
-    }
-
-    if (typeof this.editValue === 'number') {
-      return this.editValue.toFixed(1);
-    }
-    return String(this.editValue);
+    // Reset time segments
+    this.timeHours = '';
+    this.timeMinutes = '';
+    this.timeSeconds = '';
   }
 
   // Get status color class based on Q-SYS status value
@@ -775,73 +622,6 @@ export class QsysBrowser implements OnInit, OnDestroy {
     }
   }
 
-  // Get available values for State Trigger based on min/max range
-  getStateTriggerValues(): number[] {
-    const control = this.browserService.selectedControl();
-    if (!control) return [0];
-
-    // Check if control has choices (like combo box)
-    if (control.choices && control.choices.length > 0) {
-      return control.choices.map(c => Number(c));
-    }
-
-    // Use valueMin/valueMax if available, otherwise use current value to determine range
-    let min = control.valueMin ?? 0;
-    let max = control.valueMax ?? 1;
-
-    // If current value is outside the min/max range, expand the range to include it
-    if (control.value !== undefined) {
-      const currentValue = Number(control.value);
-      if (currentValue < min) min = currentValue;
-      if (currentValue > max) max = currentValue;
-    }
-
-    const values: number[] = [];
-    for (let i = min; i <= max; i++) {
-      values.push(i);
-    }
-
-    return values;
-  }
-
-  // Slider drag start - prevent feedback updates
-  onSliderDragStart(): void {
-    this.isDragging = true;
-  }
-
-  // Slider drag end - allow feedback updates and send final value
-  onSliderDragEnd(): void {
-    this.isDragging = false;
-    this.updateControl();
-  }
-
-  // Slider input - update value without sending to Q-SYS (for display only)
-  onSliderInput(event: Event): void {
-    const target = event.target as HTMLInputElement;
-    // For Knob controls, editValue stores position (0-1), use full precision
-    this.editValue = parseFloat(target.value);
-  }
-
-  // Time control - handle segment changes
-  onTimeChange(): void {
-    // Pad segments to 2 digits
-    const hours = this.timeHours.padStart(2, '0');
-    const minutes = this.timeMinutes.padStart(2, '0');
-    const seconds = this.timeSeconds.padStart(2, '0');
-
-    // Combine into total seconds value
-    const totalSeconds = (parseInt(hours) || 0) * 3600 + (parseInt(minutes) || 0) * 60 + (parseInt(seconds) || 0);
-
-    this.editValue = totalSeconds;
-    this.updateControl();
-  }
-
-  // Time control - select all text on focus
-  onTimeSegmentFocus(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    input.select();
-  }
-
   // Navigation
   backToComponents(): void {
     // Unsubscribe from component when navigating away
@@ -854,128 +634,110 @@ export class QsysBrowser implements OnInit, OnDestroy {
     this.browserService.backToControls();
   }
 
-  // Inline control editing methods
-  toggleControlExpanded(control: ControlInfo): void {
-    const key = `${this.browserService.selectedComponent()?.name}:${control.name}`;
-    if (this.expandedControls.has(key)) {
-      this.expandedControls.delete(key);
-    } else {
-      this.expandedControls.add(key);
+  // Unified Control Interaction Methods
+  // These methods work for all views: global search, control list, and editor
+
+  /**
+   * Unified method to handle value changes for any control
+   * Automatically determines the correct component and discovery method
+   */
+  async handleControlValueChange(control: ControlInfo, value: any): Promise<void> {
+    console.log('handleControlValueChange called with:', control, value);
+    const componentName = control.componentName || this.browserService.selectedComponent()?.name;
+    if (!componentName) {
+      console.error('Cannot update control: no component name available');
+      return;
     }
-  }
 
-  isControlExpanded(control: ControlInfo): boolean {
-    const key = `${this.browserService.selectedComponent()?.name}:${control.name}`;
-    return this.expandedControls.has(key);
-  }
+    // Find the component to check discovery method
+    const component = control.componentName
+      ? this.browserService.components().find(c => c.name === componentName)
+      : this.browserService.selectedComponent();
 
-  async setControlValue(control: ControlInfo, value: number): Promise<void> {
-    const component = this.browserService.selectedComponent();
-    if (!component) return;
+    console.log(`Control value change: ${componentName}.${control.name} = ${value}`);
 
     try {
-      if (component.discoveryMethod === 'websocket') {
-        await this.qsysService.setControlViaHTTP(component.name, control.name, value);
+      if (component?.discoveryMethod === 'websocket') {
+        await this.qsysService.setControlViaHTTP(componentName, control.name, value);
       } else {
-        await this.qsysService.setControl(component.name, control.name, value);
+        await this.qsysService.setControl(componentName, control.name, value);
       }
     } catch (error) {
       console.error('Failed to set control:', error);
     }
   }
 
+  /**
+   * Unified method to handle position changes for slider controls
+   * Handles both Knob controls (use position API) and Float/Integer controls (convert to value)
+   */
+  async handleControlPositionChange(control: ControlInfo, position: number): Promise<void> {
+    const componentName = control.componentName || this.browserService.selectedComponent()?.name;
+    if (!componentName) {
+      console.error('Cannot update control: no component name available');
+      return;
+    }
+
+    // Find the component to check discovery method
+    const component = control.componentName
+      ? this.browserService.components().find(c => c.name === componentName)
+      : this.browserService.selectedComponent();
+
+    // For Float/Integer controls, convert position (0-1) to value in range
+    if (control.type === 'Float' || control.type === 'Integer') {
+      const valueMin = control.valueMin ?? 0;
+      const valueMax = control.valueMax ?? 1;
+      const value = valueMin + (position * (valueMax - valueMin));
+
+      console.log(`Control position change (${control.type}): ${componentName}.${control.name} position=${position} -> value=${value}`);
+
+      // Use value-based API for Float/Integer
+      await this.handleControlValueChange(control, value);
+      return;
+    }
+
+    // For Knob controls, use position-based API
+    console.log(`Control position change (Knob): ${componentName}.${control.name} = ${position}`);
+
+    try {
+      if (component?.discoveryMethod === 'websocket') {
+        console.warn("Position updates via HTTP not implemented yet");
+      } else {
+        await this.qsysService.setControlPosition(componentName, control.name, position);
+      }
+    } catch (error) {
+      console.error('Failed to set control position:', error);
+    }
+  }
+
+  /**
+   * Unified method to handle trigger controls
+   */
+  async handleControlTrigger(control: ControlInfo): Promise<void> {
+    await this.handleControlValueChange(control, 1);
+  }
+
+  // Drag state management for sliders
   onInlineSliderDragStart(control: ControlInfo): void {
     // Clear any pending drag end timeout
     if (this.dragEndTimeout) {
       clearTimeout(this.dragEndTimeout);
       this.dragEndTimeout = null;
     }
-
+    console.log('Inline slider drag start:', control);
     this.isDragging = true;
     this.draggingControlName = control.name;
   }
 
   onInlineSliderDragEnd(): void {
     // Add a small delay before resuming feedback to allow in-flight updates to settle
+    console.log('Inline slider drag end:');
     this.dragEndTimeout = setTimeout(() => {
       this.isDragging = false;
       this.draggingControlName = null;
       this.dragEndTimeout = null;
+      console.log('Inline slider dragEndTimeout');
     }, 500); // 500ms delay
-  }
-
-  onInlineSliderInput(control: ControlInfo, value: number): void {
-    const componentName = this.browserService.selectedComponent()?.name;
-    if (componentName) {
-      const component = this.browserService.selectedComponent();
-      if (component?.discoveryMethod === 'websocket') {
-        // For WebSocket components, value is already in the correct format
-        this.qsysService.setControlViaHTTP(componentName, control.name, value);
-      } else {
-        // For QRWC components, value is already converted by the control component
-        this.qsysService.setControl(componentName, control.name, value);
-      }
-    }
-  }
-
-  onInlineValueChange(control: ControlInfo, value: number): void {
-    const componentName = this.browserService.selectedComponent()?.name;
-    if (componentName) {
-      const component = this.browserService.selectedComponent();
-      if (component?.discoveryMethod === 'websocket') {
-        this.qsysService.setControlViaHTTP(componentName, control.name, value);
-      } else {
-        this.qsysService.setControl(componentName, control.name, value);
-      }
-    }
-  }
-
-  onInlineComboChange(control: ControlInfo, value: string): void {
-    const componentName = this.browserService.selectedComponent()?.name;
-    if (componentName) {
-      const component = this.browserService.selectedComponent();
-      if (component?.discoveryMethod === 'websocket') {
-        this.qsysService.setControlViaHTTP(componentName, control.name, value);
-      } else {
-        this.qsysService.setControl(componentName, control.name, value);
-      }
-    }
-  }
-
-  onInlineTextChange(control: ControlInfo, value: string): void {
-    const componentName = this.browserService.selectedComponent()?.name;
-    if (componentName) {
-      const component = this.browserService.selectedComponent();
-      if (component?.discoveryMethod === 'websocket') {
-        this.qsysService.setControlViaHTTP(componentName, control.name, value);
-      } else {
-        this.qsysService.setControl(componentName, control.name, value);
-      }
-    }
-  }
-
-  onInlineTimeChange(control: ControlInfo, totalSeconds: number): void {
-    const componentName = this.browserService.selectedComponent()?.name;
-    if (componentName) {
-      const component = this.browserService.selectedComponent();
-      if (component?.discoveryMethod === 'websocket') {
-        this.qsysService.setControlViaHTTP(componentName, control.name, totalSeconds);
-      } else {
-        this.qsysService.setControl(componentName, control.name, totalSeconds);
-      }
-    }
-  }
-
-  onInlineTrigger(control: ControlInfo): void {
-    const componentName = this.browserService.selectedComponent()?.name;
-    if (componentName) {
-      const component = this.browserService.selectedComponent();
-      if (component?.discoveryMethod === 'websocket') {
-        this.qsysService.setControlViaHTTP(componentName, control.name, 1);
-      } else {
-        this.qsysService.setControl(componentName, control.name, 1);
-      }
-    }
   }
 
   // Global search methods
@@ -1048,79 +810,6 @@ export class QsysBrowser implements OnInit, OnDestroy {
     this.browserService.selectControlFromGlobalSearch(control);
   }
 
-  // Global search control interaction methods
-  onGlobalSearchControlUpdate(control: ControlInfo, value: number): void {
-    if (control.componentName) {
-      this.qsysService.setControl(control.componentName, control.name, value);
-    }
-  }
-
-  onGlobalSearchSliderInput(control: ControlInfo, value: number): void {
-    if (control.componentName) {
-      const component = this.browserService.components().find(c => c.name === control.componentName);
-      if (component?.discoveryMethod === 'websocket') {
-        this.qsysService.setControlViaHTTP(control.componentName, control.name, value);
-      } else {
-        this.qsysService.setControl(control.componentName, control.name, value);
-      }
-    }
-  }
-
-  onGlobalSearchValueChange(control: ControlInfo, value: number): void {
-    if (control.componentName) {
-      const component = this.browserService.components().find(c => c.name === control.componentName);
-      if (component?.discoveryMethod === 'websocket') {
-        this.qsysService.setControlViaHTTP(control.componentName, control.name, value);
-      } else {
-        this.qsysService.setControl(control.componentName, control.name, value);
-      }
-    }
-  }
-
-  onGlobalSearchComboChange(control: ControlInfo, value: string): void {
-    if (control.componentName) {
-      const component = this.browserService.components().find(c => c.name === control.componentName);
-      if (component?.discoveryMethod === 'websocket') {
-        this.qsysService.setControlViaHTTP(control.componentName, control.name, value);
-      } else {
-        this.qsysService.setControl(control.componentName, control.name, value);
-      }
-    }
-  }
-
-  onGlobalSearchTextChange(control: ControlInfo, value: string): void {
-    if (control.componentName) {
-      const component = this.browserService.components().find(c => c.name === control.componentName);
-      if (component?.discoveryMethod === 'websocket') {
-        this.qsysService.setControlViaHTTP(control.componentName, control.name, value);
-      } else {
-        this.qsysService.setControl(control.componentName, control.name, value);
-      }
-    }
-  }
-
-  onGlobalSearchTimeChange(control: ControlInfo, totalSeconds: number): void {
-    if (control.componentName) {
-      const component = this.browserService.components().find(c => c.name === control.componentName);
-      if (component?.discoveryMethod === 'websocket') {
-        this.qsysService.setControlViaHTTP(control.componentName, control.name, totalSeconds);
-      } else {
-        this.qsysService.setControl(control.componentName, control.name, totalSeconds);
-      }
-    }
-  }
-
-  onGlobalSearchTrigger(control: ControlInfo): void {
-    if (control.componentName) {
-      const component = this.browserService.components().find(c => c.name === control.componentName);
-      if (component?.discoveryMethod === 'websocket') {
-        this.qsysService.setControlViaHTTP(control.componentName, control.name, 1);
-      } else {
-        this.qsysService.setControl(control.componentName, control.name, 1);
-      }
-    }
-  }
-
   // Helper methods to get time segment values
   private getTimeHoursValue(control: ControlInfo): number {
     const totalSeconds = control.value ?? 0;
@@ -1178,7 +867,7 @@ export class QsysBrowser implements OnInit, OnDestroy {
     const currentCode = this.editValue || '';
     const newCode = this.luaScriptService.insertScript(currentCode, script);
     this.editValue = newCode;
-    this.updateControl();
+    this.browserService.updateControlValue(newCode, undefined);
   }
 
   // Remove a Lua script
@@ -1186,7 +875,13 @@ export class QsysBrowser implements OnInit, OnDestroy {
     const currentCode = this.editValue || '';
     const newCode = this.luaScriptService.removeScript(currentCode, scriptName);
     this.editValue = newCode;
-    this.updateControl();
+    this.browserService.updateControlValue(newCode, undefined);
+  }
+
+  // Handle text control value change (immediately update editValue for Lua)
+  onTextControlValueChange(value: string): void {
+    this.editValue = value;
+    this.browserService.updateControlValue(value, undefined);
   }
 
   // Log History Methods

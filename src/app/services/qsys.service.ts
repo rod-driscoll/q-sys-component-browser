@@ -53,7 +53,8 @@ export class QSysService {
     }
 
     const protocol = this.options.secure ? 'wss' : 'ws';
-    const url = `${protocol}://${this.options.coreIp}/qrc-public-api/v0`;
+    //const url = `${protocol}://${this.options.coreIp}/qrc-public-api/v0`;
+    const url = `${protocol}://${this.options.coreIp}/qrc`;
 
     try {
       console.log('Connecting to Q-SYS Core via QRWC...');
@@ -95,38 +96,40 @@ export class QSysService {
 
       // Set connection status after a brief delay to allow QRWC to initialize
       // QRWC needs time to discover and populate component.controls objects
-      setTimeout(() => {
+      setTimeout(async () => {
         this.qrwcComponents = this.qrwc?.components || null;
 
         // Debug: Log which components have controls loaded at initialization
         if (this.qrwcComponents) {
-          const componentNames = Object.keys(this.qrwcComponents);
-          let loadedCount = 0;
-          let notLoadedCount = 0;
+          try {
+            // Use getComponents() method instead of manual access
+            const components = await this.getComponents();
+            let loadedCount = 0;
+            let notLoadedCount = 0;
 
-          console.log('=== Component Control Loading Status ===');
-          componentNames.forEach(name => {
-            const component = this.qrwcComponents[name];
-            const controlCount = Object.keys(component.controls || {}).length;
+            console.log('=== Component Control Loading Status ===');
+            components.forEach(comp => {
+              if (comp.controlCount === 0) {
+                console.log(`  ⚠ ${comp.name}: 0 controls (may not be loaded yet)`);
+                notLoadedCount++;
+              } else {
+                console.log(`  ✓ ${comp.name}: ${comp.controlCount} controls`);
+                loadedCount++;
+              }
+            });
 
-            if (controlCount === 0) {
-              console.log(`  ⚠ ${name}: 0 controls (may not be loaded yet)`);
-              notLoadedCount++;
-            } else {
-              console.log(`  ✓ ${name}: ${controlCount} controls`);
-              loadedCount++;
-            }
-          });
-
-          console.log(`\nSummary: ${loadedCount} components with controls, ${notLoadedCount} components with 0 controls`);
-          console.log('Components with 0 controls may load their controls when accessed.');
-          console.log('========================================');
+            console.log(`\nSummary: ${loadedCount} components with controls, ${notLoadedCount} components with 0 controls`);
+            console.log('Components with 0 controls may load their controls when accessed.');
+            console.log('========================================');
+          } catch (error) {
+            console.error('Failed to log component status:', error);
+          }
         }
 
         this.isConnected.set(true);
         this.connectionStatus$.next(true);
         console.log('QRWC initialization complete');
-      }, 5000); // Increased from 2000ms to 5000ms to allow more time for component discovery
+      }, 2000); // Suggestion: Increase from 2000ms to 5000ms to allow more time for component discovery
 
     } catch (error) {
       console.error('Failed to connect:', error);
@@ -180,7 +183,7 @@ export class QSysService {
     console.log('Refreshing component control counts...');
 
     // Give QRWC additional time to populate controls
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     return this.getComponents();
   }
@@ -327,15 +330,23 @@ export class QSysService {
         let controlType = state.Type;
 
         // Override type based on control properties (Q-SYS often reports incorrect types)
-        // Check for Position first - Array types with Position are Integer Knobs, not Combo boxes
-        if (state.Position !== undefined && (controlType === 'Float' || controlType === 'Array')) {
+
+        // Priority 1: If it has Choices, it's a Combo box (or List Box)
+        // This overrides Position checks because even if it has a position (e.g. index),
+        // the presence of choices means we should show a dropdown.
+        // EXCEPTION: If it has ValueMin AND ValueMax, it's likely an Integer Knob with choices (steps),
+        // so we should let it fall through to the Knob check.
+        if (state.Choices && Array.isArray(state.Choices) && state.Choices.length > 0 &&
+          (state.ValueMin === undefined || state.ValueMax === undefined)) {
+          controlType = 'Combo box';
+        }
+        // Priority 2: Check for Position - Array types with Position (but no choices) are Integer Knobs
+        else if (state.Position !== undefined && (controlType === 'Float' || controlType === 'Array')) {
           // Float or Array with Position = Knob/Fader (use Position for control, not Value)
           controlType = 'Knob';
-        } else if (state.Choices && Array.isArray(state.Choices) && state.Choices.length > 0) {
-          // Has choices = Combo box (Q-SYS often reports as "Text")
-          controlType = 'Combo box';
-        } else if (!controlType || controlType === '') {
-          // If no type provided, infer from name patterns
+        }
+        // Priority 3: Infer from name patterns if no type provided
+        else if (!controlType || controlType === '') {
           if (/^(System|Power)(On|Off)$/i.test(controlName)) {
             controlType = 'State Trigger';
           } else if (controlName.endsWith('Trig') || controlName.toLowerCase().includes('trigger')) {
@@ -360,6 +371,8 @@ export class QSysService {
           Position: state.Position,
           String: state.String,
           Choices: state.Choices,
+          StringMin: state.StringMin,
+          StringMax: state.StringMax,
           // Add inferred properties
           Units: inferredProps.units,
           PushAction: inferredProps.pushAction,
@@ -519,12 +532,36 @@ export class QSysService {
   }
 
   /**
-   * Enable continuous polling - not needed with event listeners
-   * Kept for compatibility
+   * Set a control position (0-1)
+   * Uses QRWC's control.update({ Position: value }) API
    */
-  public enableContinuousPolling(): void {
-    // Not needed with QRWC event listeners
-    console.log('Continuous polling not needed - using event listeners');
+  async setControlPosition(componentName: string, controlName: string, position: number): Promise<void> {
+    if (!this.qrwcComponents) {
+      throw new Error('Not connected to Q-SYS Core');
+    }
+
+    try {
+      const component = this.qrwcComponents[componentName];
+      if (!component) {
+        throw new Error(`Component "${componentName}" not found`);
+      }
+
+      // Access control from component.controls
+      const control = component.controls?.[controlName];
+      if (!control) {
+        throw new Error(`Control "${controlName}" not found in component "${componentName}"`);
+      }
+
+      console.log(`Setting ${componentName}:${controlName} position to ${position}`);
+
+      // Use QRWC's update method with Position property
+      // According to QRWC docs: await control.update({ Position: 0.5 })
+      await control.update({ Position: position });
+
+    } catch (error) {
+      console.error(`Failed to set control position ${componentName}:${controlName}:`, error);
+      throw error;
+    }
   }
 
   /**
