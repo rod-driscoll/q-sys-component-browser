@@ -18,8 +18,10 @@ export class QSysService {
   private currentComponentListener: any = null;
   private currentComponent: any = null;
 
-  // Cache for on-demand loaded components
-  private componentCache: Map<string, any> = new Map();
+  // Cache no longer needed since we're using RPC instead of QRWC Components
+
+  // Keepalive timer to prevent connection timeout
+  private keepaliveTimer: any = null;
 
   // Connection state
   public isConnected = signal(false);
@@ -137,13 +139,15 @@ export class QSysService {
       this.unsubscribeFromComponent();
     }
 
+    // Stop keepalive timer
+    this.stopKeepalive();
+
     if (this.qrwc) {
       this.qrwc.disconnect();
       this.qrwc = null;
     }
 
-    // Clear component cache
-    this.componentCache.clear();
+    // Component cache removed - using RPC instead of QRWC Components
 
     this.isConnected.set(false);
     this.connectionStatus$.next(false);
@@ -229,10 +233,49 @@ export class QSysService {
         console.log(`  ⚠ ${failedCount} components failed to load controls`);
       }
 
+      // Now that we have control counts, start keepalive to keep connection alive
+      this.startKeepalive(webSocketManager);
+
       return componentsWithCounts;
     } catch (error) {
       console.error('Failed to get components:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Start keepalive timer to prevent WebSocket connection timeout
+   * Sends StatusGet RPC every 30 seconds to keep connection alive
+   */
+  private startKeepalive(webSocketManager: any): void {
+    // Clear any existing timer
+    if (this.keepaliveTimer) {
+      clearInterval(this.keepaliveTimer);
+    }
+
+    console.log('Starting keepalive timer (StatusGet every 30s)...');
+
+    // Send StatusGet RPC every 30 seconds to keep connection alive
+    this.keepaliveTimer = setInterval(async () => {
+      try {
+        await webSocketManager.sendRpc('StatusGet', undefined);
+        // Successful keepalive - no need to log
+      } catch (error) {
+        console.warn('Keepalive StatusGet failed:', error);
+      }
+    }, 30000); // 30 seconds
+
+    console.log('Keepalive timer started');
+  }
+
+  /**
+   * Stop keepalive timer
+   */
+  private stopKeepalive(): void {
+    if (this.keepaliveTimer) {
+      clearInterval(this.keepaliveTimer);
+      this.keepaliveTimer = null;
+      console.log('Keepalive timer stopped');
     }
   }
 
@@ -283,6 +326,66 @@ export class QSysService {
 
     // All attempts failed - return 0
     return 0;
+  }
+
+  /**
+   * Set control value via RPC
+   * Uses Component.Set RPC directly
+   */
+  private async setControlViaRpc(componentName: string, controlName: string, value: any): Promise<void> {
+    if (!this.qrwc) {
+      throw new Error('Not connected to Q-SYS Core');
+    }
+
+    try {
+      const webSocketManager = (this.qrwc as any).webSocketManager;
+
+      // Use Component.Set RPC to set control value
+      await webSocketManager.sendRpc('Component.Set', {
+        Name: componentName,
+        Controls: [
+          {
+            Name: controlName,
+            Value: value
+          }
+        ]
+      });
+
+      console.log(`Set ${componentName}:${controlName} = ${value} via RPC`);
+    } catch (error) {
+      console.error(`Failed to set control via RPC:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Set control position via RPC
+   * Uses Component.Set RPC with Position parameter
+   */
+  private async setControlPositionViaRpc(componentName: string, controlName: string, position: number): Promise<void> {
+    if (!this.qrwc) {
+      throw new Error('Not connected to Q-SYS Core');
+    }
+
+    try {
+      const webSocketManager = (this.qrwc as any).webSocketManager;
+
+      // Use Component.Set RPC to set control position
+      await webSocketManager.sendRpc('Component.Set', {
+        Name: componentName,
+        Controls: [
+          {
+            Name: controlName,
+            Position: position
+          }
+        ]
+      });
+
+      console.log(`Set ${componentName}:${controlName} position = ${position} via RPC`);
+    } catch (error) {
+      console.error(`Failed to set control position via RPC:`, error);
+      throw error;
+    }
   }
 
   /**
@@ -442,21 +545,179 @@ export class QSysService {
   }
 
   /**
-   * Subscribe to a component's control changes using component-level event listener
-   * NOTE: This method requires loading components on-demand which is not yet implemented
-   * Use HTTP API or WebSocket discovery for now
+   * Subscribe to a component's control changes using QRWC's ChangeGroup
+   * Uses QRWC's internal ChangeGroup to register controls for polling feedback
    */
-  subscribeToComponent(componentName: string): void {
-    console.warn('subscribeToComponent: Not implemented with on-demand loading. Use HTTP API instead.');
-    // TODO: Implement on-demand component loading to support subscriptions
+  async subscribeToComponent(componentName: string): Promise<void> {
+    if (!this.qrwc) {
+      throw new Error('Not connected to Q-SYS Core');
+    }
+
+    try {
+      console.log(`Subscribing to component: ${componentName} via ChangeGroup`);
+
+      // Unsubscribe from current component if any
+      if (this.currentComponentListener) {
+        await this.unsubscribeFromComponent();
+      }
+
+      // Get controls for the component
+      const controls = await this.getComponentControlsViaRpc(componentName);
+
+      if (controls.length === 0) {
+        console.warn(`Component ${componentName} has no controls to subscribe to`);
+        return;
+      }
+
+      // Access QRWC's internal ChangeGroup
+      const changeGroup = (this.qrwc as any).changeGroup;
+      const webSocketManager = (this.qrwc as any).webSocketManager;
+
+      // Register all controls with the ChangeGroup
+      console.log(`Registering ${controls.length} controls with ChangeGroup for ${componentName}`);
+
+      // Build the controls array for ChangeGroup.AddComponentControl
+      const controlsToRegister = controls.map(control => ({
+        Name: control.Name
+      }));
+
+      // Register all controls at once
+      await webSocketManager.sendRpc('ChangeGroup.AddComponentControl', {
+        Id: (changeGroup as any).id,
+        Component: {
+          Name: componentName,
+          Controls: controlsToRegister
+        }
+      });
+
+      // Store the component name for unsubscribe
+      this.currentComponentListener = componentName;
+
+      console.log(`✓ Subscribed to ${componentName} with ${controls.length} controls via ChangeGroup`);
+
+      // Start ChangeGroup polling if not already started
+      // Since we used componentFilter: () => false, QRWC didn't start polling automatically
+      await this.ensureChangeGroupPollingStarted();
+
+      // Start listening to ChangeGroup polls
+      this.listenToChangeGroupUpdates(componentName);
+
+    } catch (error) {
+      console.error(`Failed to subscribe to component ${componentName}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Ensure ChangeGroup polling is started
+   * QRWC only starts polling if components were loaded during init,
+   * but we filtered them all out, so we need to start it manually
+   */
+  private async ensureChangeGroupPollingStarted(): Promise<void> {
+    const changeGroup = (this.qrwc as any).changeGroup;
+
+    // Check if polling is already started by checking for intervalRef
+    if ((changeGroup as any).intervalRef) {
+      console.log('ChangeGroup polling already started');
+      return;
+    }
+
+    console.log('Starting ChangeGroup polling...');
+
+    // Start polling - this calls the internal startPolling method
+    await (changeGroup as any).startPolling();
+
+    console.log('✓ ChangeGroup polling started');
+  }
+
+  /**
+   * Listen to ChangeGroup poll results and emit control updates
+   */
+  private listenToChangeGroupUpdates(componentName: string): void {
+    // Access QRWC's internal ChangeGroup
+    const changeGroup = (this.qrwc as any).changeGroup;
+
+    // Override the ChangeGroup's poll method to intercept results
+    // Store original poll method
+    if (!(changeGroup as any)._originalPoll) {
+      (changeGroup as any)._originalPoll = (changeGroup as any).poll.bind(changeGroup);
+
+      // Replace with our interceptor
+      (changeGroup as any).poll = async () => {
+        // Call original poll
+        const webSocketManager = (this.qrwc as any).webSocketManager;
+        try {
+          const pollResult = await webSocketManager.sendRpc('ChangeGroup.Poll', {
+            Id: (changeGroup as any).id
+          });
+
+          // Process changes for subscribed component
+          if (pollResult.Changes) {
+            pollResult.Changes.forEach((change: any) => {
+              if (change.Component === this.currentComponentListener) {
+                // Emit control update
+                this.controlUpdates$.next({
+                  component: change.Component,
+                  control: change.Name,
+                  value: change.Value,
+                  position: change.Position,
+                  string: change.String,
+                  Bool: change.Bool
+                });
+              }
+            });
+          }
+
+          // Also call original register callbacks
+          pollResult.Changes.forEach((change: any) => {
+            const key = `${change.Component}:${change.Name}`;
+            if ((changeGroup as any).register.has(key)) {
+              const callback = (changeGroup as any).register.get(key);
+              callback(change);
+            }
+          });
+        } catch (error) {
+          const message = 'QRWC: RPC Error: ChangeGroup.Poll failed to poll for changes.';
+          if (error instanceof Error) {
+            error.message = `${message}\n${error.message}`;
+            (this.qrwc as any).logger.error(error);
+          } else {
+            const errorObj = new Error(`${message}\n${error}`);
+            (this.qrwc as any).logger.error(errorObj);
+          }
+        }
+      };
+    }
   }
 
   /**
    * Unsubscribe from the current component
+   * Removes controls from QRWC's ChangeGroup
    */
-  unsubscribeFromComponent(): void {
-    console.warn('unsubscribeFromComponent: Not implemented with on-demand loading.');
-    // TODO: Implement on-demand component loading to support subscriptions
+  async unsubscribeFromComponent(): Promise<void> {
+    if (!this.currentComponentListener) {
+      return;
+    }
+
+    try {
+      console.log(`Unsubscribing from component: ${this.currentComponentListener}`);
+
+      const webSocketManager = (this.qrwc as any).webSocketManager;
+      const changeGroup = (this.qrwc as any).changeGroup;
+
+      // Remove component from ChangeGroup
+      await webSocketManager.sendRpc('ChangeGroup.Remove', {
+        Id: (changeGroup as any).id,
+        Component: this.currentComponentListener
+      });
+
+      this.currentComponentListener = null;
+
+      console.log('✓ Unsubscribed from component');
+    } catch (error) {
+      console.error('Failed to unsubscribe from component:', error);
+      // Don't throw - just log the error
+    }
   }
 
   /**
@@ -550,21 +811,47 @@ export class QSysService {
   }
 
   /**
-   * Set a control value
+   * Set a control value using RPC
    */
   async setControl(componentName: string, controlName: string, value: any, ramp?: number): Promise<void> {
-    // Use HTTP API for control updates (QRWC components not loaded on-demand yet)
-    return this.setControlViaHTTP(componentName, controlName, value);
+    try {
+      console.log(`Setting ${componentName}:${controlName} to ${value}${ramp ? ` with ramp ${ramp}s` : ''}`);
+
+      // Check if this is a pulse trigger (based on control name pattern)
+      const isStateTrigger = /^(System|Power)(On|Off)$/i.test(controlName);
+      const isPulseTrigger = controlName.endsWith('Trig') && !isStateTrigger && value === 1;
+
+      if (isPulseTrigger) {
+        // For pulse triggers, pulse high then low
+        console.log(`Triggering ${componentName}:${controlName} (pulse)`);
+        await this.setControlViaRpc(componentName, controlName, 1);
+        await this.setControlViaRpc(componentName, controlName, 0);
+      } else {
+        // For all other controls, just set the value
+        await this.setControlViaRpc(componentName, controlName, value);
+      }
+    } catch (error) {
+      console.error(`Failed to set control ${componentName}:${controlName}:`, error);
+      // Fallback to HTTP API if RPC fails
+      console.log('Falling back to HTTP API...');
+      return this.setControlViaHTTP(componentName, controlName, value);
+    }
   }
 
   /**
    * Set a control position (0-1)
-   * Uses QRWC's control.update({ Position: value }) API
+   * Uses RPC with Position parameter
    */
   async setControlPosition(componentName: string, controlName: string, position: number): Promise<void> {
-    // Use HTTP API for control updates (QRWC components not loaded on-demand yet)
-    // Convert position to value for HTTP API
-    return this.setControlViaHTTP(componentName, controlName, position);
+    try {
+      console.log(`Setting ${componentName}:${controlName} position to ${position}`);
+      await this.setControlPositionViaRpc(componentName, controlName, position);
+    } catch (error) {
+      console.error(`Failed to set control position ${componentName}:${controlName}:`, error);
+      // Fallback to HTTP API if RPC fails
+      console.log('Falling back to HTTP API...');
+      return this.setControlViaHTTP(componentName, controlName, position);
+    }
   }
 
   /**
