@@ -11,8 +11,13 @@
       </div>
       <div class="header-right">
         <div class="connection-status" [class.connected]="isConnected()">
-          {{ isConnected() ? 'Connected' : 'Disconnected' }}
+          {{ isConnected() ? 'Core Connected' : 'Core Disconnected' }}
         </div>
+        @if (wsDiscoveryService.isConnected()) {
+          <div class="ws-connection-status connected" title="WebSocket Discovery Connected">
+            Script only WS
+          </div>
+        }
         <div class="core-ip">{{ coreIp }}:{{ corePort }}</div>
         @if (corePlatform && coreState) {
           <div class="core-info">{{ corePlatform }} ({{ coreState }})</div>
@@ -85,7 +90,7 @@
             <li>Navigate to the 'code' control in the editor</li>
             <li>Use the Lua Script Management section to insert the "WebSocket Component Discovery" script</li>
             <li>Click the "Update" or "Insert" button to load the script</li>
-            <li>Try "Script only discovery" again</li>
+            <li>Try 'Discover "Script only"'' again</li>
           </ol>
           <div class="notification-actions">
             <button class="dismiss-button" (click)="dismissWebSocketError()">Dismiss</button>
@@ -218,7 +223,7 @@
           🔄 Refresh
         </button>
         <button class="refresh-button" (click)="loadComponentsViaWebSocket()" title="Discover components via WebSocket (bypasses log system)">
-          🔌 "Script only" discovery
+          🔌 Discover "Script only"
         </button>
         <select
           class="type-filter"
@@ -245,7 +250,7 @@
               <div class="component-name">
                 {{ component.name }}
                 @if (component.discoveryMethod === 'websocket') {
-                  <span class="discovery-badge" title="Discovered via WebSocket (HTTP API mode)">🔌 WS</span>
+                  <span class="discovery-badge" title="Discovered via WebSocket (HTTP API mode)">🔌 Sript only</span>
                 }
               </div>
               <div class="component-meta">

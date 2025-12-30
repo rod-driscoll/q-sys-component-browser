@@ -55,6 +55,22 @@
   background-color: #4caf50;
 }
 
+.ws-connection-status {
+  padding: 4px 12px;
+  border-radius: 12px;
+  background-color: #3498db;
+  color: white;
+  font-weight: 500;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ws-connection-status.connected {
+  background-color: #2ecc71;
+}
+
 .core-ip {
   color: #5dade2;
   font-family: 'Courier New', monospace;
