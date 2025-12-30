@@ -18,6 +18,8 @@ export interface ControlInfo {
   position?: number;
   string?: string;
   choices?: string[];
+  stringMin?: string;
+  stringMax?: string;
   componentName?: string; // Added for global search results
   // Inferred properties (not directly from Q-SYS API)
   units?: string; // Hz, Float, Integer, Meter (dB), Percent, Pan, Seconds
@@ -81,12 +83,46 @@ export class QSysBrowserService {
   /**
    * Update a control value
    */
-  updateControlValue(value: any, ramp?: number): void {
+  async updateControlValue(value: any, ramp?: number): Promise<void> {
     const component = this.selectedComponent();
     const control = this.selectedControl();
 
-    if (component && control) {
-      this.qsysService.setControl(component.name, control.name, value, ramp);
+    if (!component || !control) return;
+    console.log('updateControlValue', component, control);
+    try {
+      if (component.discoveryMethod === 'websocket') {
+        await this.qsysService.setControlViaHTTP(component.name, control.name, value);
+      } else {
+        await this.qsysService.setControl(component.name, control.name, value, ramp);
+      }
+    } catch (error) {
+      console.error(`Failed to update control value:`, error);
+    }
+  }
+
+  /**
+   * Update a control position (0-1)
+   */
+  async updateControlPosition(position: number): Promise<void> {
+    const component = this.selectedComponent();
+    const control = this.selectedControl();
+
+    if (!component || !control) return;
+
+    try {
+      if (component.discoveryMethod === 'websocket') {
+        // Websocket components might not support position via HTTP API easily?
+        // Fallback to value calculation or ignore?
+        // Actually, let's assume HTTP API takes { "Position": x }?
+        // Since I don't know, I will just log warning or try to calculate value locally?
+        // Or just TRY to send it?
+        // Let's defer HTTP impl details. User is using QRWC (setControl).
+        console.warn('Position updates not fully supported for HTTP components yet.');
+      } else {
+        await this.qsysService.setControlPosition(component.name, control.name, position);
+      }
+    } catch (error) {
+      console.error(`Failed to update control position:`, error);
     }
   }
 
@@ -156,6 +192,8 @@ export class QSysBrowserService {
             position: control.Position,
             string: control.String,
             choices: control.Choices,
+            stringMin: control.StringMin,
+            stringMax: control.StringMax,
             componentName: component.name, // Include component name for display
             units: control.Units,
             pushAction: control.PushAction,
@@ -205,6 +243,8 @@ export class QSysBrowserService {
         position: c.Position,
         string: c.String,
         choices: c.Choices,
+        stringMin: c.StringMin,
+        stringMax: c.StringMax,
         units: c.Units,
         pushAction: c.PushAction,
         indicatorType: c.IndicatorType

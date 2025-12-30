@@ -13,7 +13,7 @@
         <div class="connection-status" [class.connected]="isConnected()">
           {{ isConnected() ? 'Connected' : 'Disconnected' }}
         </div>
-        <div class="core-ip">{{ coreIp }}</div>
+        <div class="core-ip">{{ coreIp }}:{{ corePort }}</div>
         @if (corePlatform && coreState) {
           <div class="core-info">{{ corePlatform }} ({{ coreState }})</div>
         }
@@ -36,17 +36,18 @@
     </div>
   </div>
 
-  <!-- Loading Notifications -->
-  @if (isLoadingComponents) {
-    <div class="loading-notification">
-      <div class="loading-spinner"></div>
-      <span>Loading components...</span>
-    </div>
-  }
-  @if (isLoadingControls) {
-    <div class="loading-notification">
-      <div class="loading-spinner"></div>
-      <span>Loading controls...</span>
+  <!-- Loading Notifications with Stage Details -->
+  @if (loadingStage()) {
+    <div class="loading-notification-detailed">
+      <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">
+          <div class="loading-stage">{{ loadingStage() }}</div>
+          @if (loadingSubStage()) {
+            <div class="loading-substage">{{ loadingSubStage() }}</div>
+          }
+        </div>
+      </div>
     </div>
   }
 
@@ -66,6 +67,31 @@
           </div>
         </div>
         <button class="close-notification" (click)="dismissCertificateError()">✕</button>
+      </div>
+    </div>
+  }
+
+  <!-- WebSocket Error Notification -->
+  @if (showWebSocketErrorNotification()) {
+    <div class="certificate-error-notification websocket-error">
+      <div class="notification-content">
+        <div class="notification-icon">⚠️</div>
+        <div class="notification-message">
+          <strong>"Script only" WebSocket Server Not Available</strong>
+          <p>{{ webSocketErrorMessage() }}</p>
+          <p class="help-text">To use "Script only" WebSocket discovery:</p>
+          <ol class="help-steps">
+            <li>Select a Script component in the Q-SYS Component Browser</li>
+            <li>Navigate to the 'code' control in the editor</li>
+            <li>Use the Lua Script Management section to insert the "WebSocket Component Discovery" script</li>
+            <li>Click the "Update" or "Insert" button to load the script</li>
+            <li>Try "Script only discovery" again</li>
+          </ol>
+          <div class="notification-actions">
+            <button class="dismiss-button" (click)="dismissWebSocketError()">Dismiss</button>
+          </div>
+        </div>
+        <button class="close-notification" (click)="dismissWebSocketError()">✕</button>
       </div>
     </div>
   }
@@ -192,7 +218,7 @@
           🔄 Refresh
         </button>
         <button class="refresh-button" (click)="loadComponentsViaWebSocket()" title="Discover components via WebSocket (bypasses log system)">
-          🔌 WS Discovery
+          🔌 "Script only" discovery
         </button>
         <select
           class="type-filter"
@@ -224,7 +250,11 @@
               </div>
               <div class="component-meta">
                 <span class="component-type">{{ formatComponentType(component.type) }}</span>
-                <span class="component-info">{{ component.controlCount }} controls</span>
+                @if (component.controlCount === -1) {
+                  <span class="component-info script-only" title="Controls not loaded by QRWC, will fetch via HTTP API">📡 HTTP API</span>
+                } @else {
+                  <span class="component-info">{{ component.controlCount }} controls</span>
+                }
               </div>
             </div>
           </div>

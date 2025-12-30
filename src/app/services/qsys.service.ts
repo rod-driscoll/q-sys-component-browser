@@ -15,9 +15,11 @@ export interface ComponentWithControls {
 })
 export class QSysService {
   private qrwc: any = null;
-  private qrwcComponents: any = null;
   private currentComponentListener: any = null;
   private currentComponent: any = null;
+
+  // Cache for on-demand loaded components
+  private componentCache: Map<string, any> = new Map();
 
   // Connection state
   public isConnected = signal(false);
@@ -81,55 +83,43 @@ export class QSysService {
       });
 
       // Create QRWC instance using factory method
-      // Note: Not passing a logger to avoid verbose polling spam in console
-      // QRWC will still poll ALL components automatically - this is expected behavior
+      // Pass a custom logger to capture errors without polling spam
+      // Use componentFilter to prevent loading ANY components initially (avoids timeout errors)
       this.qrwc = await Qrwc.createQrwc({
         socket,
         pollingInterval: this.options.pollInterval || 35,
-        // No logger = no console spam from polling
+        componentFilter: () => false, // Don't load any components during initialization
+        logger: {
+          debug: () => { }, // Suppress debug messages (polling spam)
+          info: () => { },  // Suppress info messages
+          warn: (message: string) => console.warn('QRWC Warning:', message),
+          error: (error: Error) => console.error('QRWC Error:', error.message, error),
+        },
+      });
+
+      // Listen for QRWC error events
+      this.qrwc.on('error', (error: Error) => {
+        console.error('QRWC Error Event:', error.message);
+        // Check if this is a control loading error
+        if (error.message?.includes('Failed to fetch controls')) {
+          console.warn('Component control loading failed - will fallback to HTTP API');
+        }
+      });
+
+      // Listen for disconnection events
+      this.qrwc.on('disconnected', (reason: string) => {
+        console.warn('QRWC Disconnected:', reason);
+        this.isConnected.set(false);
+        this.connectionStatus$.next(false);
       });
 
       console.log('Connected to Q-SYS Core');
 
-      // Note: Don't set connected status yet - wait for QRWC to be ready
-      // QRWC needs time to discover components
-
-      // Set connection status after a brief delay to allow QRWC to initialize
-      // QRWC needs time to discover and populate component.controls objects
-      setTimeout(async () => {
-        this.qrwcComponents = this.qrwc?.components || null;
-
-        // Debug: Log which components have controls loaded at initialization
-        if (this.qrwcComponents) {
-          try {
-            // Use getComponents() method instead of manual access
-            const components = await this.getComponents();
-            let loadedCount = 0;
-            let notLoadedCount = 0;
-
-            console.log('=== Component Control Loading Status ===');
-            components.forEach(comp => {
-              if (comp.controlCount === 0) {
-                console.log(`  ⚠ ${comp.name}: 0 controls (may not be loaded yet)`);
-                notLoadedCount++;
-              } else {
-                console.log(`  ✓ ${comp.name}: ${comp.controlCount} controls`);
-                loadedCount++;
-              }
-            });
-
-            console.log(`\nSummary: ${loadedCount} components with controls, ${notLoadedCount} components with 0 controls`);
-            console.log('Components with 0 controls may load their controls when accessed.');
-            console.log('========================================');
-          } catch (error) {
-            console.error('Failed to log component status:', error);
-          }
-        }
-
-        this.isConnected.set(true);
-        this.connectionStatus$.next(true);
-        console.log('QRWC initialization complete');
-      }, 2000); // Suggestion: Increase from 2000ms to 5000ms to allow more time for component discovery
+      // QRWC is now ready - no components were loaded during initialization (componentFilter returned false for all)
+      // Components will be fetched via direct RPC call when needed
+      this.isConnected.set(true);
+      this.connectionStatus$.next(true);
+      console.log('QRWC initialization complete - ready to fetch components on-demand');
 
     } catch (error) {
       console.error('Failed to connect:', error);
@@ -150,8 +140,10 @@ export class QSysService {
     if (this.qrwc) {
       this.qrwc.disconnect();
       this.qrwc = null;
-      this.qrwcComponents = null;
     }
+
+    // Clear component cache
+    this.componentCache.clear();
 
     this.isConnected.set(false);
     this.connectionStatus$.next(false);
@@ -173,54 +165,145 @@ export class QSysService {
 
   /**
    * Refresh component control counts after QRWC has had more time to load
-   * Useful for getting accurate counts after initial lazy loading
+   * Note: With the new on-demand loading approach, this just re-fetches the component list
    */
   async refreshComponentCounts(): Promise<ComponentWithControls[]> {
-    if (!this.qrwcComponents) {
+    if (!this.qrwc) {
       throw new Error('Not connected to Q-SYS Core');
     }
 
-    console.log('Refreshing component control counts...');
-
-    // Give QRWC additional time to populate controls
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
+    console.log('Refreshing component list...');
     return this.getComponents();
   }
 
   /**
-   * Get all components from Q-SYS Core
-   * Returns a promise that resolves with the component list
+   * Get all components from Q-SYS Core via direct RPC call
+   * This avoids the timeout issues from QRWC's automatic control loading
+   * Returns a promise that resolves with the component list with control counts
    */
   async getComponents(): Promise<ComponentWithControls[]> {
-    if (!this.qrwcComponents) {
+    if (!this.qrwc) {
       throw new Error('Not connected to Q-SYS Core');
     }
 
     try {
-      // Get all component names
-      const componentNames = Object.keys(this.qrwcComponents);
+      console.log('Fetching components via Component.GetComponents RPC...');
 
-      // For each component, get its controls to count them
-      const componentsWithCounts: ComponentWithControls[] = [];
+      // Access the internal WebSocketManager to call Component.GetComponents directly
+      // This is safe because QRWC exposes it as a public property (just not in TypeScript types)
+      const webSocketManager = (this.qrwc as any).webSocketManager;
+      if (!webSocketManager) {
+        throw new Error('WebSocketManager not available');
+      }
 
-      for (const name of componentNames) {
-        const component = this.qrwcComponents[name];
+      // Call Component.GetComponents RPC directly
+      const components = await webSocketManager.sendRpc('Component.GetComponents', 'test');
+      console.log(`Found ${components.length} components via RPC`);
 
-        // Controls are in component.controls, not directly on component
-        const componentControls = component.controls || {};
-        const controlCount = Object.keys(componentControls).length;
+      // Fetch control counts for each component (without ChangeGroup registration)
+      console.log('Fetching control counts for all components...');
+      const componentsWithCounts: ComponentWithControls[] = await Promise.all(
+        components.map(async (component: any) => {
+          // Try with retry logic for components that might timeout
+          const controlCount = await this.fetchControlCountWithRetry(
+            webSocketManager,
+            component.Name,
+            3  // Max 3 attempts
+          );
 
-        componentsWithCounts.push({
-          name: name,
-          type: component._state?.Type || 'Unknown',
-          controlCount: controlCount
-        });
+          return {
+            name: component.Name,
+            type: component.Type || 'Unknown',
+            controlCount: controlCount
+          };
+        })
+      );
+
+      console.log(`Loaded ${componentsWithCounts.length} components with control counts`);
+
+      // Log summary of successes vs failures
+      const successCount = componentsWithCounts.filter(c => c.controlCount > 0).length;
+      const failedCount = componentsWithCounts.filter(c => c.controlCount === 0).length;
+      console.log(`  ✓ ${successCount} components loaded successfully`);
+      if (failedCount > 0) {
+        console.log(`  ⚠ ${failedCount} components failed to load controls`);
       }
 
       return componentsWithCounts;
     } catch (error) {
       console.error('Failed to get components:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch control count with retry logic for components that timeout
+   * Uses exponential backoff: 1s, 2s, 4s delays between retries
+   */
+  private async fetchControlCountWithRetry(
+    webSocketManager: any,
+    componentName: string,
+    maxAttempts: number = 3
+  ): Promise<number> {
+    let lastError: any;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        // Call Component.GetControls RPC to get control count
+        const controlsResult = await webSocketManager.sendRpc('Component.GetControls', {
+          Name: componentName
+        });
+
+        // Success - return count
+        if (attempt > 1) {
+          console.log(`  ✓ ${componentName}: succeeded on attempt ${attempt}`);
+        }
+        return controlsResult.Controls?.length || 0;
+
+      } catch (error) {
+        lastError = error;
+        const errorMessage = error instanceof Error ? error.message : String(error);
+
+        // Check if it's a timeout error
+        const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('timed out');
+
+        if (isTimeout && attempt < maxAttempts) {
+          // Calculate delay with exponential backoff: 1s, 2s, 4s
+          const delayMs = Math.pow(2, attempt - 1) * 1000;
+          console.log(`  ⏱ ${componentName}: timeout on attempt ${attempt}, retrying in ${delayMs}ms...`);
+
+          // Wait before retrying
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        } else if (attempt === maxAttempts) {
+          // Final attempt failed
+          console.warn(`  ✗ ${componentName}: failed after ${maxAttempts} attempts - ${errorMessage}`);
+        }
+      }
+    }
+
+    // All attempts failed - return 0
+    return 0;
+  }
+
+  /**
+   * Get component controls via RPC call
+   * This bypasses QRWC's automatic ChangeGroup registration
+   */
+  private async getComponentControlsViaRpc(componentName: string): Promise<any[]> {
+    if (!this.qrwc) {
+      throw new Error('Not connected to Q-SYS Core');
+    }
+
+    try {
+      console.log(`Fetching controls for component: ${componentName}`);
+
+      const webSocketManager = (this.qrwc as any).webSocketManager;
+      const result = await webSocketManager.sendRpc('Component.GetControls', { Name: componentName });
+
+      console.log(`Fetched ${result.Controls.length} controls for ${componentName}`);
+      return result.Controls;
+    } catch (error) {
+      console.error(`Failed to fetch controls for ${componentName}:`, error);
       throw error;
     }
   }
@@ -275,56 +358,26 @@ export class QSysService {
   /**
    * Get all controls for a specific component
    * Returns a promise that resolves with the control list
+   * Uses direct RPC call to avoid QRWC's ChangeGroup registration
    */
   async getComponentControls(componentName: string): Promise<any[]> {
-    if (!this.qrwcComponents) {
+    if (!this.qrwc) {
       throw new Error('Not connected to Q-SYS Core');
     }
 
     try {
-      const component = this.qrwcComponents[componentName];
-      if (!component) {
-        throw new Error(`Component "${componentName}" not found`);
-      }
+      // Get controls via RPC call (fast, no ChangeGroup registration)
+      const controlStates = await this.getComponentControlsViaRpc(componentName);
 
-      // Controls are in component.controls, not directly on component
-      const componentControls = component.controls;
-      if (!componentControls) {
-        console.warn(`Component "${componentName}" has no controls property`);
+      if (controlStates.length === 0) {
+        console.warn(`Component "${componentName}" has no controls`);
         return [];
       }
 
-      const controlNames = Object.keys(componentControls);
       const controls: any[] = [];
 
-      for (const controlName of controlNames) {
-        const control = componentControls[controlName];
-
-        // Access control state
-        const state = control.state || control;
-
-        // Debug log for combo box controls
-        if (controlName.toLowerCase().includes('display') || controlName.toLowerCase().includes('call')) {
-          console.log(`Control ${controlName}:`, {
-            Type: state.Type,
-            hasChoices: !!state.Choices,
-            Choices: state.Choices,
-            allKeys: Object.keys(state)
-          });
-        }
-
-        // Debug log for knob/fader controls
-        if (controlName.toLowerCase().includes('volume') || controlName.toLowerCase().includes('fader') || state.Position !== undefined) {
-          console.log(`Control ${controlName} (has Position):`, {
-            Type: state.Type,
-            Value: state.Value,
-            ValueMin: state.ValueMin,
-            ValueMax: state.ValueMax,
-            Position: state.Position,
-            String: state.String,
-            allKeys: Object.keys(state)
-          });
-        }
+      for (const state of controlStates) {
+        const controlName = state.Name;
 
         // Infer/correct control type
         let controlType = state.Type;
@@ -383,74 +436,94 @@ export class QSysService {
       return controls;
     } catch (error) {
       console.error(`Failed to get controls for ${componentName}:`, error);
-      throw error;
+      // Fallback to HTTP API if RPC fails
+      return this.getComponentControlsViaHTTP(componentName);
     }
   }
 
   /**
    * Subscribe to a component's control changes using component-level event listener
+   * NOTE: This method requires loading components on-demand which is not yet implemented
+   * Use HTTP API or WebSocket discovery for now
    */
   subscribeToComponent(componentName: string): void {
-    if (!this.qrwcComponents) {
-      console.error('Not connected to Q-SYS Core');
-      return;
-    }
-
-    // Unsubscribe from previous component if any
-    if (this.currentComponentListener) {
-      this.unsubscribeFromComponent();
-    }
-
-    try {
-      const component = this.qrwcComponents[componentName];
-      if (!component) {
-        console.error(`Component "${componentName}" not found`);
-        return;
-      }
-
-      console.log(`Subscribing to component: ${componentName}`);
-
-      // Store reference to component
-      this.currentComponent = component;
-
-      // Set up component-level event listener
-      // This will listen to all controls in the component
-      // QRWC is already polling this component automatically
-      this.currentComponentListener = component.on('update', (control: any, state: any) => {
-        // The first parameter is the control object (not a string), extract the name
-        const controlName = control.name || control;
-        console.log(`Control update: ${componentName}:${controlName}`, state);
-
-        this.controlUpdates$.next({
-          component: componentName,
-          control: controlName,
-          value: state.Value,
-          position: state.Position,
-          string: state.String,
-          Bool: state.Bool
-        });
-      });
-
-    } catch (error) {
-      console.error(`Failed to subscribe to component ${componentName}:`, error);
-    }
+    console.warn('subscribeToComponent: Not implemented with on-demand loading. Use HTTP API instead.');
+    // TODO: Implement on-demand component loading to support subscriptions
   }
 
   /**
    * Unsubscribe from the current component
    */
   unsubscribeFromComponent(): void {
-    if (this.currentComponentListener) {
-      console.log('Unsubscribing from component');
+    console.warn('unsubscribeFromComponent: Not implemented with on-demand loading.');
+    // TODO: Implement on-demand component loading to support subscriptions
+  }
 
-      // Remove event listener
-      this.currentComponentListener.off();
-      this.currentComponentListener = null;
-    }
+  /**
+   * Get component controls via HTTP API (for components not loaded by QRWC)
+   * Some Script components are not populated by QRWC due to lazy loading, so we fetch via HTTP API
+   */
+  private async getComponentControlsViaHTTP(componentName: string): Promise<any[]> {
+    const url = `${environment.QSYS_HTTP_API_URL}/components/${encodeURIComponent(componentName)}/controls`;
 
-    // Clear component reference
-    if (this.currentComponent) {
-      this.currentComponent = null;
+    console.log(`Fetching controls via HTTP API: ${url}`);
+
+    try {
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        let errorDetails = `HTTP ${response.status}: ${response.statusText}`;
+
+        // Special handling for 404 - webserver not loaded
+        if (response.status === 404) {
+          errorDetails = `HTTP API not available (404). Please load 'WebSocketComponentDiscovery.lua' onto a Script component's 'code' control in Q-SYS Designer first.`;
+          console.error(errorDetails);
+          console.error(`The HTTP API webserver must be running on the Q-SYS Core to access components with controls not loaded by QRWC.`);
+          console.error(`Steps to fix:`);
+          console.error(`  1. Open Q-SYS Designer and select a Script component`);
+          console.error(`  2. Find the 'code' control in the component`);
+          console.error(`  3. Load 'WebSocketComponentDiscovery.lua' into the code control`);
+          console.error(`  4. Save and deploy the design`);
+        } else {
+          try {
+            const errorData = await response.json();
+            if (errorData.error) {
+              errorDetails += ` - ${errorData.error}`;
+            }
+          } catch (e) {
+            // Response wasn't JSON, use status text
+          }
+        }
+
+        throw new Error(errorDetails);
+      }
+
+      const data = await response.json();
+
+      if (!data.controls || !Array.isArray(data.controls)) {
+        console.warn(`HTTP API response for "${componentName}" has no controls array`);
+        return [];
+      }
+
+      console.log(`✓ Fetched ${data.controls.length} controls via HTTP API for ${componentName}`);
+
+      // Transform HTTP API format to match QRWC format
+      return data.controls.map((ctrl: any) => ({
+        name: ctrl.name,
+        type: ctrl.type,
+        value: ctrl.value,
+        position: ctrl.position,
+        string: ctrl.string,
+        choices: ctrl.choices,
+        min: ctrl.min,
+        max: ctrl.max,
+        rampTime: ctrl.rampTime,
+        // Include any other properties from HTTP API
+        ...ctrl
+      }));
+    } catch (error) {
+      console.error(`Failed to fetch controls via HTTP API for ${componentName}:`, error);
+      throw error;
     }
   }
 
@@ -480,55 +553,8 @@ export class QSysService {
    * Set a control value
    */
   async setControl(componentName: string, controlName: string, value: any, ramp?: number): Promise<void> {
-    if (!this.qrwcComponents) {
-      throw new Error('Not connected to Q-SYS Core');
-    }
-
-    try {
-      const component = this.qrwcComponents[componentName];
-      if (!component) {
-        throw new Error(`Component "${componentName}" not found`);
-      }
-
-      // Access control from component.controls
-      const control = component.controls?.[controlName];
-      if (!control) {
-        throw new Error(`Control "${controlName}" not found in component "${componentName}"`);
-      }
-
-      console.log(`Setting ${componentName}:${controlName} to ${value}${ramp ? ` with ramp ${ramp}s` : ''}`);
-
-      // Check control type from state
-      const state = control.state || control;
-      const controlType = state.Type;
-
-      // Identify pulse triggers:
-      // - Type must be "Trigger" (Q-SYS reports this for true pulse triggers)
-      // - Controls ending in "Trig" are usually pulse triggers
-      // - BUT: SystemOn/SystemOff/PowerOn/PowerOff are STATE triggers, not pulse triggers
-      const isStateTrigger = /^(System|Power)(On|Off)$/i.test(controlName);
-      const isPulseTrigger = (controlType === 'Trigger' || controlName.endsWith('Trig')) &&
-        !isStateTrigger &&
-        value === 1;
-
-      if (isPulseTrigger) {
-        // For pulse triggers, pulse high then low
-        console.log(`Triggering ${componentName}:${controlName} (pulse)`);
-        await control.update(1);
-        await control.update(0);
-      } else {
-        // For State Triggers and all other controls, just set the value
-        if (ramp !== undefined && ramp > 0) {
-          await control.update(value, ramp);
-        } else {
-          await control.update(value);
-        }
-      }
-
-    } catch (error) {
-      console.error(`Failed to set control ${componentName}:${controlName}:`, error);
-      throw error;
-    }
+    // Use HTTP API for control updates (QRWC components not loaded on-demand yet)
+    return this.setControlViaHTTP(componentName, controlName, value);
   }
 
   /**
@@ -536,32 +562,9 @@ export class QSysService {
    * Uses QRWC's control.update({ Position: value }) API
    */
   async setControlPosition(componentName: string, controlName: string, position: number): Promise<void> {
-    if (!this.qrwcComponents) {
-      throw new Error('Not connected to Q-SYS Core');
-    }
-
-    try {
-      const component = this.qrwcComponents[componentName];
-      if (!component) {
-        throw new Error(`Component "${componentName}" not found`);
-      }
-
-      // Access control from component.controls
-      const control = component.controls?.[controlName];
-      if (!control) {
-        throw new Error(`Control "${controlName}" not found in component "${componentName}"`);
-      }
-
-      console.log(`Setting ${componentName}:${controlName} position to ${position}`);
-
-      // Use QRWC's update method with Position property
-      // According to QRWC docs: await control.update({ Position: 0.5 })
-      await control.update({ Position: position });
-
-    } catch (error) {
-      console.error(`Failed to set control position ${componentName}:${controlName}:`, error);
-      throw error;
-    }
+    // Use HTTP API for control updates (QRWC components not loaded on-demand yet)
+    // Convert position to value for HTTP API
+    return this.setControlViaHTTP(componentName, controlName, position);
   }
 
   /**

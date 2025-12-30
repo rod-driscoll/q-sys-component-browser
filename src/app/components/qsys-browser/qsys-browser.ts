@@ -65,8 +65,24 @@ export class QsysBrowser implements OnInit, OnDestroy {
   isLoadingControls = false;
   private lastProcessedDiscoveryTimestamp: string | null = null;
 
+  // Loading stage tracking
+  loadingStage = signal<string>('');
+  loadingSubStage = signal<string>('');
+
+  // Available Lua scripts (loaded asynchronously)
+  availableLuaScripts = signal<LuaScript[]>([]);
+
+  // WebSocket error notification
+  showWebSocketErrorNotification = signal<boolean>(false);
+  webSocketErrorMessage = signal<string>('');
+
   // Connection details
-  coreIp = environment.QSYS_CORE_IP;
+  get coreIp(): string {
+    return environment.RUNTIME_CORE_IP;
+  }
+  get corePort(): number {
+    return environment.RUNTIME_CORE_PORT;
+  }
   corePlatform = '';
   coreState = '';
   designName = '';
@@ -96,6 +112,25 @@ export class QsysBrowser implements OnInit, OnDestroy {
       const update = this.wsDiscoveryService.componentUpdate();
       if (update) {
         this.handleComponentUpdate(update);
+      }
+    });
+
+    // Watch for WebSocket connection failures
+    effect(() => {
+      const failed = this.wsDiscoveryService.connectionFailed();
+      const error = this.wsDiscoveryService.error();
+
+      if (failed && error) {
+        this.isLoadingComponents = false;
+        this.showWebSocketError(error);
+      }
+    });
+
+    // Watch for WebSocket loading stage updates
+    effect(() => {
+      const wsStage = this.wsDiscoveryService.loadingStage();
+      if (wsStage) {
+        this.loadingSubStage.set(wsStage);
       }
     });
   }
@@ -182,7 +217,9 @@ export class QsysBrowser implements OnInit, OnDestroy {
 
   // Certificate error notification
   showCertificateErrorNotification = signal<boolean>(false);
-  certificateUrl = `https://${environment.QSYS_CORE_IP}`;
+  get certificateUrl(): string {
+    return `https://${environment.RUNTIME_CORE_IP}`;
+  }
 
   showCertificateError(): void {
     this.showCertificateErrorNotification.set(true);
@@ -197,6 +234,18 @@ export class QsysBrowser implements OnInit, OnDestroy {
     window.open(this.certificateUrl, '_blank');
   }
 
+  // WebSocket error notification
+  showWebSocketError(message: string): void {
+    this.webSocketErrorMessage.set(message);
+    this.showWebSocketErrorNotification.set(true);
+    console.error('WebSocket Error:', message);
+  }
+
+  dismissWebSocketError(): void {
+    this.showWebSocketErrorNotification.set(false);
+    this.webSocketErrorMessage.set('');
+  }
+
   // Current view
   get currentView(): 'components' | 'controls' | 'editor' {
     if (this.browserService.selectedControl()) return 'editor';
@@ -205,9 +254,16 @@ export class QsysBrowser implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Connect to Q-SYS Core
+    // Show initial connecting state
+    this.loadingStage.set('Connecting to Q-SYS Core');
+    this.loadingSubStage.set(`Connecting to ${environment.RUNTIME_CORE_IP}:${environment.RUNTIME_CORE_PORT}...`);
+
+    // Load Lua scripts asynchronously
+    this.loadLuaScripts();
+
+    // Connect to Q-SYS Core using runtime IP (can be overridden via URL params)
     this.qsysService.connect({
-      coreIp: environment.QSYS_CORE_IP,
+      coreIp: environment.RUNTIME_CORE_IP,
       secure: true,
       pollInterval: 35,
     }).catch((error) => {
@@ -217,19 +273,32 @@ export class QsysBrowser implements OnInit, OnDestroy {
         error?.toString().includes('ERR_CERT');
 
       if (isCertError) {
+        this.loadingStage.set('');
+        this.loadingSubStage.set('');
         this.showCertificateError();
+      } else {
+        this.loadingStage.set('Error');
+        this.loadingSubStage.set('Failed to connect to Q-SYS Core');
+        setTimeout(() => {
+          this.loadingStage.set('');
+          this.loadingSubStage.set('');
+        }, 3000);
       }
     });
 
     // Wait for connection before loading components
     this.qsysService.getConnectionStatus().subscribe(async (connected) => {
       if (connected) {
+        // Update loading state to show successful connection
+        this.loadingSubStage.set('✓ Connected to Q-SYS Core');
+
         // Don't enable polling yet - ChangeGroup doesn't exist until controls are added
         // Polling will be enabled when you select a component and add controls
         console.log('Connected - loading components from Q-SYS Core...');
 
         // Load Core status to get platform, state, and design name
         try {
+          this.loadingSubStage.set('Loading Core status...');
           const status = this.qsysService.getCoreStatus();
           this.corePlatform = status.platform;
           this.coreState = status.state;
@@ -295,13 +364,24 @@ export class QsysBrowser implements OnInit, OnDestroy {
   // Load all components from Q-SYS Core via QRWC
   async loadComponents(refresh: boolean = false): Promise<void> {
     this.isLoadingComponents = true;
+    this.loadingStage.set('Loading Components');
+    this.loadingSubStage.set('Connecting to Q-SYS Core via QRWC...');
+
     try {
       console.log(refresh ? 'Refreshing component list from Q-SYS...' : 'Fetching component list from Q-SYS...');
+
+      if (refresh) {
+        this.loadingSubStage.set('Refreshing component list (waiting 3s for lazy loading)...');
+      } else {
+        this.loadingSubStage.set('Fetching component list from Q-SYS...');
+      }
 
       // If refreshing, use the refreshComponentCounts method to give QRWC more time
       const components = refresh
         ? await this.qsysService.refreshComponentCounts()
         : await this.qsysService.getComponents();
+
+      this.loadingSubStage.set('Processing component data...');
 
       // Transform QRWC response to our ComponentInfo format
       // Now includes actual control counts from qrwc.components
@@ -314,8 +394,20 @@ export class QsysBrowser implements OnInit, OnDestroy {
 
       this.browserService.setComponents(componentList);
       console.log(`✓ Loaded ${componentList.length} components`);
+
+      this.loadingSubStage.set(`✓ Loaded ${componentList.length} components`);
+      setTimeout(() => {
+        this.loadingStage.set('');
+        this.loadingSubStage.set('');
+      }, 1000);
     } catch (error) {
       console.error('Failed to load components:', error);
+      this.loadingStage.set('Error');
+      this.loadingSubStage.set('Failed to load components');
+      setTimeout(() => {
+        this.loadingStage.set('');
+        this.loadingSubStage.set('');
+      }, 3000);
     } finally {
       this.isLoadingComponents = false;
     }
@@ -330,6 +422,8 @@ export class QsysBrowser implements OnInit, OnDestroy {
   loadComponentsViaWebSocket(): void {
     console.log('Requesting component discovery via WebSocket...');
     this.isLoadingComponents = true;
+    this.loadingStage.set('WebSocket Discovery');
+    this.loadingSubStage.set('Connecting to WebSocket server...');
     this.wsDiscoveryService.connect();
     this.wsDiscoveryService.connectUpdates();
   }
@@ -337,11 +431,14 @@ export class QsysBrowser implements OnInit, OnDestroy {
   // Process WebSocket discovery data
   private processWebSocketDiscoveryData(discoveryData: any): void {
     console.log('Processing WebSocket discovery data...');
+    this.loadingSubStage.set('Processing discovery data...');
 
     try {
       // Get existing components (from QRWC)
       const existingComponents = this.browserService.components();
       const existingComponentNames = new Set(existingComponents.map(c => c.name));
+
+      this.loadingSubStage.set(`Analyzing ${discoveryData.components.length} discovered components...`);
 
       // Convert WebSocket data to ComponentInfo format, but only for components not already in QRWC
       const wsComponents: ComponentInfo[] = discoveryData.components
@@ -355,15 +452,29 @@ export class QsysBrowser implements OnInit, OnDestroy {
 
       console.log(`Found ${discoveryData.components.length} components via WebSocket, ${wsComponents.length} are new (not in QRWC)`);
 
+      this.loadingSubStage.set(`Merging ${wsComponents.length} new components...`);
+
       // Merge QRWC components (priority) with new WebSocket-only components
       const mergedComponents = [...existingComponents, ...wsComponents];
 
       this.browserService.setComponents(mergedComponents);
       console.log(`✓ Total components: ${mergedComponents.length} (${existingComponents.length} QRWC + ${wsComponents.length} WebSocket)`);
 
+      this.loadingSubStage.set(`✓ Added ${wsComponents.length} new components via WebSocket`);
+      setTimeout(() => {
+        this.loadingStage.set('');
+        this.loadingSubStage.set('');
+      }, 2000);
+
       this.isLoadingComponents = false;
     } catch (error) {
       console.error('Failed to process WebSocket discovery data:', error);
+      this.loadingStage.set('Error');
+      this.loadingSubStage.set('Failed to process WebSocket data');
+      setTimeout(() => {
+        this.loadingStage.set('');
+        this.loadingSubStage.set('');
+      }, 3000);
       this.isLoadingComponents = false;
     }
   }
@@ -416,6 +527,8 @@ export class QsysBrowser implements OnInit, OnDestroy {
     await this.browserService.selectComponent(component);
     this.controlSearchTerm = '';
     this.isLoadingControls = true;
+    this.loadingStage.set('Loading Controls');
+    this.loadingSubStage.set(`Loading controls for ${component.name}...`);
     console.log('Loading controls for:', component.name);
 
     try {
@@ -424,21 +537,26 @@ export class QsysBrowser implements OnInit, OnDestroy {
       // If component was discovered via WebSocket, use HTTP API exclusively
       if (component.discoveryMethod === 'websocket') {
         console.log(`WebSocket-discovered component, fetching controls via HTTP API...`);
+        this.loadingSubStage.set('Fetching controls via HTTP API...');
         controls = await this.fetchControlsViaHTTP(component.name);
       } else {
         // For QRWC-discovered components, try QRWC first
         try {
+          this.loadingSubStage.set('Fetching controls via QRWC...');
           controls = await this.qsysService.getComponentControls(component.name);
         } catch (error: any) {
           // Fallback to HTTP API if QRWC fails
           if (error.message?.includes('not found')) {
             console.log(`Component not in QRWC, fetching controls via HTTP API...`);
+            this.loadingSubStage.set('QRWC failed, trying HTTP API...');
             controls = await this.fetchControlsViaHTTP(component.name);
           } else {
             throw error;
           }
         }
       }
+
+      this.loadingSubStage.set('Processing control data...');
 
       // Transform response to our ControlInfo format
       // Handle both QRWC (capitalized) and HTTP API (lowercase) property names
@@ -462,6 +580,7 @@ export class QsysBrowser implements OnInit, OnDestroy {
       // Subscribe to component-level event listeners for live updates (only for QRWC components)
       if (component.discoveryMethod === 'qrwc') {
         try {
+          this.loadingSubStage.set('Subscribing to control updates...');
           this.qsysService.subscribeToComponent(component.name);
         } catch (error) {
           console.log('Failed to subscribe to QRWC component updates:', error);
@@ -469,6 +588,12 @@ export class QsysBrowser implements OnInit, OnDestroy {
       } else {
         console.log('Skipping QRWC subscription (WebSocket-discovered component)');
       }
+
+      this.loadingSubStage.set(`✓ Loaded ${controlList.length} controls`);
+      setTimeout(() => {
+        this.loadingStage.set('');
+        this.loadingSubStage.set('');
+      }, 1000);
 
       // Listen for control updates
       this.qsysService.getControlUpdates().subscribe((update) => {
@@ -559,6 +684,12 @@ export class QsysBrowser implements OnInit, OnDestroy {
       });
     } catch (error) {
       console.error('Failed to load controls:', error);
+      this.loadingStage.set('Error');
+      this.loadingSubStage.set('Failed to load controls');
+      setTimeout(() => {
+        this.loadingStage.set('');
+        this.loadingSubStage.set('');
+      }, 3000);
     } finally {
       this.isLoadingControls = false;
     }
@@ -845,15 +976,26 @@ export class QsysBrowser implements OnInit, OnDestroy {
 
   // Lua Script Management Methods
 
+  // Load Lua scripts asynchronously
+  private async loadLuaScripts(): Promise<void> {
+    try {
+      const scripts = await this.luaScriptService.getAvailableScripts();
+      this.availableLuaScripts.set(scripts);
+    } catch (error) {
+      console.error('Failed to load Lua scripts:', error);
+      this.availableLuaScripts.set([]);
+    }
+  }
+
   // Check if the current control is a code control
   isCodeControl(): boolean {
     const control = this.browserService.selectedControl();
     return control?.name?.toLowerCase() === 'code';
   }
 
-  // Get available Lua scripts
+  // Get available Lua scripts (synchronous access to signal)
   getAvailableLuaScripts(): LuaScript[] {
-    return this.luaScriptService.getAvailableScripts();
+    return this.availableLuaScripts();
   }
 
   // Check if a script is present in the current code

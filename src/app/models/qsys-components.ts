@@ -83,7 +83,7 @@ export class TriggerControl {
     protected qsysService: QSysService,
     protected componentName: string,
     protected controlName: string
-  ) {}
+  ) { }
 
   trigger(): void {
     // Set to 1 (trigger), Q-SYS will automatically reset to 0
@@ -106,10 +106,12 @@ export class KnobControl extends QSysControlBase<number> {
   }
 
   setValue(value: number, ramp?: number): void {
+    console.log("Setting control value:", this.componentName, this.controlName, value, ramp);
     this.qsysService.setControl(this.componentName, this.controlName, value, ramp);
   }
 
   setPosition(position: number, ramp?: number): void {
+    console.log("Setting control position:", this.componentName, this.controlName, position, ramp);
     this.qsysService.setControl(this.componentName, this.controlName, position, ramp);
   }
 }
@@ -131,7 +133,7 @@ export class IntegerControl extends QSysControlBase<number> {
  * Component wrapper to access controls
  */
 export class QSysComponent {
-  constructor(private qsysService: QSysService, private componentName: string) {}
+  constructor(private qsysService: QSysService, private componentName: string) { }
 
   /**
    * Get a text control

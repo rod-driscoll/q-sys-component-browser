@@ -40,6 +40,8 @@ export class WebSocketDiscoveryService {
   public discoveryData = signal<DiscoveryData | null>(null);
   public error = signal<string | null>(null);
   public componentUpdate = signal<ComponentUpdate | null>(null);
+  public connectionFailed = signal<boolean>(false);
+  public loadingStage = signal<string>('');
 
   constructor() {}
 
@@ -54,12 +56,15 @@ export class WebSocketDiscoveryService {
     }
 
     console.log('Connecting to WebSocket discovery endpoint:', this.wsUrl);
+    this.loadingStage.set('Connecting to WebSocket...');
     this.ws = new WebSocket(this.wsUrl);
 
     this.ws.onopen = () => {
       console.log('✓ Connected to WebSocket discovery endpoint');
       this.isConnected.set(true);
       this.error.set(null);
+      this.connectionFailed.set(false);
+      this.loadingStage.set('✓ WebSocket connected, waiting for data...');
     };
 
     this.ws.onmessage = (event) => {
@@ -69,26 +74,37 @@ export class WebSocketDiscoveryService {
 
         if (message.type === 'discovery' && message.data) {
           console.log(`Received discovery data: ${message.data.totalComponents} components`);
+          this.loadingStage.set(`Received ${message.data.totalComponents} components`);
           this.discoveryData.set(message.data);
         } else if (message.type === 'connected') {
           console.log('WebSocket acknowledged:', message.message);
+          this.loadingStage.set('WebSocket connection acknowledged');
         }
       } catch (error) {
         console.error('Error parsing WebSocket message:', error);
         this.error.set('Failed to parse discovery data');
+        this.loadingStage.set('');
       }
     };
 
     this.ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      this.error.set('WebSocket connection error');
+      console.error('WebSocket discovery error:', error);
+      this.error.set('Failed to connect to WebSocket server. Please ensure the WebSocket server script is loaded in a Q-SYS component.');
       this.isConnected.set(false);
+      this.connectionFailed.set(true);
+      this.loadingStage.set('');
     };
 
-    this.ws.onclose = () => {
-      console.log('WebSocket connection closed');
+    this.ws.onclose = (event) => {
+      console.log('WebSocket discovery connection closed', event.code, event.reason);
       this.isConnected.set(false);
       this.ws = null;
+      this.loadingStage.set('');
+
+      // If closed without ever connecting successfully, mark as failed
+      if (!this.discoveryData()) {
+        this.connectionFailed.set(true);
+      }
     };
   }
 
@@ -119,7 +135,8 @@ export class WebSocketDiscoveryService {
           this.componentUpdate.set(message);
         } else if (message.type === 'connected') {
           console.log('Updates WebSocket acknowledged:', message.message);
-        }
+        } else
+          console.warn('Unknown update message type:', message.type);
       } catch (error) {
         console.error('Error parsing update message:', error);
       }

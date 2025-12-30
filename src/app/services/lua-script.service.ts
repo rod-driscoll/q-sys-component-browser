@@ -1,4 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 
 export interface LuaScript {
   name: string;
@@ -6,107 +8,90 @@ export interface LuaScript {
   content: string;
 }
 
+interface LuaScriptMetadata {
+  name: string;
+  fileName: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class LuaScriptService {
+  private http = inject(HttpClient);
   private scripts: LuaScript[] = [];
-
-  constructor() {
-    this.loadScripts();
-  }
+  private scriptsLoaded = false;
 
   /**
-   * Load available Lua scripts
-   * Scripts are embedded directly to avoid async loading issues
+   * Script metadata - defines which Lua files to load and their display names
    */
-  private loadScripts(): void {
-    this.scripts = [
-      {
-        name: 'Get System Information',
-        fileName: 'GetSystemInformation.lua',
-        content: `--[[
-  GetSystemInformation.lua
-  -- This script gets the hardware details of a Q-SYS Core
-]]
-json = require 'rapidjson'
-print('System information')
-local info = { System = System, Network = Network.Interfaces() }
-print(json.encode(info))`,
-      },
-      {
-        name: 'Discover Components and Controls',
-        fileName: 'DiscoverComponentsAndControls.lua',
-        content: `--[[
-  DiscoverComponentsAndControls.lua
-  -- Discovers all components and their controls in the Q-SYS design
-  -- Uses Component.GetComponents() and Component.GetControls() APIs
-  -- Outputs results as JSON to log.history for consumption by external systems
-]]
-json = require 'rapidjson'
+  private scriptMetadata: LuaScriptMetadata[] = [
+    {
+      name: 'WebSocket Component Discovery',
+      fileName: 'WebSocketComponentDiscovery.lua',
+    },
+    {
+      name: 'Get System Information',
+      fileName: 'GetSystemInformation.lua',
+    },
+    {
+      name: 'Discover Components and Controls',
+      fileName: 'DiscoverComponentsAndControls.lua',
+    },
+    {
+      name: 'Get UCI Layers',
+      fileName: 'GetUCILayers.lua',
+    },
+  ];
 
--- Get all components in the design
-local components = Component.GetComponents()
-local discoveryData = {
-  timestamp = os.date("%Y-%m-%dT%H:%M:%S"),
-  totalComponents = #components,
-  components = {}
-}
+  /**
+   * Load Lua scripts from files
+   * Returns a promise that resolves when all scripts are loaded
+   */
+  async loadScripts(): Promise<void> {
+    if (this.scriptsLoaded) {
+      return;
+    }
 
-print("Starting component discovery...")
-print("Found " .. #components .. " components")
+    try {
+      // Load all scripts in parallel
+      const scriptPromises = this.scriptMetadata.map(async (metadata) => {
+        try {
+          const content = await firstValueFrom(
+            this.http.get(`/lua/${metadata.fileName}`, { responseType: 'text' })
+          );
+          return {
+            name: metadata.name,
+            fileName: metadata.fileName,
+            content: content,
+          };
+        } catch (error) {
+          console.error(`Failed to load Lua script: ${metadata.fileName}`, error);
+          // Return a placeholder script if loading fails
+          return {
+            name: metadata.name,
+            fileName: metadata.fileName,
+            content: `-- Error: Failed to load ${metadata.fileName}\n-- Please check that the file exists in the lua/ directory`,
+          };
+        }
+      });
 
--- Iterate through each component
-for _, comp in ipairs(components) do
-  local componentData = {
-    name = comp.Name,
-    type = comp.Type,
-    properties = comp.Properties or {},
-    controls = {}
-  }
-
-  -- Get all controls for this component
-  local success, controls = pcall(function()
-    return Component.GetControls(comp.Name)
-  end)
-
-  if success and controls then
-    componentData.controlCount = #controls
-
-    -- Iterate through each control
-    for _, ctrl in ipairs(controls) do
-      table.insert(componentData.controls, {
-        name = ctrl.Name,
-        type = ctrl.Type or "Text",
-        direction = ctrl.Direction or "Read/Write",
-        value = ctrl.Value,
-        valueMin = ctrl.ValueMin,
-        valueMax = ctrl.ValueMax,
-        position = ctrl.Position,
-        string = ctrl.String,
-        choices = ctrl.Choices
-      })
-    end
-  else
-    componentData.controlCount = 0
-    componentData.error = "Failed to get controls"
-  end
-
-  table.insert(discoveryData.components, componentData)
-end
-
--- Output as JSON
-local jsonOutput = json.encode(discoveryData, { pretty = true })
-print("Component Discovery Complete")
-print(jsonOutput)`,
-      },
-    ];
+      this.scripts = await Promise.all(scriptPromises);
+      this.scriptsLoaded = true;
+      console.log(`Loaded ${this.scripts.length} Lua scripts`);
+    } catch (error) {
+      console.error('Failed to load Lua scripts:', error);
+      this.scripts = [];
+    }
   }
 
   /**
    * Get all available Lua scripts
+   * Loads scripts from files if not already loaded
    */
-  getAvailableScripts(): LuaScript[] {
+  async getAvailableScripts(): Promise<LuaScript[]> {
+    if (!this.scriptsLoaded) {
+      await this.loadScripts();
+    }
     return this.scripts;
   }
 
