@@ -26,7 +26,8 @@
       "Bash(npx -y qrwc-svelte-mcp 192.168.104.220 --no-svelte)",
       "Bash(npx:*)",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nFix combo box initial value display and add control write/subscribe support\n\n- Fix combo box dropdowns showing blank on initial load by adding [selected] \n  attribute binding to option elements in HTML template\n- Read combo box String values from actual control instances instead of \n  metadata to get current selection\n- Implement HTTP POST endpoint for setting control values via WebSocket API\n- Add component subscription system with per-control EventHandlers for \n  real-time updates\n- Support re-subscription to components to update EventHandlers with latest logic\n- Add WebSocket updates endpoint for broadcasting control changes to clients\n- Identify combo boxes by checking for Choices array and set type accordingly\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(npm run build:dev:*)"
     ]
   }
 }

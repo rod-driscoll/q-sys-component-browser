@@ -35,7 +35,7 @@ export class QsysExample implements OnInit, OnDestroy {
     return val !== undefined ? Math.round(val) : 0;
   });
 
-  constructor(protected qsysService: QSysService) {}
+  constructor(protected qsysService: QSysService) { }
 
   // Connection state - access via getter for template
   get isConnected() {
@@ -44,8 +44,9 @@ export class QsysExample implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     // Connect to Q-SYS Core with secure WebSocket (wss://)
+    // Uses runtime IP which can be overridden via URL parameters
     this.qsysService.connect({
-      coreIp: environment.QSYS_CORE_IP,
+      coreIp: environment.RUNTIME_CORE_IP,
       secure: true, // Use wss:// instead of ws://
       pollInterval: 35
     });
@@ -55,7 +56,8 @@ export class QsysExample implements OnInit, OnDestroy {
       if (connected) {
         this.setupComponents();
         // Enable continuous polling to receive updates from Q-SYS
-        this.qsysService.enableContinuousPolling();
+        console.log("NOT Enabling continuous polling");
+        //this.qsysService.enableContinuousPolling();
       }
     });
   }
