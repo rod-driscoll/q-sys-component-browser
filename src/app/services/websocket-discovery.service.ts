@@ -32,8 +32,15 @@ export interface ComponentUpdate {
 export class WebSocketDiscoveryService {
   private ws: WebSocket | null = null;
   private updatesWs: WebSocket | null = null;
-  private readonly wsUrl = environment.QSYS_WS_DISCOVERY_URL;
-  private readonly updatesUrl = environment.QSYS_WS_UPDATES_URL;
+
+  // Use getters to always reference current runtime IP
+  private get wsUrl(): string {
+    return environment.QSYS_WS_DISCOVERY_URL;
+  }
+
+  private get updatesUrl(): string {
+    return environment.QSYS_WS_UPDATES_URL;
+  }
 
   // Signals for reactive state
   public isConnected = signal<boolean>(false);

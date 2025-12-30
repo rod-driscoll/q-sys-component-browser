@@ -43,11 +43,11 @@ export class QsysExample implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Connect to Q-SYS Core with secure WebSocket (wss://)
+    // Connect to Q-SYS Core
     // Uses runtime IP which can be overridden via URL parameters
     this.qsysService.connect({
       coreIp: environment.RUNTIME_CORE_IP,
-      secure: true, // Use wss:// instead of ws://
+      secure: false, // Use ws:// for local connections
       pollInterval: 35
     });
 

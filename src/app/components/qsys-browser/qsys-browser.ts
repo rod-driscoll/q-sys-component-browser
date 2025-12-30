@@ -256,7 +256,7 @@ export class QsysBrowser implements OnInit, OnDestroy {
   ngOnInit(): void {
     // Show initial connecting state
     this.loadingStage.set('Connecting to Q-SYS Core');
-    this.loadingSubStage.set(`Connecting to ${environment.RUNTIME_CORE_IP}:${environment.RUNTIME_CORE_PORT}...`);
+    this.loadingSubStage.set(`Connecting to ${environment.RUNTIME_CORE_IP}...`);
 
     // Load Lua scripts asynchronously
     this.loadLuaScripts();
@@ -264,7 +264,7 @@ export class QsysBrowser implements OnInit, OnDestroy {
     // Connect to Q-SYS Core using runtime IP (can be overridden via URL params)
     this.qsysService.connect({
       coreIp: environment.RUNTIME_CORE_IP,
-      secure: true,
+      secure: false,
       pollInterval: 35,
     }).catch((error) => {
       // Check if this is a certificate error
