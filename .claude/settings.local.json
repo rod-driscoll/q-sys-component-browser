@@ -27,7 +27,14 @@
       "Bash(npx:*)",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nFix combo box initial value display and add control write/subscribe support\n\n- Fix combo box dropdowns showing blank on initial load by adding [selected] \n  attribute binding to option elements in HTML template\n- Read combo box String values from actual control instances instead of \n  metadata to get current selection\n- Implement HTTP POST endpoint for setting control values via WebSocket API\n- Add component subscription system with per-control EventHandlers for \n  real-time updates\n- Support re-subscription to components to update EventHandlers with latest logic\n- Add WebSocket updates endpoint for broadcasting control changes to clients\n- Identify combo boxes by checking for Choices array and set type accordingly\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git reset:*)",
-      "Bash(npm run build:dev:*)"
+      "Bash(npm run build:dev:*)",
+      "Bash(npm run start:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: implement RPC-based control operations with ChangeGroup feedback\n\n- Replace QRWC Component class approach with direct RPC calls \\(Component class not exported\\)\n- Add RPC-based control setting via Component.Set with HTTP API fallback\n- Implement real-time control feedback using QRWC''s ChangeGroup polling\n- Add keepalive timer \\(StatusGet every 30s\\) to prevent connection timeout\n- Start ChangeGroup polling manually when subscribing to components\n- Intercept ChangeGroup poll results to emit control updates\n- Support pulse trigger detection for Trig controls\n\nControl operations now work via RPC while maintaining real-time feedback through\nQRWC''s internal ChangeGroup polling system. This avoids timeout errors during\ninitialization while providing full control and feedback functionality.\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfix: resolve WebSocket connection to use runtime IP and fix Lua execution timeout\n\n- Change WebSocket connections from secure \\(wss://\\) to non-secure \\(ws://\\) for local Q-SYS Core connections\n- Fix WebSocketDiscoveryService to use runtime IP by converting wsUrl/updatesUrl to getters\n- Fix Lua component discovery timeout by implementing async batch processing \\(5 components at a time\\)\n- Use Timer-based batching in WebSocketComponentDiscovery.lua to avoid ''Max execution limits exceeded'' error\n\nWebSocket URLs now correctly resolve to runtime IP \\(e.g., 192.168.6.21\\) instead of default IP \\(192.168.104.220\\).\nLua discovery script processes large component lists without timeout by yielding between batches.\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(npm run start:dev:*)",
+      "Bash(npm run:*)",
+      "Bash(npm start)",
+      "Bash(npm start:*)"
     ]
   }
 }

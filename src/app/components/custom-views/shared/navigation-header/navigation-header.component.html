@@ -1,0 +1,13 @@
+<header class="nav-header">
+  <button class="nav-button" (click)="navigateToMenu()">
+    <span class="nav-arrow">←</span>
+    <span class="nav-text">Back to Menu</span>
+  </button>
+
+  <h1 class="nav-title">{{ title }}</h1>
+
+  <div class="connection-status" [class.connected]="isConnected">
+    <div class="status-indicator" [class.active]="isConnected"></div>
+    <span class="status-text">{{ connectionStatus }}</span>
+  </div>
+</header>

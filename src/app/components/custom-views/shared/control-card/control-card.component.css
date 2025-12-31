@@ -1,0 +1,117 @@
+.control-card {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: box-shadow 0.2s ease;
+  min-width: 0;
+}
+
+.control-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Control Header */
+.control-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+.control-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #2c3e50;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.control-type-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: #3498db;
+  color: #ffffff;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Control Body */
+.control-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60px;
+}
+
+/* Unsupported Controls */
+.unsupported {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  color: #95a5a6;
+}
+
+.unsupported-icon {
+  font-size: 2rem;
+}
+
+.unsupported-text {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Control Footer */
+.control-footer {
+  padding-top: 0.5rem;
+  border-top: 1px solid #ecf0f1;
+  display: flex;
+  justify-content: center;
+}
+
+.component-badge {
+  font-size: 0.75rem;
+  color: #7f8c8d;
+  background: #ecf0f1;
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .control-card {
+    padding: 0.75rem;
+  }
+
+  .control-name {
+    font-size: 0.9rem;
+  }
+
+  .control-type-badge {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.4rem;
+  }
+
+  .component-badge {
+    font-size: 0.7rem;
+  }
+}
