@@ -9,7 +9,7 @@
  */
 
 // Internal state for runtime overrides
-let runtimeCoreIp = '192.168.104.220';
+let runtimeCoreIp = '192.168.6.21';
 let runtimeCorePort = 9091;
 
 export const environment = {
@@ -17,7 +17,7 @@ export const environment = {
 
   // Q-SYS Core connection settings (defaults)
   // Change this IP address to match your Q-SYS Core
-  QSYS_CORE_IP: '192.168.104.220',
+  QSYS_CORE_IP: '192.168.6.21',
   // port for http and webserver connection (not qrwc - also not the native core http server)
   // The native webserver on a qsys does not support custom projects so we install a lua webserver onto a script
   // We use this webserver to access components with 'Script' only code access (not 'External' or 'All')

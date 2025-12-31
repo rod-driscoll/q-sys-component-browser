@@ -214,6 +214,12 @@ export abstract class CustomViewBase implements OnInit, OnDestroy {
   private removeDuplicateControls(controls: ControlInfo[]): ControlInfo[] {
     const seen = new Set<string>();
     return controls.filter(control => {
+      // Skip controls without names - they can't be identified uniquely
+      if (!control.name) {
+        console.warn('Skipping control without name:', control);
+        return false;
+      }
+
       const key = `${control.componentName}:${control.name}`;
       if (seen.has(key)) {
         return false;

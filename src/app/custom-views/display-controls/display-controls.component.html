@@ -22,28 +22,38 @@
     }
 
     <!-- Empty State -->
-    @else if (controls().length === 0) {
+    @else if (displayCards().length === 0) {
       <div class="empty-state">
         <div class="empty-icon">📺</div>
-        <h2>No display controls found</h2>
-        <p>No components matching display, monitor, or screen patterns were found.</p>
+        <h2>No displays found</h2>
+        <p>No IPTVManager component found or no displays configured.</p>
       </div>
     }
 
-    <!-- Control Cards Grid -->
+    <!-- Display Cards -->
     @else {
       <div class="controls-header">
-        <h2>{{ controls().length }} Control{{ controls().length === 1 ? '' : 's' }}</h2>
+        <h2>{{ displayCards().length }} Display{{ displayCards().length === 1 ? '' : 's' }}</h2>
       </div>
 
-      <div class="controls-grid">
-        @for (control of controls(); track control.componentName + ':' + control.name) {
-          <app-control-card
-            [control]="control"
-            [showComponentName]="true"
-            (valueChange)="onValueChange(control, $event)"
-            (positionChange)="onPositionChange(control, $event)"
-          />
+      <div class="displays-grid">
+        @for (display of displayCards(); track display.displayNumber) {
+          <div class="display-card">
+            <div class="display-card-header">
+              <h3>{{ display.displayName }}</h3>
+              <!-- <span class="display-number-badge">{{ display.displayNumber }}</span> -->
+            </div>
+            <div class="display-controls">
+              @for (control of display.controls; track control.name) {
+                <app-control-card
+                  [control]="control"
+                  [showComponentName]="false"
+                  (valueChange)="onValueChange(control, $event)"
+                  (positionChange)="onPositionChange(control, $event)"
+                />
+              }
+            </div>
+          </div>
         }
       </div>
     }

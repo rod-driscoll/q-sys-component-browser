@@ -1,16 +1,29 @@
 <div class="menu-container">
-  <!-- Connection Status Banner -->
-  <header class="connection-banner" [class.connected]="isConnected">
-    <div class="banner-content">
-      <div class="status-indicator" [class.active]="isConnected"></div>
-      <span class="status-text">{{ connectionStatus }}</span>
+  <!-- Header with Project Details -->
+  <header class="header">
+    <div class="header-main">
+      <div class="header-left">
+        <h1>Q-SYS Control System</h1>
+        <div class="project-detail-item">
+          <span class="detail-label">Project:</span>
+          <span class="detail-value">{{ designName || 'Loading...' }}</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="connection-status" [class.connected]="isConnected">
+          {{ connectionStatus }}
+        </div>
+        <div class="core-ip">{{ coreIp }}</div>
+        @if (corePlatform && coreState) {
+          <div class="core-info">{{ corePlatform }} ({{ coreState }})</div>
+        }
+      </div>
     </div>
   </header>
 
   <!-- Main Content -->
   <main class="menu-content">
     <div class="menu-header">
-      <h1>Q-SYS Control System</h1>
       <p class="subtitle">Select a view to continue</p>
     </div>
 

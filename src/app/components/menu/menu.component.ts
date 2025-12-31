@@ -4,6 +4,7 @@ import { Router, RouterModule } from '@angular/router';
 import { QSysService } from '../../services/qsys.service';
 import { CustomViewRegistryService } from '../../services/custom-view-registry.service';
 import { MenuCard } from '../../models/custom-view.model';
+import { environment } from '../../../environments/environment';
 
 /**
  * Menu component - Home page with navigation cards
@@ -20,6 +21,11 @@ import { MenuCard } from '../../models/custom-view.model';
 export class MenuComponent implements OnInit {
   menuCards = signal<MenuCard[]>([]);
 
+  // Q-SYS Core status information
+  corePlatform = '';
+  coreState = '';
+  designName = '';
+
   constructor(
     private router: Router,
     protected qsysService: QSysService,
@@ -28,6 +34,37 @@ export class MenuComponent implements OnInit {
 
   ngOnInit(): void {
     this.buildMenuCards();
+    this.connectToQSys();
+  }
+
+  /**
+   * Connect to Q-SYS Core and load status
+   */
+  private connectToQSys(): void {
+    // Connect to Q-SYS Core
+    this.qsysService.connect({
+      coreIp: environment.RUNTIME_CORE_IP,
+      secure: false,
+      pollInterval: 35,
+    }).catch((error) => {
+      console.error('Failed to connect to Q-SYS Core:', error);
+    });
+
+    // Subscribe to connection status changes
+    this.qsysService.getConnectionStatus().subscribe(async (connected) => {
+      if (connected) {
+        // Load Core status to get platform, state, and design name
+        try {
+          const status = this.qsysService.getCoreStatus();
+          this.corePlatform = status.platform;
+          this.coreState = status.state;
+          this.designName = status.designName;
+          console.log(`Menu: Core ${status.platform} (${status.state}) - Design: ${status.designName}`);
+        } catch (error) {
+          console.error('Failed to load Core status:', error);
+        }
+      }
+    });
   }
 
   /**
@@ -74,6 +111,20 @@ export class MenuComponent implements OnInit {
    * Get connection status text
    */
   get connectionStatus(): string {
-    return this.qsysService.isConnected() ? 'Connected to Q-SYS Core' : 'Not connected';
+    return this.qsysService.isConnected() ? 'Core Connected' : 'Core Disconnected';
+  }
+
+  /**
+   * Get Q-SYS Core IP address
+   */
+  get coreIp(): string {
+    return environment.RUNTIME_CORE_IP;
+  }
+
+  /**
+   * Get Q-SYS Core port
+   */
+  get corePort(): number {
+    return environment.RUNTIME_CORE_PORT;
   }
 }
