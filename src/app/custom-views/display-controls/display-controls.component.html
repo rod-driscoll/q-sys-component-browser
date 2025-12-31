@@ -34,6 +34,9 @@
     @else {
       <div class="controls-header">
         <h2>{{ displayCards().length }} Display{{ displayCards().length === 1 ? '' : 's' }}</h2>
+        <button class="mode-toggle-button" (click)="toggleMode()">
+          {{ advancedMode() ? 'Basic Mode' : 'Advanced Mode' }}
+        </button>
       </div>
 
       <div class="displays-grid">
@@ -41,7 +44,6 @@
           <div class="display-card">
             <div class="display-card-header">
               <h3>{{ display.displayName }}</h3>
-              <!-- <span class="display-number-badge">{{ display.displayNumber }}</span> -->
             </div>
             <div class="display-controls">
               @for (control of display.controls; track control.name) {

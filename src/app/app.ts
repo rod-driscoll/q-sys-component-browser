@@ -1,6 +1,7 @@
 import { Component, signal, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { environment } from '../environments/environment';
+import { QSysService } from './services/qsys.service';
 
 @Component({
   selector: 'app-root',
@@ -11,9 +12,28 @@ import { environment } from '../environments/environment';
 export class App implements OnInit {
   protected readonly title = signal('q-sys-angular-components');
 
+  constructor(private qsysService: QSysService) {}
+
   ngOnInit(): void {
     // Parse URL parameters for dynamic Q-SYS Core connection settings
     this.parseUrlParameters();
+
+    // Connect to Q-SYS Core on app initialization
+    this.connectToQSys();
+  }
+
+  /**
+   * Connect to Q-SYS Core at app level
+   * This ensures connection is available regardless of entry route
+   */
+  private connectToQSys(): void {
+    this.qsysService.connect({
+      coreIp: environment.RUNTIME_CORE_IP,
+      secure: false,
+      pollInterval: 35,
+    }).catch((error) => {
+      console.error('Failed to connect to Q-SYS Core:', error);
+    });
   }
 
   /**

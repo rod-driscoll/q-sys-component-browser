@@ -1,13 +1,25 @@
-<header class="nav-header">
-  <button class="nav-button" (click)="navigateToMenu()">
-    <span class="nav-arrow">←</span>
-    <span class="nav-text">Back to Menu</span>
-  </button>
-
-  <h1 class="nav-title">{{ title }}</h1>
-
-  <div class="connection-status" [class.connected]="isConnected">
-    <div class="status-indicator" [class.active]="isConnected"></div>
-    <span class="status-text">{{ connectionStatus }}</span>
+<header class="header">
+  <div class="header-main">
+    <div class="header-left">
+      <button class="back-button" (click)="navigateToMenu()" title="Back to Menu">
+        ←
+      </button>
+      <div class="header-left-content">
+        <h1>{{ title }}</h1>
+        <div class="project-detail-item">
+          <span class="detail-label">Project:</span>
+          <span class="detail-value">{{ designName || 'Loading...' }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="connection-status" [class.connected]="isConnected">
+        {{ connectionStatus }}
+      </div>
+      <div class="core-ip">{{ coreIp }}</div>
+      @if (corePlatform && coreState) {
+        <div class="core-info">{{ corePlatform }} ({{ coreState }})</div>
+      }
+    </div>
   </div>
 </header>

@@ -3,10 +3,15 @@
   <div class="header">
     <div class="header-main">
       <div class="header-left">
-        <h1>Q-SYS Component Browser</h1>
-        <div class="project-detail-item">
-          <span class="detail-label">Project:</span>
-          <span class="detail-value">{{ designName || 'Loading...' }}</span>
+        <button class="back-button" (click)="navigateToMenu()" title="Back to Menu">
+          ←
+        </button>
+        <div class="header-left-content">
+          <h1>Q-SYS Component Browser</h1>
+          <div class="project-detail-item">
+            <span class="detail-label">Project:</span>
+            <span class="detail-value">{{ designName || 'Loading...' }}</span>
+          </div>
         </div>
       </div>
       <div class="header-right">

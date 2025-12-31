@@ -34,22 +34,13 @@ export class MenuComponent implements OnInit {
 
   ngOnInit(): void {
     this.buildMenuCards();
-    this.connectToQSys();
+    this.loadCoreStatus();
   }
 
   /**
-   * Connect to Q-SYS Core and load status
+   * Load Q-SYS Core status (connection is handled at app level)
    */
-  private connectToQSys(): void {
-    // Connect to Q-SYS Core
-    this.qsysService.connect({
-      coreIp: environment.RUNTIME_CORE_IP,
-      secure: false,
-      pollInterval: 35,
-    }).catch((error) => {
-      console.error('Failed to connect to Q-SYS Core:', error);
-    });
-
+  private loadCoreStatus(): void {
     // Subscribe to connection status changes
     this.qsysService.getConnectionStatus().subscribe(async (connected) => {
       if (connected) {
@@ -65,6 +56,14 @@ export class MenuComponent implements OnInit {
         }
       }
     });
+
+    // If already connected, load status immediately
+    if (this.qsysService.isConnected()) {
+      const status = this.qsysService.getCoreStatus();
+      this.corePlatform = status.platform;
+      this.coreState = status.state;
+      this.designName = status.designName;
+    }
   }
 
   /**

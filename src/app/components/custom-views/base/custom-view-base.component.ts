@@ -42,7 +42,21 @@ export abstract class CustomViewBase implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.loadControls();
+    // Wait for connection before loading controls
+    if (this.qsysService.isConnected()) {
+      // Already connected, load immediately
+      this.loadControls();
+    } else {
+      // Wait for connection
+      const connectionSub = this.qsysService.getConnectionStatus().subscribe((connected) => {
+        if (connected) {
+          this.loadControls();
+          connectionSub.unsubscribe(); // Only load once when first connected
+        }
+      });
+      this.subscriptions.push(connectionSub);
+    }
+
     this.subscribeToUpdates();
   }
 

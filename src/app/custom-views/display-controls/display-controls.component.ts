@@ -1,4 +1,4 @@
-import { Component, computed } from '@angular/core';
+import { Component, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CustomViewBase } from '../../components/custom-views/base/custom-view-base.component';
 import { NavigationHeaderComponent } from '../../components/custom-views/shared/navigation-header/navigation-header.component';
@@ -20,6 +20,7 @@ interface DisplayCard {
  * Display Controls custom view
  * Groups controls from IPTVManager component by display number
  * Creates a card for each display containing all its controls
+ * Supports Basic and Advanced modes for filtering displayed controls
  */
 @Component({
   selector: 'app-display-controls',
@@ -30,6 +31,15 @@ interface DisplayCard {
 export class DisplayControlsComponent extends CustomViewBase {
   /** View title from metadata */
   readonly title = DISPLAY_CONTROLS_METADATA.title;
+
+  /** Advanced mode toggle - false = Basic, true = Advanced */
+  advancedMode = signal<boolean>(false);
+
+  /** Basic mode control names */
+  private readonly basicModeControls = ['ChannelSelect', 'PowerOn', 'PowerOff'];
+
+  /** Advanced mode additional control names */
+  private readonly advancedModeControls = ['IPAddress', 'DisplayStatus', 'Decoder IPAddress', 'DecoderStatus'];
 
   /** Grouped displays with their controls */
   displayCards = computed(() => this.groupControlsByDisplay());
@@ -50,8 +60,36 @@ export class DisplayControlsComponent extends CustomViewBase {
   }
 
   /**
+   * Toggle between Basic and Advanced modes
+   */
+  toggleMode(): void {
+    this.advancedMode.set(!this.advancedMode());
+  }
+
+  /**
+   * Check if a control should be displayed based on current mode
+   */
+  private shouldShowControl(controlName: string): boolean {
+    // Extract base control name without the number suffix
+    const baseControlName = controlName.replace(/\s+\d+$/, '');
+
+    // Always show basic mode controls
+    if (this.basicModeControls.includes(baseControlName)) {
+      return true;
+    }
+
+    // In advanced mode, also show additional controls
+    if (this.advancedMode()) {
+      return this.advancedModeControls.includes(baseControlName);
+    }
+
+    return false;
+  }
+
+  /**
    * Group controls by display number
    * Extracts display number from control names (e.g., "ChannelSelect 18" -> display 18)
+   * Filters controls based on current mode (Basic/Advanced)
    */
   private groupControlsByDisplay(): DisplayCard[] {
     const controlsList = this.controls();
@@ -63,6 +101,9 @@ export class DisplayControlsComponent extends CustomViewBase {
     for (const control of controlsList) {
       // Skip controls without names
       if (!control.name) continue;
+
+      // Filter controls based on mode
+      if (!this.shouldShowControl(control.name)) continue;
 
       const match = control.name.match(numberPattern);
       if (match) {
@@ -78,11 +119,17 @@ export class DisplayControlsComponent extends CustomViewBase {
 
     // Convert map to array of DisplayCard objects, sorted by display number
     const displays: DisplayCard[] = Array.from(displayMap.entries())
-      .map(([displayNumber, controls]) => ({
-        displayNumber,
-        displayName: `Display ${displayNumber}`,
-        controls: controls.sort((a, b) => a.name.localeCompare(b.name))
-      }))
+      .map(([displayNumber, controls]) => {
+        // Find the DeviceName control for this display
+        const deviceNameControl = controls.find(c => c.name === `DeviceName ${displayNumber}`);
+        const deviceName = deviceNameControl?.string || deviceNameControl?.value || `Display ${displayNumber}`;
+
+        return {
+          displayNumber,
+          displayName: `${displayNumber}. ${deviceName}`,
+          controls: controls.sort((a, b) => a.name.localeCompare(b.name))
+        };
+      })
       .sort((a, b) => a.displayNumber - b.displayNumber);
 
     return displays;
