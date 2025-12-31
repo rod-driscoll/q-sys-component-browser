@@ -25,11 +25,76 @@
   margin: 0;
 }
 
-/* Controls Grid */
-.controls-grid {
+/* Zones Grid */
+.zones-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 500px));
+  gap: 1.5rem;
+}
+
+/* Zone Card */
+.zone-card {
+  background: #2c3e50;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  max-width: 500px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.zone-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Zone Card Header */
+.zone-card-header {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.zone-card-header h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Zone Controls */
+.zone-controls {
+  display: grid;
+  gap: 1rem;
+}
+
+/* Control Row */
+.control-row {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  align-items: center;
+  gap: 1rem;
+}
+
+.control-label {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #ffffff;
+  text-align: right;
+}
+
+/* Gain Row (Volume Slider) */
+.gain-row {
+  grid-template-columns: 100px 1fr;
+}
+
+.gain-row app-knob-control {
+  display: block;
+  width: 100%;
 }
 
 /* Loading State */
@@ -128,9 +193,17 @@
     font-size: 1.25rem;
   }
 
-  .controls-grid {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 1rem;
+  .zones-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .zone-card {
+    padding: 1.25rem;
+  }
+
+  .zone-card-header h3 {
+    font-size: 1.2rem;
   }
 }
 
@@ -139,8 +212,17 @@
     padding: 1rem;
   }
 
-  .controls-grid {
+  .zones-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .zone-card {
+    padding: 1rem;
+  }
+
+  .zone-card-header h3 {
+    font-size: 1.1rem;
   }
 
   .loading-state,
