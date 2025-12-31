@@ -1,0 +1,51 @@
+<div class="view-container">
+  <!-- Navigation Header -->
+  <app-navigation-header [title]="title" />
+
+  <!-- Main Content -->
+  <main class="view-content">
+    <!-- Loading State -->
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading volume controls...</p>
+      </div>
+    }
+
+    <!-- Error State -->
+    @else if (error()) {
+      <div class="error-state">
+        <div class="error-icon">⚠️</div>
+        <h2>Failed to load controls</h2>
+        <p>{{ error() }}</p>
+      </div>
+    }
+
+    <!-- Empty State -->
+    @else if (controls().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">🔊</div>
+        <h2>No volume controls found</h2>
+        <p>No components matching volume, audio, or gain patterns were found.</p>
+      </div>
+    }
+
+    <!-- Control Cards Grid -->
+    @else {
+      <div class="controls-header">
+        <h2>{{ controls().length }} Control{{ controls().length === 1 ? '' : 's' }}</h2>
+      </div>
+
+      <div class="controls-grid">
+        @for (control of controls(); track control.componentName + ':' + control.name) {
+          <app-control-card
+            [control]="control"
+            [showComponentName]="true"
+            (valueChange)="onValueChange(control, $event)"
+            (positionChange)="onPositionChange(control, $event)"
+          />
+        }
+      </div>
+    }
+  </main>
+</div>
