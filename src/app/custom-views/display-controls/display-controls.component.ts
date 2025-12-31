@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { CustomViewBase } from '../../components/custom-views/base/custom-view-base.component';
 import { NavigationHeaderComponent } from '../../components/custom-views/shared/navigation-header/navigation-header.component';
 import { ControlCardComponent } from '../../components/custom-views/shared/control-card/control-card.component';
+import { PowerControlComponent } from './power-control/power-control.component';
 import { ControlSelectionConfig } from '../../models/custom-view.model';
 import { ControlInfo } from '../../services/qsys-browser.service';
 import { DISPLAY_CONTROLS_METADATA } from './display-controls.metadata';
@@ -14,6 +15,8 @@ interface DisplayCard {
   displayNumber: number;
   displayName: string;
   controls: ControlInfo[];
+  powerOnControl?: ControlInfo;
+  powerOffControl?: ControlInfo;
 }
 
 /**
@@ -24,7 +27,7 @@ interface DisplayCard {
  */
 @Component({
   selector: 'app-display-controls',
-  imports: [CommonModule, NavigationHeaderComponent, ControlCardComponent],
+  imports: [CommonModule, NavigationHeaderComponent, ControlCardComponent, PowerControlComponent],
   templateUrl: './display-controls.component.html',
   styleUrl: './display-controls.component.css'
 })
@@ -37,6 +40,9 @@ export class DisplayControlsComponent extends CustomViewBase {
 
   /** Basic mode control names */
   private readonly basicModeControls = ['ChannelSelect', 'PowerOn', 'PowerOff'];
+
+  /** Power control names (treated specially - combined into one control) */
+  private readonly powerControlNames = ['PowerOn', 'PowerOff'];
 
   /** Advanced mode additional control names */
   private readonly advancedModeControls = ['IPAddress', 'DisplayStatus', 'Decoder IPAddress', 'DecoderStatus'];
@@ -94,10 +100,30 @@ export class DisplayControlsComponent extends CustomViewBase {
   private groupControlsByDisplay(): DisplayCard[] {
     const controlsList = this.controls();
     const displayMap = new Map<number, ControlInfo[]>();
+    const deviceNameMap = new Map<number, string>();
 
     // Regex to extract trailing number from control name
     const numberPattern = /\s+(\d+)$/;
 
+    // First pass: collect all DeviceName controls for display names
+    for (const control of controlsList) {
+      if (!control.name) continue;
+
+      if (control.name.startsWith('DeviceName ')) {
+        const match = control.name.match(numberPattern);
+        if (match) {
+          const displayNumber = parseInt(match[1], 10);
+          const deviceName = control.string || control.value || `Display ${displayNumber}`;
+          deviceNameMap.set(displayNumber, deviceName);
+        }
+      }
+    }
+
+    // Maps to track power controls separately
+    const powerOnMap = new Map<number, ControlInfo>();
+    const powerOffMap = new Map<number, ControlInfo>();
+
+    // Second pass: collect controls to display based on mode filtering
     for (const control of controlsList) {
       // Skip controls without names
       if (!control.name) continue;
@@ -108,6 +134,17 @@ export class DisplayControlsComponent extends CustomViewBase {
       const match = control.name.match(numberPattern);
       if (match) {
         const displayNumber = parseInt(match[1], 10);
+        const baseControlName = control.name.replace(/\s+\d+$/, '');
+
+        // Handle power controls specially
+        if (baseControlName === 'PowerOn') {
+          powerOnMap.set(displayNumber, control);
+          continue;
+        }
+        if (baseControlName === 'PowerOff') {
+          powerOffMap.set(displayNumber, control);
+          continue;
+        }
 
         if (!displayMap.has(displayNumber)) {
           displayMap.set(displayNumber, []);
@@ -120,19 +157,41 @@ export class DisplayControlsComponent extends CustomViewBase {
     // Convert map to array of DisplayCard objects, sorted by display number
     const displays: DisplayCard[] = Array.from(displayMap.entries())
       .map(([displayNumber, controls]) => {
-        // Find the DeviceName control for this display
-        const deviceNameControl = controls.find(c => c.name === `DeviceName ${displayNumber}`);
-        const deviceName = deviceNameControl?.string || deviceNameControl?.value || `Display ${displayNumber}`;
+        const deviceName = deviceNameMap.get(displayNumber) || `Display ${displayNumber}`;
 
         return {
           displayNumber,
           displayName: `${displayNumber}. ${deviceName}`,
-          controls: controls.sort((a, b) => a.name.localeCompare(b.name))
+          controls: controls.sort((a, b) => a.name.localeCompare(b.name)),
+          powerOnControl: powerOnMap.get(displayNumber),
+          powerOffControl: powerOffMap.get(displayNumber)
         };
       })
       .sort((a, b) => a.displayNumber - b.displayNumber);
 
     return displays;
+  }
+
+  /**
+   * Handle power on button click
+   */
+  async onPowerOn(display: DisplayCard): Promise<void> {
+    if (display.powerOnControl) {
+      // Send opposite of current value (trigger the control)
+      const newValue = display.powerOnControl.value === 1 ? 0 : 1;
+      await this.handleValueChange(display.powerOnControl, newValue);
+    }
+  }
+
+  /**
+   * Handle power off button click
+   */
+  async onPowerOff(display: DisplayCard): Promise<void> {
+    if (display.powerOffControl) {
+      // Send opposite of current value (trigger the control)
+      const newValue = display.powerOffControl.value === 1 ? 0 : 1;
+      await this.handleValueChange(display.powerOffControl, newValue);
+    }
   }
 
   /**

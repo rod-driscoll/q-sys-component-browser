@@ -37,6 +37,15 @@ export class ControlCardComponent {
   /** Whether to show the component name badge */
   @Input() showComponentName: boolean = true;
 
+  /** Whether to strip trailing number from control name (e.g., "ChannelSelect 1" -> "ChannelSelect") */
+  @Input() stripNumberSuffix: boolean = false;
+
+  /** Whether to hide the control type badge */
+  @Input() hideTypeBadge: boolean = false;
+
+  /** Whether to hide the control name */
+  @Input() hideControlName: boolean = false;
+
   /** Emitted when control value changes */
   @Output() valueChange = new EventEmitter<any>();
 
@@ -51,9 +60,12 @@ export class ControlCardComponent {
 
   /**
    * Get display name for the control
-   * Shows control name and component name if different
+   * Optionally strips trailing number suffix if stripNumberSuffix is true
    */
   get displayName(): string {
+    if (this.stripNumberSuffix) {
+      return this.control.name.replace(/\s+\d+$/, '');
+    }
     return this.control.name;
   }
 

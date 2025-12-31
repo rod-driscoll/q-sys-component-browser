@@ -75,6 +75,55 @@
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
 }
 
+/* Display Card in Basic Mode */
+.display-card.basic-mode {
+  background: #ffffff;
+  padding: 0.5rem 0.75rem;
+}
+
+.display-card.basic-mode .display-card-header {
+  margin-bottom: 0.35rem;
+  padding-bottom: 0.35rem;
+}
+
+.display-card.basic-mode .display-card-header h3 {
+  color: #2c3e50;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Advanced Mode Overrides */
+/* Power control card in advanced mode should have white background */
+.display-card:not(.basic-mode) app-power-control ::ng-deep .control-card {
+  background: #ffffff;
+}
+
+.display-card:not(.basic-mode) app-power-control ::ng-deep .control-card .control-name {
+  color: #2c3e50;
+}
+
+.display-card:not(.basic-mode) app-power-control ::ng-deep .control-card .control-type-badge {
+  background-color: #e3f2fd;
+  color: #1976d2;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+/* All control cards in advanced mode should have white background and browser-style type badges */
+.display-card:not(.basic-mode) app-control-card ::ng-deep .control-card {
+  background: #ffffff;
+}
+
+.display-card:not(.basic-mode) app-control-card ::ng-deep .control-type-badge {
+  background-color: #e3f2fd;
+  color: #1976d2;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
 /* Display Card Header */
 .display-card-header {
   display: flex;
@@ -107,6 +156,29 @@
 .display-controls {
   display: grid;
   gap: 0.75rem;
+}
+
+/* In basic mode, style controls directly on the card */
+.display-card.basic-mode .display-controls {
+  grid-template-columns: auto 1fr;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.display-card.basic-mode :host ::ng-deep .control-card,
+.display-card.basic-mode app-control-card ::ng-deep .control-card,
+.display-card.basic-mode app-power-control ::ng-deep .control-card {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+.display-card.basic-mode :host ::ng-deep .control-card:hover,
+.display-card.basic-mode app-control-card ::ng-deep .control-card:hover,
+.display-card.basic-mode app-power-control ::ng-deep .control-card:hover {
+  box-shadow: none;
+  background: transparent;
 }
 
 /* Loading State */

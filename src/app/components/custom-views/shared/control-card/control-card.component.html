@@ -1,9 +1,13 @@
 <div class="control-card">
   <!-- Control Header -->
-  <div class="control-header">
-    <span class="control-name" [title]="control.name">{{ displayName }}</span>
-    <span class="control-type-badge">{{ typeBadge }}</span>
-  </div>
+  @if (!hideControlName) {
+    <div class="control-header">
+      <span class="control-name" [title]="control.name">{{ displayName }}</span>
+      @if (!hideTypeBadge) {
+        <span class="control-type-badge">{{ typeBadge }}</span>
+      }
+    </div>
+  }
 
   <!-- Control Body -->
   <div class="control-body">
