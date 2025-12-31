@@ -70,6 +70,13 @@
             (valueChange)="valueChange.emit($event)"
           />
         }
+        @case ('Status') {
+          <app-status-control
+            [control]="control"
+            mode="inline"
+            (valueChange)="valueChange.emit($event)"
+          />
+        }
       }
     } @else {
       <div class="unsupported">

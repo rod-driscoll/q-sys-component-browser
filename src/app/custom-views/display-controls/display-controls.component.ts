@@ -17,6 +17,8 @@ interface DisplayCard {
   controls: ControlInfo[];
   powerOnControl?: ControlInfo;
   powerOffControl?: ControlInfo;
+  displayIPAddress?: string;
+  displayStatus?: number;
 }
 
 /**
@@ -45,7 +47,7 @@ export class DisplayControlsComponent extends CustomViewBase {
   private readonly powerControlNames = ['PowerOn', 'PowerOff'];
 
   /** Advanced mode additional control names */
-  private readonly advancedModeControls = ['IPAddress', 'DisplayStatus', 'Decoder IPAddress', 'DecoderStatus'];
+  private readonly advancedModeControls = ['IPAddress', 'Display IPAddress', 'DisplayStatus', 'Decoder IPAddress', 'DecoderStatus'];
 
   /** Grouped displays with their controls */
   displayCards = computed(() => this.groupControlsByDisplay());
@@ -105,7 +107,10 @@ export class DisplayControlsComponent extends CustomViewBase {
     // Regex to extract trailing number from control name
     const numberPattern = /\s+(\d+)$/;
 
-    // First pass: collect all DeviceName controls for display names
+    // First pass: collect all DeviceName, Display IPAddress, and DisplayStatus controls
+    const displayIPAddressMap = new Map<number, string>();
+    const displayStatusMap = new Map<number, number>();
+
     for (const control of controlsList) {
       if (!control.name) continue;
 
@@ -115,6 +120,19 @@ export class DisplayControlsComponent extends CustomViewBase {
           const displayNumber = parseInt(match[1], 10);
           const deviceName = control.string || control.value || `Display ${displayNumber}`;
           deviceNameMap.set(displayNumber, deviceName);
+        }
+      } else if (control.name.startsWith('Display IPAddress ')) {
+        const match = control.name.match(numberPattern);
+        if (match) {
+          const displayNumber = parseInt(match[1], 10);
+          const ipAddress = control.string || control.value || '';
+          displayIPAddressMap.set(displayNumber, ipAddress);
+        }
+      } else if (control.name.startsWith('DisplayStatus ')) {
+        const match = control.name.match(numberPattern);
+        if (match) {
+          const displayNumber = parseInt(match[1], 10);
+          displayStatusMap.set(displayNumber, Number(control.value) || 0);
         }
       }
     }
@@ -164,12 +182,31 @@ export class DisplayControlsComponent extends CustomViewBase {
           displayName: `${displayNumber}. ${deviceName}`,
           controls: controls.sort((a, b) => a.name.localeCompare(b.name)),
           powerOnControl: powerOnMap.get(displayNumber),
-          powerOffControl: powerOffMap.get(displayNumber)
+          powerOffControl: powerOffMap.get(displayNumber),
+          displayIPAddress: displayIPAddressMap.get(displayNumber),
+          displayStatus: displayStatusMap.get(displayNumber)
         };
       })
       .sort((a, b) => a.displayNumber - b.displayNumber);
 
     return displays;
+  }
+
+  /**
+   * Get the status color class based on Q-SYS status value
+   */
+  getStatusColorClass(statusValue?: number): string {
+    if (statusValue === undefined) return 'status-grey';
+
+    switch (Number(statusValue)) {
+      case 0: return 'status-green';      // OK
+      case 1: return 'status-orange';     // Compromised
+      case 2: return 'status-red';        // Fault
+      case 3: return 'status-grey';       // Not Present
+      case 4: return 'status-red';        // Missing
+      case 5: return 'status-blue';       // Initializing
+      default: return 'status-grey';
+    }
   }
 
   /**

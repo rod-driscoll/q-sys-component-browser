@@ -9,6 +9,7 @@ import { TextControl } from '../../../qsys-browser/controls/text-control/text-co
 import { TriggerControl } from '../../../qsys-browser/controls/trigger-control/trigger-control';
 import { StateTriggerControl } from '../../../qsys-browser/controls/state-trigger-control/state-trigger-control';
 import { TimeControl } from '../../../qsys-browser/controls/time-control/time-control';
+import { StatusControl } from '../../../qsys-browser/controls/status-control/status-control';
 
 /**
  * Reusable card component for rendering any control type
@@ -25,7 +26,8 @@ import { TimeControl } from '../../../qsys-browser/controls/time-control/time-co
     TextControl,
     TriggerControl,
     StateTriggerControl,
-    TimeControl
+    TimeControl,
+    StatusControl
   ],
   templateUrl: './control-card.component.html',
   styleUrl: './control-card.component.css'
@@ -82,7 +84,7 @@ export class ControlCardComponent {
   get isSupported(): boolean {
     const supportedTypes = [
       'Knob', 'Boolean', 'Float', 'Integer',
-      'Combo box', 'Text', 'Trigger', 'State Trigger', 'Time'
+      'Combo box', 'Text', 'Trigger', 'State Trigger', 'Time', 'Status'
     ];
     return supportedTypes.includes(this.control.type);
   }
