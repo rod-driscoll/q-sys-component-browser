@@ -137,9 +137,10 @@ export class DisplayControlsComponent extends CustomViewBase {
       }
     }
 
-    // Maps to track power controls separately
+    // Maps to track power controls and channel select controls separately
     const powerOnMap = new Map<number, ControlInfo>();
     const powerOffMap = new Map<number, ControlInfo>();
+    const channelSelectMap = new Map<number, ControlInfo>();
 
     // Second pass: collect controls to display based on mode filtering
     for (const control of controlsList) {
@@ -164,6 +165,11 @@ export class DisplayControlsComponent extends CustomViewBase {
           continue;
         }
 
+        // Track ChannelSelect controls for filtering
+        if (baseControlName === 'ChannelSelect') {
+          channelSelectMap.set(displayNumber, control);
+        }
+
         if (!displayMap.has(displayNumber)) {
           displayMap.set(displayNumber, []);
         }
@@ -186,6 +192,46 @@ export class DisplayControlsComponent extends CustomViewBase {
           displayIPAddress: displayIPAddressMap.get(displayNumber),
           displayStatus: displayStatusMap.get(displayNumber)
         };
+      })
+      .filter((display) => {
+        // In basic mode, filter out displays with blank/empty ChannelSelect
+        if (!this.advancedMode()) {
+          const channelSelect = channelSelectMap.get(display.displayNumber);
+          console.log(`Display ${display.displayNumber}:`, {
+            hasChannelSelect: !!channelSelect,
+            channelSelect: channelSelect,
+            string: channelSelect?.string,
+            value: channelSelect?.value,
+            choices: channelSelect?.choices
+          });
+
+          if (channelSelect) {
+            // Check if string is blank
+            const stringValue = channelSelect.string || '';
+            const hasBlankString = stringValue.trim() === '';
+
+            // Check if choices is empty (can be empty array or empty object)
+            const choices = channelSelect.choices;
+            const hasEmptyChoices = !choices ||
+              (Array.isArray(choices) && choices.length === 0) ||
+              (typeof choices === 'object' && Object.keys(choices).length === 0);
+
+            console.log(`Display ${display.displayNumber} filter check:`, {
+              stringValue,
+              hasBlankString,
+              choices,
+              hasEmptyChoices,
+              willFilter: hasBlankString && hasEmptyChoices
+            });
+
+            // Skip this display if string is blank AND choices are empty
+            if (hasBlankString && hasEmptyChoices) {
+              console.log(`FILTERING OUT Display ${display.displayNumber}`);
+              return false;
+            }
+          }
+        }
+        return true;
       })
       .sort((a, b) => a.displayNumber - b.displayNumber);
 
