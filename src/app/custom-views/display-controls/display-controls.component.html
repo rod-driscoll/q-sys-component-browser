@@ -43,13 +43,15 @@
         @for (display of displayCards(); track display.displayNumber) {
           <div class="display-card" [class.basic-mode]="!advancedMode()">
             <div class="display-card-header">
-              <h3>{{ display.displayName }}</h3>
-              @if (display.displayIPAddress) {
-                <div class="display-info">
-                  <span class="status-led" [ngClass]="getStatusColorClass(display.displayStatus)"></span>
-                  <span class="ip-address">{{ display.displayIPAddress }}</span>
-                </div>
-              }
+              <h3>
+                <span class="display-name">{{ display.displayName }}</span>
+                @if (display.displayIPAddress) {
+                  <span class="display-info-inline">
+                    <span class="status-led" [ngClass]="getStatusColorClass(display.displayStatus)"></span>
+                    <span class="ip-address">{{ display.displayIPAddress }}</span>
+                  </span>
+                }
+              </h3>
             </div>
             <div class="display-controls">
               <!-- Power Control (if both PowerOn and PowerOff exist) -->
