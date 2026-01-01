@@ -8,7 +8,7 @@
     @if (isLoading()) {
       <div class="loading-state">
         <div class="spinner"></div>
-        <p>Loading lighting controls...</p>
+        <p>Loading lighting presets...</p>
       </div>
     }
 
@@ -16,34 +16,51 @@
     @else if (error()) {
       <div class="error-state">
         <div class="error-icon">⚠️</div>
-        <h2>Failed to load controls</h2>
+        <h2>Failed to load presets</h2>
         <p>{{ error() }}</p>
       </div>
     }
 
     <!-- Empty State -->
-    @else if (controls().length === 0) {
+    @else if (presets().length === 0) {
       <div class="empty-state">
         <div class="empty-icon">💡</div>
-        <h2>No lighting controls found</h2>
-        <p>No components matching light, lighting, or lamp patterns were found.</p>
+        <h2>No lighting presets found</h2>
+        <p>No Lighting Presets component found.</p>
       </div>
     }
 
-    <!-- Control Cards Grid -->
+    <!-- Lighting Presets -->
     @else {
       <div class="controls-header">
-        <h2>{{ controls().length }} Control{{ controls().length === 1 ? '' : 's' }}</h2>
+        <h2>{{ presets().length }} Preset{{ presets().length === 1 ? '' : 's' }}</h2>
+        <button class="mode-toggle-button" (click)="toggleMode()">
+          {{ advancedMode() ? 'Basic Mode' : 'Advanced Mode' }}
+        </button>
       </div>
 
-      <div class="controls-grid">
-        @for (control of controls(); track control.componentName + ':' + control.name) {
-          <app-control-card
-            [control]="control"
-            [showComponentName]="true"
-            (valueChange)="onValueChange(control, $event)"
-            (positionChange)="onPositionChange(control, $event)"
-          />
+      <div class="presets-grid">
+        @for (preset of presets(); track preset.presetNumber) {
+          <div class="preset-card">
+            <div class="preset-header">
+              <h3>{{ preset.presetName }}</h3>
+            </div>
+            <div class="preset-actions">
+              <!-- Load Button -->
+              @if (preset.loadControl) {
+                <button class="preset-button load-button" (click)="onLoadPreset(preset)">
+                  Load
+                </button>
+              }
+
+              <!-- Save Button (Advanced Mode Only) -->
+              @if (advancedMode() && preset.saveControl) {
+                <button class="preset-button save-button" (click)="onSavePreset(preset)">
+                  Save
+                </button>
+              }
+            </div>
+          </div>
         }
       </div>
     }

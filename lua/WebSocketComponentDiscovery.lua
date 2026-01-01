@@ -1651,7 +1651,7 @@ end)();
 
 json = require 'rapidjson'
 
--- Create HTTP server
+-- Create HTTP server0
 local server = HttpServer.New()
 
 -- Middleware
@@ -1835,6 +1835,10 @@ local function subscribeToComponent(componentName)
   -- Get all control metadata to set up individual EventHandlers
   local controlMetadata = Component.GetControls(componentName)
 
+  -- Throttle state for this component
+  local throttleTimer = nil
+  local pendingUpdate = false
+
   -- Function to broadcast all control updates
   local function broadcastControlUpdates()
     -- Get a fresh component instance for accessing current control values
@@ -1910,8 +1914,6 @@ local function subscribeToComponent(componentName)
       end
     end
 
-    print("Broadcasting update for " .. componentName .. " with " .. #updatedControls .. " controls to " .. #activeUpdateConnections .. " clients")
-
     -- Broadcast update to all connected clients
     for _, ws in ipairs(activeUpdateConnections) do
       if ws.IsConnected then
@@ -1922,6 +1924,28 @@ local function subscribeToComponent(componentName)
         })
       end
     end
+
+    pendingUpdate = false
+  end
+
+  -- Throttled update function (max once per 500ms)
+  local function requestUpdate()
+    if not pendingUpdate then
+      pendingUpdate = true
+
+      if throttleTimer then
+        throttleTimer:Stop()
+      end
+
+      throttleTimer = Timer.New()
+      throttleTimer.EventHandler = function(timer)
+        timer:Stop()
+        if pendingUpdate then
+          broadcastControlUpdates()
+        end
+      end
+      throttleTimer:Start(0.5) -- 500ms throttle
+    end
   end
 
   -- Set up EventHandler for each control
@@ -1931,8 +1955,7 @@ local function subscribeToComponent(componentName)
       local control = component[ctrlMeta.Name]
       if control then
         control.EventHandler = function()
-          print("Control changed: " .. componentName .. "." .. ctrlMeta.Name)
-          broadcastControlUpdates()
+          requestUpdate()
         end
         eventHandlerCount = eventHandlerCount + 1
       end

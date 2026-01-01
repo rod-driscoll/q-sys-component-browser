@@ -15,7 +15,12 @@
 
 /* Controls Header */
 .controls-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 1.5rem;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .controls-header h2 {
@@ -25,11 +30,111 @@
   margin: 0;
 }
 
-/* Controls Grid */
-.controls-grid {
+/* Mode Toggle Button */
+.mode-toggle-button {
+  padding: 0.5rem 1.25rem;
+  background: #3498db;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.mode-toggle-button:hover {
+  background: #2980b9;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+}
+
+.mode-toggle-button:active {
+  transform: translateY(0);
+}
+
+/* Presets Grid */
+.presets-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 250px));
   gap: 1.25rem;
+}
+
+/* Preset Card */
+.preset-card {
+  background: #2c3e50;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.preset-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Preset Header */
+.preset-header {
+  margin-bottom: 0.75rem;
+}
+
+.preset-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ffffff;
+  text-align: center;
+}
+
+/* Preset Actions */
+.preset-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Preset Buttons */
+.preset-button {
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.load-button {
+  background: #27ae60;
+  color: #ffffff;
+}
+
+.load-button:hover {
+  background: #229954;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(39, 174, 96, 0.3);
+}
+
+.load-button:active {
+  transform: translateY(0);
+}
+
+.save-button {
+  background: #e67e22;
+  color: #ffffff;
+}
+
+.save-button:hover {
+  background: #d35400;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(230, 126, 34, 0.3);
+}
+
+.save-button:active {
+  transform: translateY(0);
 }
 
 /* Loading State */
@@ -128,8 +233,8 @@
     font-size: 1.25rem;
   }
 
-  .controls-grid {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  .presets-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 1rem;
   }
 }
@@ -139,8 +244,8 @@
     padding: 1rem;
   }
 
-  .controls-grid {
-    grid-template-columns: 1fr;
+  .presets-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   }
 
   .loading-state,
