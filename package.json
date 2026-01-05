@@ -9,7 +9,10 @@
     "test": "ng test",
     "deploy": "node deploy.js",
     "build:deploy": "npm run build && npm run deploy",
-    "favicon": "node create-favicon.js"
+    "favicon": "node create-favicon.js",
+    "icons": "node create-pwa-icons.js",
+    "build:pwa": "npm run icons && ng build --configuration production",
+    "deploy:pwa": "npm run build:pwa && npm run deploy"
   },
   "prettier": {
     "printWidth": 100,
@@ -40,6 +43,8 @@
     "@angular/build": "^20.3.8",
     "@angular/cli": "^20.3.8",
     "@angular/compiler-cli": "^20.3.0",
+    "@angular/pwa": "^20.3.13",
+    "@angular/service-worker": "^20.3.15",
     "@types/jasmine": "~5.1.0",
     "jasmine-core": "~5.9.0",
     "karma": "~6.4.0",
