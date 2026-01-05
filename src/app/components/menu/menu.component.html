@@ -1,0 +1,49 @@
+<div class="menu-container">
+  <!-- Header with Project Details -->
+  <header class="header">
+    <div class="header-main">
+      <div class="header-left">
+        <h1>Q-SYS Control System</h1>
+        <div class="project-detail-item">
+          <span class="detail-label">Project:</span>
+          <span class="detail-value">{{ designName || 'Loading...' }}</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="connection-status" [class.connected]="isConnected">
+          {{ connectionStatus }}
+        </div>
+        <div class="core-ip">{{ coreIp }}</div>
+        @if (corePlatform && coreState) {
+          <div class="core-info">{{ corePlatform }} ({{ coreState }})</div>
+        }
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="menu-content">
+    <div class="menu-header">
+      <p class="subtitle">Select a view to continue</p>
+    </div>
+
+    <!-- Navigation Cards -->
+    <div class="card-grid">
+      @for (card of menuCards(); track card.route) {
+        <div class="menu-card" (click)="navigateToView(card.route)">
+          <div class="card-icon">{{ card.icon }}</div>
+          <div class="card-content">
+            <h2 class="card-title">
+              {{ card.title }}
+              @if (card.badge) {
+                <span class="card-badge">{{ card.badge }}</span>
+              }
+            </h2>
+            <p class="card-description">{{ card.description }}</p>
+          </div>
+          <div class="card-arrow">→</div>
+        </div>
+      }
+    </div>
+  </main>
+</div>

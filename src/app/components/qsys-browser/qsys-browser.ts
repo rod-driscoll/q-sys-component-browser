@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, computed, effect, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { QSysService } from '../../services/qsys.service';
 import { QSysBrowserService, ComponentInfo, ControlInfo } from '../../services/qsys-browser.service';
 import { LuaScriptService, LuaScript } from '../../services/lua-script.service';
@@ -87,12 +88,20 @@ export class QsysBrowser implements OnInit, OnDestroy {
   coreState = '';
   designName = '';
 
+  /**
+   * Navigate back to menu
+   */
+  navigateToMenu(): void {
+    this.router.navigate(['/']);
+  }
+
   // Log history tracking
   logHistory: string[] = [];
   private lastLogEntry: string = '';
   private controlUpdateSubscription: any;
 
   constructor(
+    private router: Router,
     protected qsysService: QSysService,
     protected browserService: QSysBrowserService,
     protected luaScriptService: LuaScriptService,
@@ -357,7 +366,8 @@ export class QsysBrowser implements OnInit, OnDestroy {
     if (this.controlUpdateSubscription) {
       this.controlUpdateSubscription.unsubscribe();
     }
-    this.qsysService.disconnect();
+    // Don't disconnect from Q-SYS - connection should persist across all views
+    // this.qsysService.disconnect();
     this.wsDiscoveryService.disconnect();
   }
 

@@ -123,6 +123,10 @@ export class QSysService {
       this.connectionStatus$.next(true);
       console.log('QRWC initialization complete - ready to fetch components on-demand');
 
+      // Start keepalive timer to prevent connection timeout
+      const webSocketManager = (this.qrwc as any).webSocketManager;
+      this.startKeepalive(webSocketManager);
+
     } catch (error) {
       console.error('Failed to connect:', error);
       this.isConnected.set(false);
@@ -233,8 +237,7 @@ export class QSysService {
         console.log(`  ⚠ ${failedCount} components failed to load controls`);
       }
 
-      // Now that we have control counts, start keepalive to keep connection alive
-      this.startKeepalive(webSocketManager);
+      // Keepalive is already started in connect() method
 
       return componentsWithCounts;
     } catch (error) {
@@ -390,7 +393,7 @@ export class QSysService {
 
   /**
    * Get component controls via RPC call
-   * This bypasses QRWC's automatic ChangeGroup registration
+   * Uses Component.Get to get full control definitions including Choices arrays
    */
   private async getComponentControlsViaRpc(componentName: string): Promise<any[]> {
     if (!this.qrwc) {
@@ -401,7 +404,8 @@ export class QSysService {
       console.log(`Fetching controls for component: ${componentName}`);
 
       const webSocketManager = (this.qrwc as any).webSocketManager;
-      const result = await webSocketManager.sendRpc('Component.GetControls', { Name: componentName });
+      // Use Component.Get instead of Component.GetControls to get full control definitions with Choices
+      const result = await webSocketManager.sendRpc('Component.Get', { Name: componentName });
 
       console.log(`Fetched ${result.Controls.length} controls for ${componentName}`);
       return result.Controls;
@@ -495,6 +499,20 @@ export class QSysService {
         if (state.Choices && Array.isArray(state.Choices) && state.Choices.length > 0 &&
           (state.ValueMin === undefined || state.ValueMax === undefined)) {
           controlType = 'Combo box';
+          // Debug logging for ChannelSelect controls
+          if (controlName.includes('ChannelSelect')) {
+            console.log(`✓ Detected Combo box: ${controlName} (${state.Choices.length} choices)`);
+          }
+        } else if (controlName.includes('ChannelSelect')) {
+          // Debug: log when ChannelSelect is NOT detected as combo box
+          console.log(`✗ NOT Combo box: ${controlName}`, {
+            hasChoices: !!state.Choices,
+            isArray: Array.isArray(state.Choices),
+            choicesLength: state.Choices?.length,
+            hasValueMin: state.ValueMin !== undefined,
+            hasValueMax: state.ValueMax !== undefined,
+            originalType: state.Type
+          });
         }
         // Priority 2: Check for Position - Array types with Position (but no choices) are Integer Knobs
         else if (state.Position !== undefined && (controlType === 'Float' || controlType === 'Array')) {
@@ -518,21 +536,21 @@ export class QSysService {
         const inferredProps = this.inferControlProperties(state, controlName);
 
         controls.push({
-          Name: controlName,
-          Type: controlType,
-          Direction: state.Direction || 'Read/Write',
-          Value: state.Value,
-          ValueMin: state.ValueMin,
-          ValueMax: state.ValueMax,
-          Position: state.Position,
-          String: state.String,
-          Choices: state.Choices,
-          StringMin: state.StringMin,
-          StringMax: state.StringMax,
+          name: controlName,
+          type: controlType,
+          direction: state.Direction || 'Read/Write',
+          value: state.Value,
+          valueMin: state.ValueMin,
+          valueMax: state.ValueMax,
+          position: state.Position,
+          string: state.String,
+          choices: state.Choices,
+          stringMin: state.StringMin,
+          stringMax: state.StringMax,
           // Add inferred properties
-          Units: inferredProps.units,
-          PushAction: inferredProps.pushAction,
-          IndicatorType: inferredProps.indicatorType
+          units: inferredProps.units,
+          pushAction: inferredProps.pushAction,
+          indicatorType: inferredProps.indicatorType
         });
       }
 

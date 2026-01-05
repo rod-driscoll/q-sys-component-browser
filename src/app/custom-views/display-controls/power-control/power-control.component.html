@@ -1,0 +1,31 @@
+<div class="control-card">
+  <!-- Control Header -->
+  @if (!hideControlName) {
+    <div class="control-header">
+      <span class="control-name">Power</span>
+      @if (!hideTypeBadge) {
+        <span class="control-type-badge">Boolean</span>
+      }
+    </div>
+  }
+
+  <!-- Control Body -->
+  <div class="control-body">
+    <div class="power-buttons">
+      <button
+        class="power-button power-on"
+        (click)="onPowerOnClick()"
+        [class.active]="powerOnControl.value === 1"
+      >
+        On
+      </button>
+      <button
+        class="power-button power-off"
+        (click)="onPowerOffClick()"
+        [class.active]="powerOffControl.value === 1"
+      >
+        Off
+      </button>
+    </div>
+  </div>
+</div>

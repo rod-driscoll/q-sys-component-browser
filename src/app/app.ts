@@ -1,40 +1,39 @@
-import { Component, signal, ViewChild, AfterViewInit, OnInit } from '@angular/core';
+import { Component, signal, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { QsysBrowser } from './components/qsys-browser/qsys-browser';
 import { environment } from '../environments/environment';
-
-// Expose browser component globally for MCP tool integration
-declare global {
-  interface Window {
-    qsysBrowser?: QsysBrowser;
-  }
-}
+import { QSysService } from './services/qsys.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, QsysBrowser],
+  imports: [RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-export class App implements OnInit, AfterViewInit {
+export class App implements OnInit {
   protected readonly title = signal('q-sys-angular-components');
 
-  @ViewChild(QsysBrowser) browserComponent?: QsysBrowser;
+  constructor(private qsysService: QSysService) {}
 
   ngOnInit(): void {
     // Parse URL parameters for dynamic Q-SYS Core connection settings
     this.parseUrlParameters();
+
+    // Connect to Q-SYS Core on app initialization
+    this.connectToQSys();
   }
 
-  ngAfterViewInit(): void {
-    // Expose browser component globally so MCP tools can call its methods
-    if (this.browserComponent) {
-      window.qsysBrowser = this.browserComponent;
-      console.log('Browser component exposed on window.qsysBrowser');
-      console.log('You can now call:');
-      console.log('  window.qsysBrowser.setComponentsFromMCP(componentsArray)');
-      console.log('  window.qsysBrowser.setControlsFromMCP(controlsArray)');
-    }
+  /**
+   * Connect to Q-SYS Core at app level
+   * This ensures connection is available regardless of entry route
+   */
+  private connectToQSys(): void {
+    this.qsysService.connect({
+      coreIp: environment.RUNTIME_CORE_IP,
+      secure: false,
+      pollInterval: 35,
+    }).catch((error) => {
+      console.error('Failed to connect to Q-SYS Core:', error);
+    });
   }
 
   /**

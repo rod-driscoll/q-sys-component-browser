@@ -1,0 +1,87 @@
+<div class="view-container">
+  <!-- Navigation Header -->
+  <app-navigation-header [title]="title" />
+
+  <!-- Main Content -->
+  <main class="view-content">
+    <!-- Loading State -->
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading display controls...</p>
+      </div>
+    }
+
+    <!-- Error State -->
+    @else if (error()) {
+      <div class="error-state">
+        <div class="error-icon">⚠️</div>
+        <h2>Failed to load controls</h2>
+        <p>{{ error() }}</p>
+      </div>
+    }
+
+    <!-- Empty State -->
+    @else if (displayCards().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">📺</div>
+        <h2>No displays found</h2>
+        <p>No IPTVManager component found or no displays configured.</p>
+      </div>
+    }
+
+    <!-- Display Cards -->
+    @else {
+      <div class="controls-header">
+        <h2>{{ displayCards().length }} Display{{ displayCards().length === 1 ? '' : 's' }}</h2>
+        <button class="mode-toggle-button" (click)="toggleMode()">
+          {{ advancedMode() ? 'Basic Mode' : 'Advanced Mode' }}
+        </button>
+      </div>
+
+      <div class="displays-grid">
+        @for (display of displayCards(); track display.displayNumber) {
+          <div class="display-card" [class.basic-mode]="!advancedMode()">
+            <div class="display-card-header">
+              <h3>
+                <span class="display-name">{{ display.displayName }}</span>
+                @if (display.displayIPAddress) {
+                  <span class="display-info-inline">
+                    <span class="status-led" [ngClass]="getStatusColorClass(display.displayStatus)"></span>
+                    <span class="ip-address">{{ display.displayIPAddress }}</span>
+                  </span>
+                }
+              </h3>
+            </div>
+            <div class="display-controls">
+              <!-- Power Control (if both PowerOn and PowerOff exist) -->
+              @if (display.powerOnControl && display.powerOffControl) {
+                <app-power-control
+                  [powerOnControl]="display.powerOnControl"
+                  [powerOffControl]="display.powerOffControl"
+                  [hideTypeBadge]="!advancedMode()"
+                  [hideControlName]="!advancedMode()"
+                  (powerOn)="onPowerOn(display)"
+                  (powerOff)="onPowerOff(display)"
+                />
+              }
+
+              <!-- Other Controls -->
+              @for (control of display.controls; track control.name) {
+                <app-control-card
+                  [control]="control"
+                  [showComponentName]="false"
+                  [stripNumberSuffix]="true"
+                  [hideTypeBadge]="!advancedMode()"
+                  [hideControlName]="!advancedMode()"
+                  (valueChange)="onValueChange(control, $event)"
+                  (positionChange)="onPositionChange(control, $event)"
+                />
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </main>
+</div>

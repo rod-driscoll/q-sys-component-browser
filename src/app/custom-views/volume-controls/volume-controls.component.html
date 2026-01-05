@@ -1,0 +1,85 @@
+<div class="view-container">
+  <!-- Navigation Header -->
+  <app-navigation-header [title]="title" />
+
+  <!-- Main Content -->
+  <main class="view-content">
+    <!-- Loading State -->
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading volume controls...</p>
+      </div>
+    }
+
+    <!-- Error State -->
+    @else if (error()) {
+      <div class="error-state">
+        <div class="error-icon">⚠️</div>
+        <h2>Failed to load controls</h2>
+        <p>{{ error() }}</p>
+      </div>
+    }
+
+    <!-- Empty State -->
+    @else if (zoneCards().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">🔊</div>
+        <h2>No zones found</h2>
+        <p>No BGM XFADE or BGM level controls components found.</p>
+      </div>
+    }
+
+    <!-- Zone Cards -->
+    @else {
+      <div class="controls-header">
+        <h2>{{ zoneCards().length }} Zone{{ zoneCards().length === 1 ? '' : 's' }}</h2>
+      </div>
+
+      <div class="zones-grid">
+        @for (zone of zoneCards(); track zone.zoneNumber) {
+          <div class="zone-card">
+            <div class="zone-card-header">
+              <h3>{{ zone.zoneName }}</h3>
+            </div>
+            <div class="zone-controls">
+              <!-- Input Select Control -->
+              @if (zone.inputSelectControl) {
+                <div class="control-row">
+                  <label class="control-label">Input</label>
+                  <app-combo-control
+                    [control]="zone.inputSelectControl"
+                    (valueChange)="onValueChange(zone.inputSelectControl, $event)"
+                  />
+                </div>
+              }
+
+              <!-- Mute Control -->
+              @if (zone.muteControl) {
+                <div class="control-row">
+                  <label class="control-label">Mute</label>
+                  <app-boolean-control
+                    [control]="zone.muteControl"
+                    (valueChange)="onValueChange(zone.muteControl, $event)"
+                  />
+                </div>
+              }
+
+              <!-- Gain Control (Slider) -->
+              @if (zone.gainControl) {
+                <div class="control-row gain-row">
+                  <label class="control-label">Volume</label>
+                  <app-knob-control
+                    [control]="zone.gainControl"
+                    mode="inline"
+                    (positionChange)="onPositionChange(zone.gainControl, $event)"
+                  />
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </main>
+</div>
