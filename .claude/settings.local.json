@@ -34,7 +34,15 @@
       "Bash(npm run start:dev:*)",
       "Bash(npm run:*)",
       "Bash(npm start)",
-      "Bash(npm start:*)"
+      "Bash(npm start:*)",
+      "Bash(netstat:*)",
+      "Bash(dir:*)",
+      "Bash(ng version:*)",
+      "Bash(node create-pwa-icons.js:*)",
+      "Bash(npm run build:pwa:*)",
+      "Bash(git restore:*)",
+      "Bash(npm run deploy:pwa:*)",
+      "Bash(npm run deploy:*)"
     ]
   }
 }

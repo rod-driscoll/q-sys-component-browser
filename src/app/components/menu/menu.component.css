@@ -73,11 +73,36 @@
   background-color: #4caf50;
 }
 
+.settings-button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #ffffff;
+}
+
+.settings-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: rotate(90deg);
+}
+
 .core-ip {
   color: #5dade2;
   font-family: 'Courier New', monospace;
   font-size: 12px;
   font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.core-ip:hover {
+  background: rgba(93, 173, 226, 0.1);
+  color: #85c1e9;
 }
 
 .core-info {

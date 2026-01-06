@@ -10,10 +10,13 @@
         </div>
       </div>
       <div class="header-right">
+        <button class="settings-button" (click)="openSettings()" title="Settings">
+          ⚙️
+        </button>
         <div class="connection-status" [class.connected]="isConnected">
           {{ connectionStatus }}
         </div>
-        <div class="core-ip">{{ coreIp }}</div>
+        <div class="core-ip" (click)="openSettings()" title="Click to change">{{ coreIp }}</div>
         @if (corePlatform && coreState) {
           <div class="core-info">{{ corePlatform }} ({{ coreState }})</div>
         }
@@ -47,3 +50,5 @@
     </div>
   </main>
 </div>
+
+<app-settings-dialog></app-settings-dialog>

@@ -1,0 +1,46 @@
+@if (isOpen()) {
+  <div class="dialog-overlay" (click)="close()">
+    <div class="dialog-content" (click)="$event.stopPropagation()">
+      <div class="dialog-header">
+        <h2>Q-SYS Core Settings</h2>
+        <button class="close-button" (click)="close()" title="Close">×</button>
+      </div>
+
+      <div class="dialog-body">
+        <div class="form-group">
+          <label for="core-ip">Core IP Address</label>
+          <input
+            id="core-ip"
+            type="text"
+            [(ngModel)]="coreIp"
+            placeholder="192.168.1.100"
+            class="form-input"
+          />
+          <small class="form-hint">The IP address of your Q-SYS Core</small>
+        </div>
+
+        <div class="form-group">
+          <label for="core-port">WebSocket Port</label>
+          <input
+            id="core-port"
+            type="number"
+            [(ngModel)]="corePort"
+            placeholder="9091"
+            class="form-input"
+          />
+          <small class="form-hint">Port for WebSocket connection (default: 9091)</small>
+        </div>
+      </div>
+
+      <div class="dialog-footer">
+        <button class="btn-secondary" (click)="clearSettings()" [disabled]="isReconnecting()">Clear Settings</button>
+        <div class="footer-actions">
+          <button class="btn-cancel" (click)="close()" [disabled]="isReconnecting()">Cancel</button>
+          <button class="btn-save" (click)="save()" [disabled]="isReconnecting()">
+            {{ isReconnecting() ? 'Reconnecting...' : 'Save & Reconnect' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

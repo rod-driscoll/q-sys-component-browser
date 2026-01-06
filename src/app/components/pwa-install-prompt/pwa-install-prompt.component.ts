@@ -107,6 +107,13 @@ export class PwaInstallPromptComponent implements OnInit {
       e.preventDefault();
       this.deferredPrompt = e;
 
+      // Only show install prompt if host is configured
+      const savedHost = localStorage.getItem('qsys-host');
+      if (!savedHost) {
+        console.log('PWA install prompt hidden: Q-SYS host not configured. Access with ?host= parameter first.');
+        return;
+      }
+
       // Check if user previously dismissed
       const dismissed = localStorage.getItem('pwa-install-dismissed');
       const dismissedTime = dismissed ? parseInt(dismissed, 10) : 0;
@@ -115,6 +122,7 @@ export class PwaInstallPromptComponent implements OnInit {
       // Show prompt if not dismissed or dismissed more than 7 days ago
       if (!dismissed || daysSinceDismissed > 7) {
         setTimeout(() => {
+          console.log(`PWA install prompt will appear. Host configured: ${savedHost}`);
           this.showPrompt.set(true);
         }, 5000); // Show after 5 seconds
       }
