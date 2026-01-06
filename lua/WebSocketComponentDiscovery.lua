@@ -1157,27 +1157,6 @@ HttpServer = (function()
   end;
 
   local function defaultHandler(req, res)
-    -- Serve index.html for Angular routes (paths without file extensions, not starting with /api)
-    local path = req.path
-    local hasExtension = path:match('%.[^/]+$')
-    local isApiRoute = path:match('^/api/')
-
-    if not hasExtension and not isApiRoute then
-      -- This is likely an Angular route, serve index.html
-      local rootDir = (System.IsEmulating and 'design' or 'media')..'/'..Controls['root-directory'].String
-      local indexPath = rootDir .. '/index.html'
-      local fh = io.open(indexPath, 'r')
-
-      if fh then
-        local content = fh:read('*all')
-        fh:close()
-        res.set('Content-Type', 'text/html')
-        res:send(content)
-        return
-      end
-    end
-
-    -- Default 404 for everything else
     res.sendStatus(404);
   end;
 
@@ -1657,6 +1636,10 @@ HttpServer = (function()
 
         -- For chunked transfer, stream the file
         if(shouldUseChunked) then
+          -- Set chunked flag and send headers BEFORE writing data
+          res._chunked = true;
+          res.writeHead();
+
           local chunk = fh:read(chunkSize);
           while(chunk) do
             res.write(chunk);
@@ -1689,27 +1672,10 @@ local server = HttpServer.New()
 server:use(HttpServer.cors())
 server:use(HttpServer.json())
 
--- Serve index.html for root path and Angular routes
-server:get('/', function(req, res)
-  local rootDir = (System.IsEmulating and 'design' or 'media')..'/'..Controls['root-directory'].String
-  local indexPath = rootDir .. '/index.html'
-  local fh = io.open(indexPath, 'r')
-
-  if fh then
-    local content = fh:read('*all')
-    fh:close()
-    res.set('Content-Type', 'text/html')
-    res:send(content)
-    return true
-  end
-
-  return false
-end)
-
 -- Serve static files from dist directory
 --server:use('/', HttpServer.Static('dist/q-sys-angular-components'))
-function UpdateDirectory()
-  server:use(HttpServer.Static((System.IsEmulating and 'design' or 'media')..'/'..Controls['root-directory'].String))
+function UpdateDirectory() 
+  server:use(HttpServer.Static((System.IsEmulating and 'design' or 'media')..'/'..Controls['root-directory'].String)) 
 end
 UpdateDirectory()
 Controls['root-directory'].EventHandler = UpdateDirectory

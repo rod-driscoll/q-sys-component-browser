@@ -67,7 +67,7 @@ export class SettingsDialogComponent {
 
     // Check if the app is running as a PWA or from a different host than the target Core
     const currentHost = window.location.hostname;
-    const currentPort = window.location.port;
+    const currentPort = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
     const targetHost = environment.RUNTIME_CORE_IP;
     const targetPort = environment.RUNTIME_CORE_PORT.toString();
 
@@ -75,6 +75,19 @@ export class SettingsDialogComponent {
     const isPWA = window.matchMedia('(display-mode: standalone)').matches ||
                   (window.navigator as any).standalone ||
                   document.referrer.includes('android-app://');
+
+    // Log to both console and localStorage (localStorage persists across navigation)
+    const debugInfo = {
+      timestamp: new Date().toISOString(),
+      currentLocation: `${currentHost}:${currentPort}`,
+      targetCore: `${targetHost}:${targetPort}`,
+      isPWA,
+      hostsMatch: currentHost === targetHost,
+      portsMatch: currentPort === targetPort,
+      willReconnect: isPWA || (currentHost === targetHost && currentPort === targetPort)
+    };
+
+    localStorage.setItem('settings-debug-last', JSON.stringify(debugInfo));
 
     console.log(`=== Settings Save Debug ===`);
     console.log(`Current location: ${currentHost}:${currentPort}`);
@@ -84,53 +97,44 @@ export class SettingsDialogComponent {
     console.log(`Ports match: ${currentPort === targetPort}`);
     console.log(`Will reconnect without redirect: ${isPWA || (currentHost === targetHost && currentPort === targetPort)}`);
 
-    // If running as PWA or from same host/port, just reconnect services
-    if (isPWA || (currentHost === targetHost && currentPort === targetPort)) {
-      console.log('✓ Running as PWA or from target Core - reconnecting services only');
+    // Always reconnect services without redirecting
+    // The app is served from one location (web server or PWA cache)
+    // but connects to Q-SYS Core services (QRWC, RPC, WebSocket) at the specified IP:port
+    console.log('✓ Reconnecting to Q-SYS Core services without page reload');
 
-      // Show reconnecting status
-      this.isReconnecting.set(true);
+    // Show reconnecting status
+    this.isReconnecting.set(true);
 
-      try {
-        // Disconnect from current Q-SYS Core
-        console.log('Disconnecting from Q-SYS Core...');
-        this.qsysService.disconnect();
+    try {
+      // Disconnect from current Q-SYS Core
+      console.log('Disconnecting from Q-SYS Core...');
+      this.qsysService.disconnect();
 
-        // Wait a moment for cleanup
-        await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait a moment for cleanup
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-        // Reconnect to new Q-SYS Core
-        console.log('Reconnecting to Q-SYS Core with new settings...');
-        await this.qsysService.connect({
-          coreIp: environment.RUNTIME_CORE_IP,
-          secure: false,
-          pollInterval: 35,
-        });
+      // Reconnect to new Q-SYS Core
+      console.log('Reconnecting to Q-SYS Core with new settings...');
+      console.log(`Target: ${environment.RUNTIME_CORE_IP}:${environment.RUNTIME_CORE_PORT}`);
 
-        console.log('✓ Successfully reconnected to Q-SYS Core');
+      await this.qsysService.connect({
+        coreIp: environment.RUNTIME_CORE_IP,
+        secure: false,
+        pollInterval: 35,
+      });
 
-        // Close dialog
-        this.close();
-      } catch (error) {
-        console.error('Failed to reconnect to Q-SYS Core:', error);
-        alert('Failed to reconnect to Q-SYS Core. Please check the IP address and port.');
-      } finally {
-        this.isReconnecting.set(false);
-      }
-    } else {
-      // Running from a different Core's web server - need to redirect to new Core
-      console.log('Running from different Core web server - redirecting to target Core');
+      console.log('✓ Successfully reconnected to Q-SYS Core');
 
       // Close dialog
       this.close();
+    } catch (error) {
+      console.error('Failed to reconnect to Q-SYS Core:', error);
+      console.error('Error details:', error);
 
-      // Redirect to new Core with host:port parameter
-      const newUrl = `http://${targetHost}:${targetPort}/index.html?host=${targetHost}:${targetPort}`;
-      console.log(`Redirecting to: ${newUrl}`);
-
-      if (confirm(`You are currently viewing the app from ${currentHost}:${currentPort}.\n\nTo connect to ${targetHost}:${targetPort}, the app needs to reload from that Core.\n\nRedirect now?`)) {
-        window.location.href = newUrl;
-      }
+      // Keep dialog open on error so user can try again
+      alert(`Failed to reconnect to Q-SYS Core at ${environment.RUNTIME_CORE_IP}:${environment.RUNTIME_CORE_PORT}\n\nError: ${error instanceof Error ? error.message : String(error)}\n\nPlease check the IP address and port.`);
+    } finally {
+      this.isReconnecting.set(false);
     }
   }
 
