@@ -1157,6 +1157,27 @@ HttpServer = (function()
   end;
 
   local function defaultHandler(req, res)
+    -- Serve index.html for Angular routes (paths without file extensions, not starting with /api)
+    local path = req.path
+    local hasExtension = path:match('%.[^/]+$')
+    local isApiRoute = path:match('^/api/')
+
+    if not hasExtension and not isApiRoute then
+      -- This is likely an Angular route, serve index.html
+      local rootDir = (System.IsEmulating and 'design' or 'media')..'/'..Controls['root-directory'].String
+      local indexPath = rootDir .. '/index.html'
+      local fh = io.open(indexPath, 'r')
+
+      if fh then
+        local content = fh:read('*all')
+        fh:close()
+        res.set('Content-Type', 'text/html')
+        res:send(content)
+        return
+      end
+    end
+
+    -- Default 404 for everything else
     res.sendStatus(404);
   end;
 
@@ -1612,7 +1633,8 @@ HttpServer = (function()
       if(root:match('^/')) then root = root:sub(2); end;
       options = options or {};
       local chunkSize = options.chunkSize or 8192; -- 8KB default chunk size
-      local useChunkedTransfer = options.chunked == true; -- disabled by default for reliability
+      local maxBufferSize = options.maxBufferSize or 65536; -- 64KB threshold for automatic chunking
+      local useChunkedTransfer = options.chunked; -- nil = auto-detect, true = force chunked, false = force buffered
 
       return function(req, res)
         local fh = io.open(root .. req.path, 'r');
@@ -1624,8 +1646,17 @@ HttpServer = (function()
           if MIME_HEADERS[extension] then res.set('Content-Type', MIME_HEADERS[extension]); end
         end;
 
+        -- Auto-detect file size and determine chunking strategy if not explicitly set
+        local shouldUseChunked = useChunkedTransfer;
+        if(shouldUseChunked == nil) then
+          local currentPos = fh:seek(); -- Save current position
+          local fileSize = fh:seek('end'); -- Get file size
+          fh:seek('set', currentPos); -- Restore position
+          shouldUseChunked = fileSize > maxBufferSize;
+        end;
+
         -- For chunked transfer, stream the file
-        if(useChunkedTransfer) then
+        if(shouldUseChunked) then
           local chunk = fh:read(chunkSize);
           while(chunk) do
             res.write(chunk);
@@ -1658,10 +1689,27 @@ local server = HttpServer.New()
 server:use(HttpServer.cors())
 server:use(HttpServer.json())
 
+-- Serve index.html for root path and Angular routes
+server:get('/', function(req, res)
+  local rootDir = (System.IsEmulating and 'design' or 'media')..'/'..Controls['root-directory'].String
+  local indexPath = rootDir .. '/index.html'
+  local fh = io.open(indexPath, 'r')
+
+  if fh then
+    local content = fh:read('*all')
+    fh:close()
+    res.set('Content-Type', 'text/html')
+    res:send(content)
+    return true
+  end
+
+  return false
+end)
+
 -- Serve static files from dist directory
 --server:use('/', HttpServer.Static('dist/q-sys-angular-components'))
-function UpdateDirectory() 
-  server:use(HttpServer.Static((System.IsEmulating and 'design' or 'media')..'/'..Controls['root-directory'].String)) 
+function UpdateDirectory()
+  server:use(HttpServer.Static((System.IsEmulating and 'design' or 'media')..'/'..Controls['root-directory'].String))
 end
 UpdateDirectory()
 Controls['root-directory'].EventHandler = UpdateDirectory
