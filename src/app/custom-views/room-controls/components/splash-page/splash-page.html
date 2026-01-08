@@ -1,0 +1,12 @@
+<div class="splash-container button-splash" (click)="handleClick()">
+  <div class="splash-language-selector" (click)="$event.stopPropagation()">
+    <app-language-selector></app-language-selector>
+  </div>
+
+  <div class="splash-logo">
+    <img src="https://cdn.prod.website-files.com/67c102e9a8a9a64cdb7a201a/67c7d86b103dc07859f96f68_GC%20built%20logo.png" alt="Logo" class="splash-logo-image" />
+  </div>
+  <div class="splash-prompt splash-text">
+    {{ splashText() }}
+  </div>
+</div>

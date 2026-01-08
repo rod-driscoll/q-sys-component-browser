@@ -1,0 +1,103 @@
+.home-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 0rem;
+  flex-direction: row;
+  gap: 1rem;
+  border: blueviolet 2px solid;
+}
+
+.source-buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  border: pink 2px solid;
+}
+
+.source-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0; /* Prevent items from shrinking */
+}
+
+.source-button {
+  width: 8rem;
+  height: 8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: var(--BorderRadius);
+}
+
+.source-button .material-icons {
+  font-size: 6rem;
+}
+
+.source-button.selected {
+  background-color: var(--Color4);
+  color: var(--LightColor);
+}
+
+.source-button.selected .material-icons {
+  color: var(--LightColor);
+}
+
+.source-item .txt-source-name {
+  font-size: 1.3rem;
+  padding: 0.5rem;
+  text-align: center;
+}
+
+/* Scale up source buttons and text for higher resolutions */
+@media (min-width: 1200px) {
+  .source-button {
+    width: 10rem;
+    height: 10rem;
+  }
+  .source-button .material-icons {
+    font-size: 7rem;
+  }
+  .source-item .txt-source-name {
+    font-size: 1.5rem;
+  }
+}
+
+@media (min-width: 1600px) {
+  .source-button {
+    width: 12rem;
+    height: 12rem;
+  }
+  .source-button .material-icons {
+    font-size: 8rem;
+  }
+  .source-item .txt-source-name {
+    font-size: 1.8rem;
+  }
+  .source-buttons {
+    gap: 2rem;
+  }
+}
+
+@media (min-width: 2000px) {
+  .source-button {
+    width: 14rem;
+    height: 14rem;
+  }
+  .source-button .material-icons {
+    font-size: 10rem;
+  }
+  .source-item .txt-source-name {
+    font-size: 2.2rem;
+  }
+  .source-buttons {
+    gap: 3rem;
+  }
+}

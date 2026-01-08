@@ -1,0 +1,111 @@
+<div class="base-page">
+  <!-- Connection Status Notice -->
+  @if (!qrwc.initialised()) {
+    <div class="connection-notice">
+      <span class="material-icons">cloud_off</span>
+      <span>Not connected to Q-SYS Core at {{ qrwc.connectionIpAddress() }} - Attempting to reconnect...</span>
+    </div>
+  }
+
+  <!-- Missing Components Warning -->
+  @if (qrwc.initialised() && qrwc.missingComponents().length > 0) {
+    <div class="missing-components-notice">
+      <span class="material-icons">warning</span>
+      <div>
+        <strong>Missing Q-SYS Components:</strong>
+        <ul>
+          @for (component of qrwc.missingComponents(); track component) {
+            <li>{{ component }}</li>
+          }
+        </ul>
+        <span>Please check your Q-SYS design file includes these components.</span>
+      </div>
+    </div>
+  }
+
+  <div class="top">
+    <!-- Top Left: Language Selector -->
+    @if (!showPowerCard()) {
+      <div class="top-left">
+        <app-language-selector></app-language-selector>
+      </div>
+    }
+
+    <!-- Top Center: Current Page Name -->
+    <div class="top-center">
+      <div class="txt-page-name">{{ getCurrentPageName() }}</div>
+    </div>
+
+    <!-- Top Right: Navigation Icons -->
+    <div class="top-right">
+      <button
+        class="nav-icon button-transparent"
+        [class.active]="currentPage() === 'home'"
+        (click)="navigateToPage('home')">
+        <span class="material-icons">home</span>
+      </button>
+
+      <button
+        class="nav-icon button-transparent"
+        [class.active]="currentPage() === 'cameras'"
+        (click)="navigateToPage('cameras')">
+        <span class="material-icons">videocam</span>
+      </button>
+
+      <button
+        class="nav-icon button-transparent"
+        [class.active]="currentPage() === 'help'"
+        (click)="navigateToPage('help')">
+        <span class="material-icons">help</span>
+      </button>
+
+      <button
+        class="nav-icon button-transparent settings-icon"
+        (click)="navigateToMenu()">
+        <span class="material-icons">settings</span>
+      </button>
+
+      <button
+        class="nav-icon button-transparent power-icon"
+        (click)="togglePowerCard()">
+        <span class="material-icons">power_settings_new</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="middle">
+    <div class="left-spacer"></div>
+
+    <!-- Main Content Area: Cards -->
+    <div class="main-content">
+      @if (currentPage() === 'home') {
+        <app-home-card></app-home-card>
+      }
+      @if (currentPage() === 'cameras') {
+        <app-cameras-card></app-cameras-card>
+      }
+      @if (currentPage() === 'help') {
+        <app-help-card></app-help-card>
+      }
+    </div>
+
+    <div class="right-spacer"></div>
+  </div>
+
+  <div class="bottom">
+    <!-- Bottom Left: Room Name -->
+    <div class="bottom-left">
+      <div class="txt-room-name">{{ roomName() }}</div>
+    </div>
+
+    <!-- Bottom Right: Volume Control -->
+    <div class="bottom-right">
+      <app-volume-control></app-volume-control>
+    </div>
+  </div>
+
+  <!-- Power Card Overlay -->
+  @if (showPowerCard()) {
+    <app-power-card (onClose)="closePowerCard()"></app-power-card>
+  }
+</div>

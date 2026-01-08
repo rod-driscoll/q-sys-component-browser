@@ -1,5 +1,29 @@
 /* You can add global styles to this file, and also import other style files */
 
+/* CSS Variables for Room Controls Custom View */
+:root {
+  --DarkColor: #2c3740;
+  --LightColor: #ffffff;
+  --DarkGreyColor: #404040;
+  --MediumGreyColor: #616262;
+  --LightGreyColor: #e6e9ed;
+  --PrimaryColor: #0076bf;
+  --PrimaryColorLight: #72aad8;
+  --PrimaryColorDark: #103b5b;
+  --Color2: #842462;
+  --Color2Light: #c48ab2;
+  --Color3: #719e1b;
+  --Color3Light: #c0d39f;
+  --Color4: #d6a836;
+  --Color4Light: #f7e2be;
+  --Color5: #324175;
+  --Color5Light: #a3b1d1;
+  --StopColor: #b40f00;
+  --GoColor: #719e1b;
+  --BorderDecoration: 3px;
+  --BorderRadius: 6px;
+}
+
 body {
   margin: 0;
   padding: 0;

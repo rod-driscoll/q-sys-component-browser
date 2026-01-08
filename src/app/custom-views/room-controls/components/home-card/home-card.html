@@ -1,0 +1,15 @@
+<div class="home-card bg-light">
+  <div class="source-buttons">
+    @for (sourceName of sourceNames(); track $index) {
+      <div class="source-item">
+        <button
+          class="source-button"
+          [class.selected]="selectedSource() === $index"
+          (click)="selectSource($index)">
+          <span class="material-icons">{{ getSourceIcon($index) }}</span>
+        </button>
+        <div class="txt-source-name">{{ sourceName }}</div>
+      </div>
+    }
+  </div>
+</div>

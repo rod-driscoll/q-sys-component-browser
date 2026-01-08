@@ -1,0 +1,49 @@
+<div class="volume-control">
+  <button
+    class="mute-btn button-transparent"
+    [class.muted]="isMuted()"
+    (click)="toggleMute()">
+    <span class="material-icons">
+      {{ isMuted() ? 'volume_off' : 'volume_up' }}
+    </span>
+  </button>
+
+  <button
+    class="volume-btn button-transparent"
+    (mousedown)="volumeDownStart()"
+    (mouseup)="volumeDownEnd()"
+    (mouseleave)="volumeDownEnd()"
+    (touchstart)="volumeDownStart()"
+    (touchend)="volumeDownEnd()">
+    <span class="material-icons">remove</span>
+  </button>
+
+  <div class="slider-container">
+    <input
+      #volumeSlider
+      type="range"
+      class="volume-slider"
+      [value]="sliderValue()"
+      [style.--volume-percent]="volumeLevel()"
+      (input)="onVolumeChange($event)"
+      (mousedown)="onSliderStart()"
+      (mouseup)="onSliderEnd()"
+      (touchstart)="onSliderStart()"
+      (touchend)="onSliderEnd()"
+      min="0"
+      max="100"
+      step="1"
+    />
+    <span class="volume-label" [style.left.%]="getLabelPosition()">{{ Math.round(sliderValue()) }}</span>
+  </div>
+
+  <button
+    class="volume-btn button-transparent"
+    (mousedown)="volumeUpStart()"
+    (mouseup)="volumeUpEnd()"
+    (mouseleave)="volumeUpEnd()"
+    (touchstart)="volumeUpStart()"
+    (touchend)="volumeUpEnd()">
+    <span class="material-icons">add</span>
+  </button>
+</div>

@@ -1,0 +1,86 @@
+.help-card {
+  padding: 2.5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.help-intro {
+  font-size: 1.3rem;
+  line-height: 1.5;
+  color: var(--DarkGreyColor);
+  font-weight: normal;
+  white-space: pre-line; /* Preserves newlines from text */
+  text-align: center;
+}
+
+.help-contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.help-contact-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2rem;
+  align-items: baseline;
+  /* border: pink 2px solid; */
+
+}
+
+.help-label {
+  font-weight: bold;
+  color: var(--DarkColor);
+  font-size: 1.1rem;
+  white-space: nowrap;
+  /* border: red 2px solid; */
+}
+
+.help-value {
+  color: var(--DarkColor);
+  font-size: 1.1rem;
+  /* border: yellow 2px solid; */
+}
+
+/* Scale up help text for higher resolutions */
+@media (min-width: 1200px) {
+  .help-intro {
+    font-size: 1.5rem;
+  }
+  .help-label,
+  .help-value {
+    font-size: 1.3rem;
+  }
+}
+
+@media (min-width: 1600px) {
+  .help-intro {
+    font-size: 1.8rem;
+  }
+  .help-label,
+  .help-value {
+    font-size: 1.5rem;
+  }
+}
+
+@media (min-width: 2000px) {
+  .help-intro {
+    font-size: 2.2rem;
+  }
+  .help-label,
+  .help-value {
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .help-contact-row {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+}

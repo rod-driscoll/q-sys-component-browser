@@ -1,0 +1,19 @@
+<div class="power-card-overlay scrim">
+  <div class="power-language-selector">
+    <app-language-selector></app-language-selector>
+  </div>
+
+  <div class="power-card bg-light">
+    <div class="power-prompt">{{ shutdownPrompt() }}</div>
+
+    <div class="power-buttons">
+      <button class="power-yes-btn button-go" (click)="confirmShutdown()">
+        {{ shutdownYesText() }}
+      </button>
+
+      <button class="power-no-btn button-cancel" (click)="cancelShutdown()">
+        {{ shutdownNoText() }}
+      </button>
+    </div>
+  </div>
+</div>

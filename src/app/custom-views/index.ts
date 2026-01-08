@@ -16,6 +16,7 @@ import { VOLUME_CONTROLS_METADATA } from './volume-controls/volume-controls.meta
 import { DISPLAY_CONTROLS_METADATA } from './display-controls/display-controls.metadata';
 import { LIGHTING_CONTROLS_METADATA } from './lighting-controls/lighting-controls.metadata';
 import { CAMERA_CONTROLS_METADATA } from './camera-controls/camera-controls.metadata';
+import { ROOM_CONTROLS_METADATA } from './room-controls/room-controls.metadata';
 
 /**
  * Array of all custom view metadata
@@ -26,6 +27,7 @@ export const CUSTOM_VIEW_METADATA = [
   DISPLAY_CONTROLS_METADATA,
   LIGHTING_CONTROLS_METADATA,
   CAMERA_CONTROLS_METADATA,
+  ROOM_CONTROLS_METADATA,
 ];
 
 /**
@@ -52,5 +54,10 @@ export const CUSTOM_VIEW_ROUTES: Routes = [
     path: CAMERA_CONTROLS_METADATA.route,
     loadComponent: () => import('./camera-controls/camera-controls.component').then(m => m.CameraControlsComponent),
     title: CAMERA_CONTROLS_METADATA.title
+  },
+  {
+    path: ROOM_CONTROLS_METADATA.route,
+    loadComponent: () => import('./room-controls/room-controls.component').then(m => m.RoomControlsComponent),
+    title: ROOM_CONTROLS_METADATA.title
   },
 ];

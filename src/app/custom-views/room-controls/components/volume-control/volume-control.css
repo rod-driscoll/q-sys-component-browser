@@ -1,0 +1,80 @@
+.volume-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
+
+.volume-btn,
+.mute-btn {
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+}
+
+.volume-btn .material-icons,
+.mute-btn .material-icons {
+  font-size: 2rem;
+  color: var(--StopColor);
+}
+
+.mute-btn.muted .material-icons {
+  color: var(--StopColor);
+}
+
+.slider-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.volume-slider {
+  width: 200px;
+  height: 30px;
+  border-radius: 15px;
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(to right,
+    var(--Color2Light) 0%,
+    var(--Color2Light) calc(var(--volume-percent, 50) * 1%),
+    var(--LightColor) calc(var(--volume-percent, 50) * 1%),
+    var(--LightColor) 100%);
+  border: 2px solid var(--MediumGreyColor);
+}
+
+.volume-label {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.7rem;
+  font-weight: bold;
+  color: var(--LightColor);
+  pointer-events: none;
+  user-select: none;
+}
+
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--Color2Light);
+  cursor: pointer;
+  border: 3px solid var(--MediumGreyColor);
+}
+
+.volume-slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--Color2Light);
+  cursor: pointer;
+  border: 3px solid var(--MediumGreyColor);
+}
