@@ -1,0 +1,248 @@
+<div class="view-container">
+  <!-- Navigation Header -->
+  <app-navigation-header [title]="title" />
+
+  <!-- Main Content -->
+  <main class="view-content">
+    <!-- Loading State -->
+    @if (isLoading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading camera controls...</p>
+      </div>
+    }
+
+    <!-- Error State -->
+    @else if (error()) {
+      <div class="error-state">
+        <div class="error-icon">⚠️</div>
+        <h2>Failed to load controls</h2>
+        <p>{{ error() }}</p>
+      </div>
+    }
+
+    <!-- Empty State -->
+    @else if (cameraCards().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">📹</div>
+        <h2>No cameras found</h2>
+        <p>No Cameras component found or no cameras configured.</p>
+      </div>
+    }
+
+    <!-- Camera Cards -->
+    @else {
+      <div class="controls-header">
+        <h2>{{ cameraCards().length }} Camera{{ cameraCards().length === 1 ? '' : 's' }}</h2>
+      </div>
+
+      <div class="cameras-grid">
+        @for (camera of cameraCards(); track camera.cameraNumber) {
+          <div class="camera-card">
+            <div class="camera-card-header">
+              <h3>{{ camera.cameraName }}</h3>
+            </div>
+
+            <!-- Video Window with Directional Arrows -->
+            <div class="video-window">
+              <!-- Camera Preview Image -->
+              @if (camera.imageDataUrl) {
+                <img [src]="camera.imageDataUrl" alt="Camera Preview" class="camera-preview-image" />
+              }
+              <!-- Preview Text -->
+              @if (camera.previewText) {
+                <!-- <div class="preview-text">{{ camera.previewText }}</div> -->
+              }
+              <div class="video-overlay">
+                <!-- Top Left Arrow -->
+                @if (camera.controls.upLeft) {
+                  <button
+                    class="arrow-button arrow-up-left"
+                    (click)="onDirectionalControl(camera.controls.upLeft)"
+                    [class.active]="camera.controls.upLeft.value === 1"
+                    title="Up Left"
+                  >
+                    ↖
+                  </button>
+                }
+
+                <!-- Up Arrow -->
+                @if (camera.controls.up) {
+                  <button
+                    class="arrow-button arrow-up"
+                    (click)="onDirectionalControl(camera.controls.up)"
+                    [class.active]="camera.controls.up.value === 1"
+                    title="Up"
+                  >
+                    ↑
+                  </button>
+                }
+
+                <!-- Top Right Arrow -->
+                @if (camera.controls.upRight) {
+                  <button
+                    class="arrow-button arrow-up-right"
+                    (click)="onDirectionalControl(camera.controls.upRight)"
+                    [class.active]="camera.controls.upRight.value === 1"
+                    title="Up Right"
+                  >
+                    ↗
+                  </button>
+                }
+
+                <!-- Left Arrow -->
+                @if (camera.controls.left) {
+                  <button
+                    class="arrow-button arrow-left"
+                    (click)="onDirectionalControl(camera.controls.left)"
+                    [class.active]="camera.controls.left.value === 1"
+                    title="Left"
+                  >
+                    ←
+                  </button>
+                }
+
+                <!-- Center spacer (no control) -->
+                <div class="arrow-spacer"></div>
+
+                <!-- Right Arrow -->
+                @if (camera.controls.right) {
+                  <button
+                    class="arrow-button arrow-right"
+                    (click)="onDirectionalControl(camera.controls.right)"
+                    [class.active]="camera.controls.right.value === 1"
+                    title="Right"
+                  >
+                    →
+                  </button>
+                }
+
+                <!-- Bottom Left Arrow -->
+                @if (camera.controls.downLeft) {
+                  <button
+                    class="arrow-button arrow-down-left"
+                    (click)="onDirectionalControl(camera.controls.downLeft)"
+                    [class.active]="camera.controls.downLeft.value === 1"
+                    title="Down Left"
+                  >
+                    ↙
+                  </button>
+                }
+
+                <!-- Down Arrow -->
+                @if (camera.controls.down) {
+                  <button
+                    class="arrow-button arrow-down"
+                    (click)="onDirectionalControl(camera.controls.down)"
+                    [class.active]="camera.controls.down.value === 1"
+                    title="Down"
+                  >
+                    ↓
+                  </button>
+                }
+
+                <!-- Bottom Right Arrow -->
+                @if (camera.controls.downRight) {
+                  <button
+                    class="arrow-button arrow-down-right"
+                    (click)="onDirectionalControl(camera.controls.downRight)"
+                    [class.active]="camera.controls.downRight.value === 1"
+                    title="Down Right"
+                  >
+                    ↘
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Camera Control Buttons -->
+            <div class="camera-controls">
+              <div class="control-row">
+                @if (camera.controls.zoomIn) {
+                  <button
+                    class="control-button"
+                    (click)="onButtonControl(camera.controls.zoomIn)"
+                    [class.active]="camera.controls.zoomIn.value === 1"
+                    title="Zoom In"
+                  >
+                    🔍+
+                  </button>
+                }
+
+                @if (camera.controls.zoomOut) {
+                  <button
+                    class="control-button"
+                    (click)="onButtonControl(camera.controls.zoomOut)"
+                    [class.active]="camera.controls.zoomOut.value === 1"
+                    title="Zoom Out"
+                  >
+                    🔍−
+                  </button>
+                }
+
+                @if (camera.controls.home) {
+                  <button
+                    class="control-button"
+                    (click)="onButtonControl(camera.controls.home)"
+                    [class.active]="camera.controls.home.value === 1"
+                    title="Home"
+                  >
+                    Home
+                  </button>
+                }
+              </div>
+
+              <div class="control-row">
+                @if (camera.controls.privacy) {
+                  <button
+                    class="control-button"
+                    (click)="onButtonControl(camera.controls.privacy)"
+                    [class.active]="camera.controls.privacy.value === 1"
+                    title="Privacy"
+                  >
+                    Privacy
+                  </button>
+                }
+
+                @if (camera.controls.powerOn) {
+                  <button
+                    class="control-button power-on"
+                    (click)="onButtonControl(camera.controls.powerOn)"
+                    [class.active]="camera.controls.powerOn.value === 1"
+                    title="Power On"
+                  >
+                    Power On
+                  </button>
+                }
+
+                @if (camera.controls.powerOff) {
+                  <button
+                    class="control-button power-off"
+                    (click)="onButtonControl(camera.controls.powerOff)"
+                    [class.active]="camera.controls.powerOff.value === 1"
+                    title="Power Off"
+                  >
+                    Power Off
+                  </button>
+                }
+              </div>
+
+              @if (camera.controls.powerState) {
+                <div class="control-row">
+                  <app-control-card
+                    [control]="camera.controls.powerState"
+                    [showComponentName]="false"
+                    [hideTypeBadge]="true"
+                    [hideControlName]="false"
+                    (valueChange)="onValueChange(camera.controls.powerState, $event)"
+                    (positionChange)="onPositionChange(camera.controls.powerState, $event)"
+                  />
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </main>
+</div>
