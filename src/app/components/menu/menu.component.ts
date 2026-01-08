@@ -38,6 +38,19 @@ export class MenuComponent implements OnInit {
   ngOnInit(): void {
     this.buildMenuCards();
     this.loadCoreStatus();
+    this.subscribeToComponentsLoaded();
+  }
+
+  /**
+   * Subscribe to components loaded event to rebuild menu when components are fetched
+   */
+  private subscribeToComponentsLoaded(): void {
+    this.qsysService.getComponentsLoaded().subscribe((components) => {
+      if (components.length > 0) {
+        console.log(`Menu: Components loaded event received (${components.length} components), rebuilding menu...`);
+        this.buildMenuCardsFromCache();
+      }
+    });
   }
 
   /**
@@ -55,8 +68,12 @@ export class MenuComponent implements OnInit {
           this.designName = status.designName;
           console.log(`Menu: Core ${status.platform} (${status.state}) - Design: ${status.designName}`);
 
-          // Rebuild menu cards after connection to filter based on available components
-          await this.buildMenuCardsAsync();
+          // Try to build menu from cache if components already loaded
+          const cached = this.qsysService.getCachedComponents();
+          if (cached.length > 0) {
+            console.log(`Menu: Using ${cached.length} cached components to build menu`);
+            this.buildMenuCardsFromCache();
+          }
         } catch (error) {
           console.error('Failed to load Core status:', error);
         }
@@ -70,8 +87,12 @@ export class MenuComponent implements OnInit {
       this.coreState = status.state;
       this.designName = status.designName;
 
-      // Rebuild menu cards to filter based on available components
-      this.buildMenuCardsAsync();
+      // Try to build menu from cache if components already loaded
+      const cached = this.qsysService.getCachedComponents();
+      if (cached.length > 0) {
+        console.log(`Menu: Using ${cached.length} cached components to build menu`);
+        this.buildMenuCardsFromCache();
+      }
     }
   }
 
@@ -101,60 +122,53 @@ export class MenuComponent implements OnInit {
   }
 
   /**
-   * Build menu cards with filtering based on available Q-SYS components
+   * Build menu cards from cached components (called when components are loaded)
    */
-  private async buildMenuCardsAsync(): Promise<void> {
-    try {
-      // Get available components from Q-SYS Core
-      const availableComponents = await this.qsysService.getComponents();
-      const componentNames = new Set(availableComponents.map(c => c.name));
+  private buildMenuCardsFromCache(): void {
+    const availableComponents = this.qsysService.getCachedComponents();
+    const componentNames = new Set(availableComponents.map(c => c.name));
 
-      console.log(`Menu: Found ${componentNames.size} Q-SYS components`);
+    console.log(`Menu: Building menu from ${componentNames.size} cached Q-SYS components`);
 
-      // Filter custom views based on required components
-      const filteredViews = this.customViewRegistry.registeredViews().filter(view => {
-        // If no required components specified, always show the view
-        if (!view.requiredComponents || view.requiredComponents.length === 0) {
-          return true;
-        }
+    // Filter custom views based on required components
+    const filteredViews = this.customViewRegistry.registeredViews().filter(view => {
+      // If no required components specified, always show the view
+      if (!view.requiredComponents || view.requiredComponents.length === 0) {
+        return true;
+      }
 
-        // Check if at least one required component exists
-        const hasRequiredComponent = view.requiredComponents.some(reqComp =>
-          componentNames.has(reqComp)
-        );
+      // Check if at least one required component exists
+      const hasRequiredComponent = view.requiredComponents.some(reqComp =>
+        componentNames.has(reqComp)
+      );
 
-        if (!hasRequiredComponent) {
-          console.log(`Menu: Hiding "${view.title}" - required components not found:`, view.requiredComponents);
-        }
+      if (!hasRequiredComponent) {
+        console.log(`Menu: Hiding "${view.title}" - required components not found:`, view.requiredComponents);
+      }
 
-        return hasRequiredComponent;
-      });
+      return hasRequiredComponent;
+    });
 
-      const cards: MenuCard[] = [
-        // Hardcoded Component Browser card (always shown)
-        {
-          title: 'Component Browser',
-          description: 'Browse and control all Q-SYS components',
-          icon: '🔍',
-          route: 'browser'
-        },
-        // Filtered custom view cards
-        ...filteredViews.map(view => ({
-          title: view.title,
-          description: view.description,
-          icon: view.icon,
-          route: view.route,
-          badge: view.badge
-        }))
-      ];
+    const cards: MenuCard[] = [
+      // Hardcoded Component Browser card (always shown)
+      {
+        title: 'Component Browser',
+        description: 'Browse and control all Q-SYS components',
+        icon: '🔍',
+        route: 'browser'
+      },
+      // Filtered custom view cards
+      ...filteredViews.map(view => ({
+        title: view.title,
+        description: view.description,
+        icon: view.icon,
+        route: view.route,
+        badge: view.badge
+      }))
+    ];
 
-      this.menuCards.set(cards);
-      console.log(`Menu: Showing ${filteredViews.length} custom views (${this.customViewRegistry.registeredViews().length - filteredViews.length} hidden)`);
-    } catch (error) {
-      console.error('Failed to filter menu cards:', error);
-      // Fall back to showing all cards if filtering fails
-      this.buildMenuCards();
-    }
+    this.menuCards.set(cards);
+    console.log(`Menu: Showing ${filteredViews.length} custom views (${this.customViewRegistry.registeredViews().length - filteredViews.length} hidden)`);
   }
 
   /**
