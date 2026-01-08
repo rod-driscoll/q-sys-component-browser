@@ -76,8 +76,11 @@ The application is configured with `baseHref: "/q-sys-component-browser/"` to en
 The `github-pages` configuration in `angular.json` includes:
 - Production optimizations
 - Output hashing for cache busting
-- Service worker for PWA support
+- **Service worker disabled** (GitHub Pages subdirectory path causes conflicts)
 - Correct base href for GitHub Pages
+
+> [!NOTE]
+> The service worker is disabled for GitHub Pages builds because Angular's service worker doesn't properly handle the subdirectory base href. The service worker will still function correctly when deploying to Q-SYS Core.
 
 ## Troubleshooting
 

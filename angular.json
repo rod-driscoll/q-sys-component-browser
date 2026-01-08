@@ -69,7 +69,7 @@
                 }
               ],
               "outputHashing": "all",
-              "serviceWorker": "ngsw-config.json",
+              "serviceWorker": false,
               "baseHref": "/q-sys-component-browser/"
             },
             "development": {
