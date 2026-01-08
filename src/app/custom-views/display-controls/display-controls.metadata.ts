@@ -8,5 +8,6 @@ export const DISPLAY_CONTROLS_METADATA: CustomViewMetadata = {
   description: 'Control displays, monitors, and screens',
   icon: '📺',
   route: 'display-controls',
-  order: 2
+  order: 2,
+  requiredComponents: ['IPTVManager']
 };

@@ -54,6 +54,9 @@ export class MenuComponent implements OnInit {
           this.coreState = status.state;
           this.designName = status.designName;
           console.log(`Menu: Core ${status.platform} (${status.state}) - Design: ${status.designName}`);
+
+          // Rebuild menu cards after connection to filter based on available components
+          await this.buildMenuCardsAsync();
         } catch (error) {
           console.error('Failed to load Core status:', error);
         }
@@ -66,11 +69,14 @@ export class MenuComponent implements OnInit {
       this.corePlatform = status.platform;
       this.coreState = status.state;
       this.designName = status.designName;
+
+      // Rebuild menu cards to filter based on available components
+      this.buildMenuCardsAsync();
     }
   }
 
   /**
-   * Build menu cards from static items and registry
+   * Build menu cards from static items and registry (synchronous - shows all views initially)
    */
   private buildMenuCards(): void {
     const cards: MenuCard[] = [
@@ -81,7 +87,7 @@ export class MenuComponent implements OnInit {
         icon: '🔍',
         route: 'browser'
       },
-      // Dynamic custom view cards from registry
+      // Dynamic custom view cards from registry (all views initially)
       ...this.customViewRegistry.registeredViews().map(view => ({
         title: view.title,
         description: view.description,
@@ -92,6 +98,63 @@ export class MenuComponent implements OnInit {
     ];
 
     this.menuCards.set(cards);
+  }
+
+  /**
+   * Build menu cards with filtering based on available Q-SYS components
+   */
+  private async buildMenuCardsAsync(): Promise<void> {
+    try {
+      // Get available components from Q-SYS Core
+      const availableComponents = await this.qsysService.getComponents();
+      const componentNames = new Set(availableComponents.map(c => c.name));
+
+      console.log(`Menu: Found ${componentNames.size} Q-SYS components`);
+
+      // Filter custom views based on required components
+      const filteredViews = this.customViewRegistry.registeredViews().filter(view => {
+        // If no required components specified, always show the view
+        if (!view.requiredComponents || view.requiredComponents.length === 0) {
+          return true;
+        }
+
+        // Check if at least one required component exists
+        const hasRequiredComponent = view.requiredComponents.some(reqComp =>
+          componentNames.has(reqComp)
+        );
+
+        if (!hasRequiredComponent) {
+          console.log(`Menu: Hiding "${view.title}" - required components not found:`, view.requiredComponents);
+        }
+
+        return hasRequiredComponent;
+      });
+
+      const cards: MenuCard[] = [
+        // Hardcoded Component Browser card (always shown)
+        {
+          title: 'Component Browser',
+          description: 'Browse and control all Q-SYS components',
+          icon: '🔍',
+          route: 'browser'
+        },
+        // Filtered custom view cards
+        ...filteredViews.map(view => ({
+          title: view.title,
+          description: view.description,
+          icon: view.icon,
+          route: view.route,
+          badge: view.badge
+        }))
+      ];
+
+      this.menuCards.set(cards);
+      console.log(`Menu: Showing ${filteredViews.length} custom views (${this.customViewRegistry.registeredViews().length - filteredViews.length} hidden)`);
+    } catch (error) {
+      console.error('Failed to filter menu cards:', error);
+      // Fall back to showing all cards if filtering fails
+      this.buildMenuCards();
+    }
   }
 
   /**
