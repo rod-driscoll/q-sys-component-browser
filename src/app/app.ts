@@ -1,16 +1,20 @@
-import { Component, signal, OnInit } from '@angular/core';
+import { Component, signal, OnInit, ViewChild } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { environment } from '../environments/environment';
 import { QSysService } from './services/qsys.service';
+import { PwaInstallPromptComponent } from './components/pwa-install-prompt/pwa-install-prompt.component';
+import { SettingsDialogComponent } from './components/settings-dialog/settings-dialog.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, PwaInstallPromptComponent, SettingsDialogComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
 export class App implements OnInit {
   protected readonly title = signal('q-sys-angular-components');
+
+  @ViewChild(SettingsDialogComponent) settingsDialog!: SettingsDialogComponent;
 
   constructor(private qsysService: QSysService) {}
 
@@ -38,24 +42,55 @@ export class App implements OnInit {
 
   /**
    * Parse URL parameters to override Q-SYS Core connection settings
-   * Supports: ?host=192.168.1.100&port=9091
+   * Supports two formats:
+   *   1. ?host=192.168.1.100:9092 (host with port)
+   *   2. ?host=192.168.1.100&port=9092 (separate parameters)
+   * Saves parameters to localStorage for PWA use
    */
   private parseUrlParameters(): void {
     const urlParams = new URLSearchParams(window.location.search);
-    const hostParam = urlParams.get('host');
-    const portParam = urlParams.get('port');
+    let hostParam = urlParams.get('host');
+    let portParam = urlParams.get('port');
+
+    // Parse host:port format if host contains a colon
+    if (hostParam && hostParam.includes(':')) {
+      const parts = hostParam.split(':');
+      hostParam = parts[0];
+      portParam = parts[1]; // Override port parameter with value from host
+      console.log(`Parsed host:port format - Host: ${hostParam}, Port: ${portParam}`);
+    }
+
+    // Check localStorage for saved connection parameters
+    const savedHost = localStorage.getItem('qsys-host');
+    const savedPort = localStorage.getItem('qsys-port');
+
+    // URL parameters take precedence over localStorage
+    const finalHost = hostParam || savedHost;
+    const finalPort = portParam || savedPort;
 
     if (hostParam || portParam) {
-      console.log('URL parameters detected, updating connection settings:');
+      console.log('URL parameters detected, saving to localStorage and updating connection settings:');
 
-      const port = portParam ? parseInt(portParam, 10) : undefined;
+      // Save to localStorage for future PWA launches
+      if (hostParam) {
+        localStorage.setItem('qsys-host', hostParam);
+      }
+      if (portParam) {
+        localStorage.setItem('qsys-port', portParam);
+      }
+    } else if (savedHost || savedPort) {
+      console.log('Using saved connection settings from localStorage:');
+    }
+
+    if (finalHost || finalPort) {
+      const port = finalPort ? parseInt(finalPort, 10) : undefined;
 
       // Validate port if provided
       if (port !== undefined && (isNaN(port) || port <= 0 || port > 65535)) {
-        console.error(`Invalid port parameter: ${portParam}. Using default.`);
-        environment.setConnectionParams(hostParam || undefined, undefined);
+        console.error(`Invalid port parameter: ${finalPort}. Using default.`);
+        environment.setConnectionParams(finalHost || undefined, undefined);
       } else {
-        environment.setConnectionParams(hostParam || undefined, port);
+        environment.setConnectionParams(finalHost || undefined, port);
       }
 
       // Log the active connection settings

@@ -290,6 +290,70 @@ ng build
 
 This will compile your project and store the build artifacts in the `dist/` directory.
 
+## Deployment
+
+### Q-SYS Core Deployment
+
+The project includes a deployment script that uploads the built application to a Q-SYS Core's internal storage.
+
+**Important Limitations:**
+
+The Q-SYS Lua HTTP server (used by the included WebSocketComponentDiscovery.lua) has a TcpSocket buffer limitation that prevents reliable transfer of files larger than approximately 65KB.
+
+- ✅ **Initial page load**: Works reliably (main.js is 29KB with lazy loading)
+- ⚠️ **Large lazy-loaded chunks**: May fail to load (e.g., Angular Material vendor chunk at 273KB)
+- ℹ️ **Native Q-SYS web server**: Does not support serving custom applications
+
+### Deployment Options
+
+#### Option 1: Q-SYS Core Internal Deployment (Recommended for Development)
+
+Best for development and simple applications without large dependencies.
+
+1. Create `.env.deploy` file:
+```bash
+QSYS_CORE_IP=192.168.104.220
+QSYS_CORE_USERNAME=your-username    # Optional for auth cores
+QSYS_CORE_PASSWORD=your-password    # Optional for auth cores
+DEPLOY_PATH=/media/ui
+```
+
+2. Deploy:
+```bash
+npm run deploy
+```
+
+3. Access at: `http://[CORE-IP]:9091/index.html`
+
+**Limitations**: Large lazy-loaded components (QSys Browser with Angular Material) may fail to load due to the 65KB file size limitation.
+
+#### Option 2: External Web Server (Recommended for Production)
+
+For production deployments or when using components with large dependencies (Angular Material), serve the application from an external web server:
+
+1. Build the application:
+```bash
+ng build
+```
+
+2. Deploy `dist/q-sys-angular-components/browser/` to your web server (Apache, Nginx, IIS, etc.)
+
+3. Configure CORS on your Q-SYS Core to allow requests from your web server's domain
+
+4. Access the application from your web server's URL
+
+**Advantages**:
+- No file size limitations
+- Better performance for larger applications
+- Can use CDN for static assets
+- Standard web server features (compression, caching, etc.)
+
+### Progressive Web App (PWA)
+
+The application is configured as a PWA and can be installed on devices for offline access. The service worker caches all application files for offline use.
+
+**Note**: When using PWA mode from Q-SYS Core deployment, large lazy-loaded chunks may fail to cache due to the file size limitation.
+
 ## Running Tests
 
 To execute unit tests with the [Karma](https://karma-runner.github.io) test runner:

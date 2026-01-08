@@ -1,10 +1,11 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { QSysService } from '../../services/qsys.service';
 import { CustomViewRegistryService } from '../../services/custom-view-registry.service';
 import { MenuCard } from '../../models/custom-view.model';
 import { environment } from '../../../environments/environment';
+import { SettingsDialogComponent } from '../settings-dialog/settings-dialog.component';
 
 /**
  * Menu component - Home page with navigation cards
@@ -14,7 +15,7 @@ import { environment } from '../../../environments/environment';
  */
 @Component({
   selector: 'app-menu',
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, SettingsDialogComponent],
   templateUrl: './menu.component.html',
   styleUrl: './menu.component.css'
 })
@@ -25,6 +26,8 @@ export class MenuComponent implements OnInit {
   corePlatform = '';
   coreState = '';
   designName = '';
+
+  @ViewChild(SettingsDialogComponent) settingsDialog!: SettingsDialogComponent;
 
   constructor(
     private router: Router,
@@ -125,5 +128,12 @@ export class MenuComponent implements OnInit {
    */
   get corePort(): number {
     return environment.RUNTIME_CORE_PORT;
+  }
+
+  /**
+   * Open settings dialog
+   */
+  openSettings(): void {
+    this.settingsDialog.open();
   }
 }

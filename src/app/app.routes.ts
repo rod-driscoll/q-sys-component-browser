@@ -1,6 +1,5 @@
 import { Routes } from '@angular/router';
 import { MenuComponent } from './components/menu/menu.component';
-import { QsysBrowser } from './components/qsys-browser/qsys-browser';
 import { CUSTOM_VIEW_ROUTES } from './custom-views';
 
 export const routes: Routes = [
@@ -12,7 +11,7 @@ export const routes: Routes = [
   },
   {
     path: 'browser',
-    component: QsysBrowser,
+    loadComponent: () => import('./components/qsys-browser/qsys-browser').then(m => m.QsysBrowser),
     title: 'Component Browser'
   },
   // Custom view routes

@@ -1,0 +1,222 @@
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.dialog-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow: auto;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.dialog-header h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #333;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 32px;
+  line-height: 1;
+  color: #666;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.close-button:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.dialog-body {
+  padding: 24px 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+  font-size: 14px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #00b4d8;
+  box-shadow: 0 0 0 3px rgba(0, 180, 216, 0.1);
+}
+
+.form-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #666;
+}
+
+.dialog-footer {
+  padding: 16px 20px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.footer-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-save,
+.btn-cancel,
+.btn-secondary {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-save {
+  background: #00b4d8;
+  color: white;
+}
+
+.btn-save:hover:not(:disabled) {
+  background: #0096b8;
+}
+
+.btn-save:disabled {
+  background: #90d5e6;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.btn-cancel {
+  background: #f0f0f0;
+  color: #666;
+}
+
+.btn-cancel:hover:not(:disabled) {
+  background: #e0e0e0;
+}
+
+.btn-cancel:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.btn-secondary {
+  background: #fff;
+  color: #d32f2f;
+  border: 1px solid #d32f2f;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #fef5f5;
+}
+
+.btn-secondary:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  color: #f5a5a5;
+  border-color: #f5a5a5;
+}
+
+@media (max-width: 600px) {
+  .dialog-content {
+    width: 100%;
+    max-width: none;
+    border-radius: 12px 12px 0 0;
+    margin-top: auto;
+  }
+
+  .dialog-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .footer-actions {
+    width: 100%;
+  }
+
+  .footer-actions button {
+    flex: 1;
+  }
+
+  .btn-secondary {
+    width: 100%;
+  }
+}
