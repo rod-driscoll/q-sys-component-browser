@@ -1,6 +1,7 @@
 {
   "name": "q-sys-component-browser",
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "author": "Rod Driscoll<rod@theavitgroup.com.au>",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",

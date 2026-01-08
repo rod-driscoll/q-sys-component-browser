@@ -1,7 +1,4 @@
 {
-  "enabledMcpjsonServers": [
-    "qrwc-svelte"
-  ],
   "permissions": {
     "allow": [
       "Bash(npm install:*)",
@@ -42,7 +39,11 @@
       "Bash(npm run build:pwa:*)",
       "Bash(git restore:*)",
       "Bash(npm run deploy:pwa:*)",
-      "Bash(npm run deploy:*)"
+      "Bash(npm run deploy:*)",
+      "Bash(find:*)"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "qrwc-svelte"
+  ]
 }
