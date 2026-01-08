@@ -1612,7 +1612,8 @@ HttpServer = (function()
       if(root:match('^/')) then root = root:sub(2); end;
       options = options or {};
       local chunkSize = options.chunkSize or 8192; -- 8KB default chunk size
-      local useChunkedTransfer = options.chunked == true; -- disabled by default for reliability
+      local maxBufferSize = options.maxBufferSize or 65536; -- 64KB threshold for automatic chunking
+      local useChunkedTransfer = options.chunked; -- nil = auto-detect, true = force chunked, false = force buffered
 
       return function(req, res)
         local fh = io.open(root .. req.path, 'r');
@@ -1624,8 +1625,21 @@ HttpServer = (function()
           if MIME_HEADERS[extension] then res.set('Content-Type', MIME_HEADERS[extension]); end
         end;
 
+        -- Auto-detect file size and determine chunking strategy if not explicitly set
+        local shouldUseChunked = useChunkedTransfer;
+        if(shouldUseChunked == nil) then
+          local currentPos = fh:seek(); -- Save current position
+          local fileSize = fh:seek('end'); -- Get file size
+          fh:seek('set', currentPos); -- Restore position
+          shouldUseChunked = fileSize > maxBufferSize;
+        end;
+
         -- For chunked transfer, stream the file
-        if(useChunkedTransfer) then
+        if(shouldUseChunked) then
+          -- Set chunked flag and send headers BEFORE writing data
+          res._chunked = true;
+          res.writeHead();
+
           local chunk = fh:read(chunkSize);
           while(chunk) do
             res.write(chunk);

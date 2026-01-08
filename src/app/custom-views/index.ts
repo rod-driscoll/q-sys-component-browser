@@ -11,12 +11,7 @@
 
 import { Routes } from '@angular/router';
 
-// Import custom view components
-import { VolumeControlsComponent } from './volume-controls/volume-controls.component';
-import { DisplayControlsComponent } from './display-controls/display-controls.component';
-import { LightingControlsComponent } from './lighting-controls/lighting-controls.component';
-
-// Import custom view metadata
+// Import custom view metadata (metadata files are small, keep eagerly loaded)
 import { VOLUME_CONTROLS_METADATA } from './volume-controls/volume-controls.metadata';
 import { DISPLAY_CONTROLS_METADATA } from './display-controls/display-controls.metadata';
 import { LIGHTING_CONTROLS_METADATA } from './lighting-controls/lighting-controls.metadata';
@@ -32,23 +27,23 @@ export const CUSTOM_VIEW_METADATA = [
 ];
 
 /**
- * Routes for all custom views
- * Used in app.routes.ts to configure routing
+ * Routes for all custom views with lazy loading
+ * Components are loaded on-demand to reduce initial bundle size
  */
 export const CUSTOM_VIEW_ROUTES: Routes = [
   {
     path: VOLUME_CONTROLS_METADATA.route,
-    component: VolumeControlsComponent,
+    loadComponent: () => import('./volume-controls/volume-controls.component').then(m => m.VolumeControlsComponent),
     title: VOLUME_CONTROLS_METADATA.title
   },
   {
     path: DISPLAY_CONTROLS_METADATA.route,
-    component: DisplayControlsComponent,
+    loadComponent: () => import('./display-controls/display-controls.component').then(m => m.DisplayControlsComponent),
     title: DISPLAY_CONTROLS_METADATA.title
   },
   {
     path: LIGHTING_CONTROLS_METADATA.route,
-    component: LightingControlsComponent,
+    loadComponent: () => import('./lighting-controls/lighting-controls.component').then(m => m.LightingControlsComponent),
     title: LIGHTING_CONTROLS_METADATA.title
   },
 ];

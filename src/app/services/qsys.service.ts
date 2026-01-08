@@ -147,7 +147,21 @@ export class QSysService {
     this.stopKeepalive();
 
     if (this.qrwc) {
-      this.qrwc.disconnect();
+      // Try to disconnect the QRWC instance
+      // The QRWC library may not have a disconnect method, so we access the WebSocket directly
+      try {
+        if (typeof this.qrwc.disconnect === 'function') {
+          this.qrwc.disconnect();
+        } else {
+          // Access the underlying WebSocket and close it
+          const webSocketManager = (this.qrwc as any).webSocketManager;
+          if (webSocketManager && webSocketManager.socket) {
+            webSocketManager.socket.close();
+          }
+        }
+      } catch (error) {
+        console.warn('Error during disconnect:', error);
+      }
       this.qrwc = null;
     }
 

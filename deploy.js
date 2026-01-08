@@ -4,6 +4,7 @@
  * Q-SYS Core Deployment Script
  *
  * Deploys the compiled Angular application to a Q-SYS Core using the Media Resources API
+ * Automatically creates directories as needed before uploading files
  *
  * API Documentation: https://q-syshelp.qsc.com/Content/Management_APIs/media_resources.htm
  */
@@ -11,7 +12,6 @@
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
-const http = require('http');
 
 // Color output helpers
 const colors = {
@@ -110,6 +110,109 @@ function getFiles(dir, baseDir = dir) {
   }
 
   return files;
+}
+
+// Check if a directory exists using HEAD request
+async function directoryExists(coreIp, bearerToken, dirPath) {
+  return new Promise((resolve) => {
+    const encodedPath = encodeURIComponent(dirPath).replace(/%2F/g, '/');
+    const apiPath = `/api/v0/cores/self/media/${encodedPath}`;
+
+    const options = {
+      hostname: coreIp,
+      port: 443,
+      path: apiPath,
+      method: 'HEAD',
+      headers: {},
+      rejectUnauthorized: false,
+    };
+
+    if (bearerToken) {
+      options.headers['Authorization'] = `Bearer ${bearerToken}`;
+    }
+
+    const req = https.request(options, (res) => {
+      resolve(res.statusCode === 200);
+    });
+
+    req.on('error', () => {
+      resolve(false);
+    });
+
+    req.end();
+  });
+}
+
+// Create a directory using POST request
+async function createDirectory(coreIp, bearerToken, parentPath, dirName) {
+  return new Promise((resolve, reject) => {
+    const payload = JSON.stringify({ name: dirName });
+    const encodedPath = encodeURIComponent(parentPath).replace(/%2F/g, '/');
+    const apiPath = `/api/v0/cores/self/media/${encodedPath}`;
+
+    const options = {
+      hostname: coreIp,
+      port: 443,
+      path: apiPath,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload),
+      },
+      rejectUnauthorized: false,
+    };
+
+    if (bearerToken) {
+      options.headers['Authorization'] = `Bearer ${bearerToken}`;
+    }
+
+    const req = https.request(options, (res) => {
+      let responseData = '';
+
+      res.on('data', (chunk) => {
+        responseData += chunk;
+      });
+
+      res.on('end', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          resolve({ statusCode: res.statusCode, data: responseData });
+        } else {
+          reject(new Error(`HTTP ${res.statusCode}: ${responseData}`));
+        }
+      });
+    });
+
+    req.on('error', (err) => {
+      reject(err);
+    });
+
+    req.write(payload);
+    req.end();
+  });
+}
+
+// Ensure directory path exists, creating directories as needed
+async function ensureDirectory(coreIp, bearerToken, dirPath) {
+  // Split path into parts and build incrementally
+  const parts = dirPath.split('/').filter(p => p);
+  let currentPath = '';
+
+  for (const part of parts) {
+    const parentPath = currentPath || '';
+    currentPath = currentPath ? `${currentPath}/${part}` : part;
+
+    const exists = await directoryExists(coreIp, bearerToken, currentPath);
+    if (!exists) {
+      try {
+        await createDirectory(coreIp, bearerToken, parentPath, part);
+      } catch (err) {
+        // Ignore errors if directory already exists (race condition)
+        if (!err.message.includes('409')) {
+          throw err;
+        }
+      }
+    }
+  }
 }
 
 // Upload a file to Q-SYS Core using Media Resources API
@@ -213,6 +316,27 @@ async function deploy() {
   }
 
   log(`Found ${files.length} file(s) to deploy\n`, colors.bright);
+
+  // Collect unique directories
+  const directories = new Set();
+  for (const file of files) {
+    const fileDir = path.dirname(file.relativePath);
+    const targetPath = fileDir === '.'
+      ? webRoot
+      : path.join(webRoot, fileDir).replace(/\\/g, '/');
+    directories.add(targetPath);
+  }
+
+  // Ensure all directories exist
+  info('Ensuring directories exist...');
+  for (const dir of directories) {
+    try {
+      await ensureDirectory(coreIp, bearerToken, dir);
+    } catch (err) {
+      warning(`Failed to create directory ${dir}: ${err.message}`);
+    }
+  }
+  success(`Verified ${directories.size} directory path(s)\n`);
 
   // Upload files
   let successCount = 0;
