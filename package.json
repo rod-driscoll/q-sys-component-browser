@@ -1,5 +1,5 @@
 {
-  "name": "q-sys-angular-components",
+  "name": "q-sys-component-browser",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
