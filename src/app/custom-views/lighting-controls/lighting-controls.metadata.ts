@@ -8,5 +8,6 @@ export const LIGHTING_CONTROLS_METADATA: CustomViewMetadata = {
   description: 'Control lighting zones and scenes',
   icon: '💡',
   route: 'lighting-controls',
-  order: 3
+  order: 3,
+  requiredComponents: ['LightingPresets']
 };
