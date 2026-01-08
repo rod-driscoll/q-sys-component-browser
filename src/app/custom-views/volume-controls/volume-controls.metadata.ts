@@ -8,5 +8,6 @@ export const VOLUME_CONTROLS_METADATA: CustomViewMetadata = {
   description: 'Manage audio levels across all zones',
   icon: '🔊',
   route: 'volume-controls',
-  order: 1
+  order: 1,
+  requiredComponents: ['BGM XFADE', 'BGM level controls']
 };

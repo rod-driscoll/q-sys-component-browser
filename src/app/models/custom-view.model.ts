@@ -23,6 +23,9 @@ export interface CustomViewMetadata {
 
   /** Sort order for menu display (lower numbers appear first) */
   order?: number;
+
+  /** Required Q-SYS component names - view only appears if at least one is found */
+  requiredComponents?: string[];
 }
 
 /**
