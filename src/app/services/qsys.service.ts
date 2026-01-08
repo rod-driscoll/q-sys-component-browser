@@ -18,7 +18,9 @@ export class QSysService {
   private currentComponentListener: any = null;
   private currentComponent: any = null;
 
-  // Cache no longer needed since we're using RPC instead of QRWC Components
+  // Component cache and observable
+  private componentsCache: ComponentWithControls[] | null = null;
+  private componentsLoaded$ = new BehaviorSubject<ComponentWithControls[]>([]);
 
   // Keepalive timer to prevent connection timeout
   private keepaliveTimer: any = null;
@@ -186,6 +188,21 @@ export class QSysService {
   }
 
   /**
+   * Get observable for components loaded event
+   * Emits when components are fetched from Q-SYS Core
+   */
+  getComponentsLoaded(): Observable<ComponentWithControls[]> {
+    return this.componentsLoaded$.asObservable();
+  }
+
+  /**
+   * Get cached components if available, otherwise returns empty array
+   */
+  getCachedComponents(): ComponentWithControls[] {
+    return this.componentsCache || [];
+  }
+
+  /**
    * Refresh component control counts after QRWC has had more time to load
    * Note: With the new on-demand loading approach, this just re-fetches the component list
    */
@@ -195,6 +212,8 @@ export class QSysService {
     }
 
     console.log('Refreshing component list...');
+    // Force refresh by clearing cache
+    this.componentsCache = null;
     return this.getComponents();
   }
 
@@ -202,10 +221,17 @@ export class QSysService {
    * Get all components from Q-SYS Core via direct RPC call
    * This avoids the timeout issues from QRWC's automatic control loading
    * Returns a promise that resolves with the component list with control counts
+   * Uses cache if available to avoid redundant fetches
    */
-  async getComponents(): Promise<ComponentWithControls[]> {
+  async getComponents(forceRefresh: boolean = false): Promise<ComponentWithControls[]> {
     if (!this.qrwc) {
       throw new Error('Not connected to Q-SYS Core');
+    }
+
+    // Return cached components if available and not forcing refresh
+    if (!forceRefresh && this.componentsCache) {
+      console.log(`Returning ${this.componentsCache.length} cached components`);
+      return this.componentsCache;
     }
 
     try {
@@ -250,6 +276,10 @@ export class QSysService {
       if (failedCount > 0) {
         console.log(`  ⚠ ${failedCount} components failed to load controls`);
       }
+
+      // Cache the components and notify subscribers
+      this.componentsCache = componentsWithCounts;
+      this.componentsLoaded$.next(componentsWithCounts);
 
       // Keepalive is already started in connect() method
 
