@@ -3,16 +3,19 @@
   <header class="header">
     <div class="header-main">
       <div class="header-left">
-        <h1>Q-SYS Control System</h1>
-        <div class="project-detail-item">
-          <span class="detail-label">Project:</span>
-          <span class="detail-value">{{ designName || 'Loading...' }}</span>
-        </div>
-      </div>
-      <div class="header-right">
         <button class="settings-button" (click)="openSettings()" title="Settings">
           ⚙️
         </button>
+        <div class="header-left-content">
+          <h1>Q-SYS Control System</h1>
+          <div class="project-detail-item">
+            <span class="detail-label">Project:</span>
+            <span class="detail-value">{{ designName || 'Loading...' }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="header-right">
+
         <div class="connection-status" [class.connected]="isConnected">
           {{ connectionStatus }}
         </div>

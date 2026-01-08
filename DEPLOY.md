@@ -34,7 +34,7 @@ This project includes a deployment script that automatically uploads the compile
    QSYS_WEB_ROOT=web
 
    # Local build directory (relative to project root)
-   BUILD_DIR=dist/q-sys-angular-components/browser
+   BUILD_DIR=dist/q-sys-component-browser/browser
    ```
 
    > **Note:** The `.env.deploy.local` file is gitignored to protect your credentials.
