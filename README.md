@@ -1,4 +1,4 @@
-# Q-SYS Angular Components
+# Q-SYS Component Browser
 
 Angular 20 components for building Q-SYS control interfaces using the QRWC (Q-SYS Remote WebSocket Control) protocol.
 
@@ -336,7 +336,7 @@ For production deployments or when using components with large dependencies (Ang
 ng build
 ```
 
-2. Deploy `dist/q-sys-angular-components/browser/` to your web server (Apache, Nginx, IIS, etc.)
+2. Deploy `dist/q-sys-component-browser/browser/` to your web server (Apache, Nginx, IIS, etc.)
 
 3. Configure CORS on your Q-SYS Core to allow requests from your web server's domain
 
