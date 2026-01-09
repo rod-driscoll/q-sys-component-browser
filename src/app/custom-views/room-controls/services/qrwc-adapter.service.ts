@@ -8,6 +8,7 @@ import { QSysService } from '../../../services/qsys.service';
  */
 class ComponentWrapper {
   public controls: Record<string, ControlWrapper> = {};
+  private qsysService?: QSysService;
 
   constructor(
     public name: string,
@@ -17,6 +18,7 @@ class ComponentWrapper {
 
   async initialize(qsysService: QSysService): Promise<void> {
     try {
+      this.qsysService = qsysService;
       console.log(`Fetching controls for component: ${this.name}`);
 
       // Use QSysService's existing method to fetch controls
@@ -42,6 +44,10 @@ class ComponentWrapper {
 
       // Register all controls with the ChangeGroup for automatic updates
       await this.registerWithChangeGroup();
+
+      // Ensure ChangeGroup polling is started (needed for control updates)
+      await this.ensureChangeGroupPolling();
+
       console.log(`Registered ${Object.keys(this.controls).length} controls with ChangeGroup for ${this.name}`);
     } catch (error) {
       console.error(`Failed to initialize component ${this.name}:`, error);
@@ -59,6 +65,16 @@ class ComponentWrapper {
         Controls: controlsToRegister
       }
     });
+  }
+
+  private async ensureChangeGroupPolling(): Promise<void> {
+    if (!this.qsysService) {
+      console.warn('Cannot ensure ChangeGroup polling - no QSysService reference');
+      return;
+    }
+
+    // Use QSysService's method to ensure polling is started and intercepted
+    await (this.qsysService as any).ensureChangeGroupPollingAndInterception();
   }
 }
 

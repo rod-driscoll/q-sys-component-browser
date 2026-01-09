@@ -693,6 +693,16 @@ export class QSysService {
   }
 
   /**
+   * Public method to ensure ChangeGroup polling and interception are set up
+   * Used by room controls adapter to ensure updates are received
+   */
+  async ensureChangeGroupPollingAndInterception(): Promise<void> {
+    await this.ensureChangeGroupPollingStarted();
+    // Set up interception if not already done (pass null as component name since we emit for all)
+    this.listenToChangeGroupUpdates(null as any);
+  }
+
+  /**
    * Listen to ChangeGroup poll results and emit control updates
    */
   private listenToChangeGroupUpdates(componentName: string): void {
@@ -713,20 +723,19 @@ export class QSysService {
             Id: (changeGroup as any).id
           });
 
-          // Process changes for subscribed component
+          // Process changes for ALL components in ChangeGroup
+          // Emit updates for any control changes, subscribers will filter for what they need
           if (pollResult.Changes) {
             pollResult.Changes.forEach((change: any) => {
-              if (change.Component === this.currentComponentListener) {
-                // Emit control update
-                this.controlUpdates$.next({
-                  component: change.Component,
-                  control: change.Name,
-                  value: change.Value,
-                  position: change.Position,
-                  string: change.String,
-                  Bool: change.Bool
-                });
-              }
+              // Emit control update for all components (not just currentComponentListener)
+              this.controlUpdates$.next({
+                component: change.Component,
+                control: change.Name,
+                value: change.Value,
+                position: change.Position,
+                string: change.String,
+                Bool: change.Bool
+              });
             });
           }
 
