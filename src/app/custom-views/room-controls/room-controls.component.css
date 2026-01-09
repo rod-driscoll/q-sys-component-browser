@@ -1,7 +1,396 @@
+/* Communities CSS File
+Intended for Use with Example Files
+Created by Hope Roth - Q-SYS 
+Version 1.0 - Initial Build September, 2024 
+
+v1.1 Rod Driscoll<rod@theavitgroup.com.au>
+- Modified to work with Angular projects
+- changed assets path for fonts and logo
+- commented out custom -qsc specific properties
+*/
+
+@font-face {
+    font-family: "Phosphor";
+    src: url(/fonts/Phosphor.ttf);
+}
+
+:root {
+    --DarkColor: #2c3740;
+    --LightColor: #ffffff;
+    --DarkGreyColor: #404040;
+    --MediumGreyColor: #616262;
+    --LightGreyColor: #e6e9ed;
+    --PrimaryColor: #0076bf;
+    --PrimaryColorLight: #72aad8;
+    --PrimaryColorDark: #103b5b;
+    --Color2: #842462;
+    --Color2Light: #c48ab2;
+    --Color3: #719e1b;
+    --Color3Light: #c0d39f;
+    --Color4: #d6a836;
+    --Color4Light: #f7e2be;
+    --Color5: #324175;
+    --Color5Light: #a3b1d1;
+    --StopColor: #b40f00;
+    --GoColor: #719e1b;
+    --BorderDecoration: 3px;
+    --BorderRadius: 6px;
+    --MyFont: "Phosphor";
+}
+
+body {
+    font-family: "Phosphor", sans-serif;
+}
+
 .room-controls-container {
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+button {
+    background-color: var(--PrimaryColorLight);
+    /* -qsc-icon-font: "Phosphor";
+    -qsc-icon-color: var(--DarkGreyColor); */
+    color: var(--DarkGreyColor);
+    font-family: var(--MyFont);
+    font-size: 22 vmin;
+    border-radius: var(--BorderRadius);
+    border: var(--BorderDecoration) var(--Color5);
+}
+
+button:value(1) {
+    background-color: var(--Color4);
+    /* -qsc-icon-color: var(--LightColor); */
+    color: var(--LightColor);
+}
+
+combobox {
+    font-style: normal;
+    color: var(--DarkColor);
+    font-family: var(--MyFont);
+    font-size: 22 vmin;
+    border-color: var(--PrimaryColorLight);
+    border-width: var(--BorderDecoration);
+    border-radius: var(--BorderRadius);
+}
+
+fader {
+    /* -qsc-render-style: layer;
+    -qsc-fader-slot-class: fader-slot;
+    -qsc-fader-slot-width: 16px;
+    -qsc-fader-cap-class: fader-cap;
+    -qsc-fader-cap-height: 50vmin;
+    -qsc-fader-cap-width: 50vmin; */
+    border-radius: 10px;
+    border-width: 0px;
+    background-color: transparent;
+    margin: 0px;
+    padding: 2px;
+}
+
+.fader-slot {
+    background-color: var(--DarkGreyColor);
+    border-width: 0px;
+    border-radius: 8px;
+}
+
+.fader-slot:value(1) {
+    background-color: var(--Color2);
+}
+
+.fader-cap {
+    background-color: var(--Color2Light);
+    border-color: var(--MediumGreyColor);
+    border-width: 12px;
+    border-radius: 300px;
+}
+
+meter {
+    /* -qsc-render-style: layer;
+    -qsc-meter-indicator-class: meter-indicator; */
+    background-color: transparent;
+    border: var(--BorderDecoration) var(--Color3Dark);
+    /* -qsc-meter-indicator-width: 98vw;
+    -qsc-meter-indicator-height: 90vh; */
+}
+
+.meter-indicator {
+    background-color: var(--LightColor);
+    border: var(--BorderDecoration) var(--DarkColor);
+    border-radius: 18px;
+}
+
+.meter-indicator:value(1) {
+    background-color: var(--Color2Light);
+}
+
+header {
+    color: var(--PrimaryColor);
+    background-color: transparent;
+    /* -qsc-font-style: semibold; */
+    text-align: left;
+    font-family: var(--MyFont);
+    font-size: 18 vmin;
+    /* font-size: 30px; */
+}
+
+page {
+    background-color: var(--LightGreyColor);
+    border-width: 0px;
+}
+
+led {
+    border-width: 0px;
+    background-color: var(--StopColor);
+}
+
+led:value(1) {
+    background-color: var(--GoColor);
+}
+
+textblock {
+    background-color: transparent;
+    color: var(--DarkGreyColor);
+    font-family: var(--MyFont);
+    font-size: 22vmin;
+    margin: 0px;
+}
+
+textbox {
+    color: var(--DarkGreyColor);
+    font-family: var(--MyFont);
+    font-size: 32vmin;
+    margin: 0px;
+}
+
+textfield {
+    background-color: transparent;
+    color: var(--DarkGreyColor);
+    font-family: var(--MyFont);
+    font-size: 40vmin;
+    margin: 0px;
+}
+
+.logo {
+    background-image: url(/assets/images/communities-logo.png);
+    background-size: auto;
+    border-width: 0px;
+}
+
+.button-cancel {
+    background-color: var(--StopColor);
+    /* -qsc-icon-color: var(--LightColor); */
+    color: var(--LightColor);
+    border-width: 0px;
+    font-size: 22vmin;
+}
+
+.button-go {
+    background-color: var(--GoColor);
+    -qsc-icon-color: var(--LightColor);
+    color: var(--LightColor);
+    border-width: 0px;
+    font-size: 22vmin;
+}
+
+.button-stop {
+    background-color: transparent;
+    /* -qsc-icon-color: var(--DarkGreyColor); */
+    border-width: 0px;
+}
+
+.button-stop:value(1) {
+    background-color: transparent;
+    /* -qsc-icon-color: var(--StopColor); */
+}
+
+.button-splash {
+    background-color: var(--MediumGreyColor);
+    border-width: var(--BorderDecoration);
+    border-color: var(--LightColor);
+    border-radius: 0px;
+}
+
+.button-transparent {
+    border-width: 0px;
+    background-color: transparent;
+    color: var(--Color2);
+    /* -qsc-icon-color: var(--Color2); */
+}
+
+.button-transparent:value(1) {
+    border-width: 0px;
+    background-color: transparent;
+    color: var(--Color2);
+    /* -qsc-icon-color: var(--Color2); */
+}
+
+.button-left {
+    border: var(--BorderDecoration);
+    border-color: var(--MediumGreyColor);
+    border-radius: 10px 0px 0px 10px;
+}
+
+.button-right {
+    border: var(--BorderDecoration);
+    border-color: var(--MediumGreyColor);
+    border-radius: 0px 10px 10px 0px;
+}
+
+.bg-light {
+    border-radius: 0px;
+    background-color: var(--LightColor);
+    border-color: var(--LightGreyColor);
+    border-width: var(--BorderDecoration);
+}
+
+.bottombar-bg {
+    border-radius: 0px;
+    background-color: var(--MediumGreyColor);
+    border-color: var(--LightColor);
+    border-width: var(--BorderDecoration);
+}
+
+.container {
+    border-radius: 6px;
+    border-width: 3px;
+    border-color: var(--LightColor);
+    background: linear-gradient(2700deg, var(--LightGreyColor), var(--LightColor));
+}
+
+.sidebar-bg {
+    background-color: var(--LightGreyColor);
+    border-left-color: var(--Color2);
+    border-left-width: var(--BorderDecoration);
+}
+
+.scrim {
+    background-color: var(--MediumGreyColor);
+    opacity: 0.9;
+    border-radius: 0px;
+    border-width: 0px;
+}
+
+.splash-prompt {
+    background-color: var(--PrimaryColor);
+    border-width: var(--BorderDecoration);
+    border-color: var(--LightColor);
+    color: var(--LightColor);
+    font-size: 25vmin;
+    content: "Touch Screen to Continue";
+    margin: 0px;
+}
+
+.txt-announcement {
+    font-style: bold;
+    background-color: transparent;
+    font-size: 36vmin;
+    text-align: center;
+    padding: 10px;
+    color: var(--StopColor);
+}
+
+.txt-highlight {
+    font-style: bold;
+    background-color: transparent;
+    border: 0px transparent;
+    font-size: 48vmin;
+    text-align: center;
+    color: var(--StopColor);
+}
+
+.txt-header {
+    font-style: bold;
+    background-color: transparent;
+    border: 0px transparent;
+    font-size: 42vmin;
+    text-align: left;
+    padding: 10px;
+    color: var(--Color5);
+}
+
+.txt-page-name {
+    font-style: bold;
+    background-color: transparent;
+    border: 0px transparent;
+    font-size: 10vmin;
+    /* font-size: 48vmin; */
+    text-align: center;
+    padding: 10px;
+    color: var(--Color5);
+}
+
+.txt-room-name {
+    font-style: bold;
+    background-color: transparent;
+    border: 0px transparent;
+    font-size: 48vmin;
+    text-align: left;
+    padding: 10px;
+    color: var(--DarkColor);
+}
+
+.txt-source-name {
+    /* -qsc-font-style: semibold; */
+    background-color: transparent;
+    border: 0px transparent;
+    font-size: 36vmin;
+    text-align: center;
+    padding: 4px;
+    color: var(--DarkColor);
+}
+
+.txt-subheader {
+    /* -qsc-font-style: semibold; */
+    background-color: transparent;
+    border: 0px transparent;
+    /* font-size: 12vmin; */
+    text-align: left;
+    padding: 10px;
+    color: var(--DarkGreyColor);
+}
+
+.txt-label {
+    font-style: normal;
+    background-color: transparent;
+    border: 0px transparent;
+    font-size: 32vmin;
+    text-align: left;
+    padding: 10px;
+    color: var(--DarkColor);
+}
+
+.txt-label-bold {
+    font-style: bold;
+    background-color: transparent;
+    border: 0px transparent;
+    font-size: 32vmin;
+    text-align: left;
+    padding: 10px;
+    color: var(--DarkColor);
+}
+
+.txt-label-2 {
+    font-style: normal;
+    background-color: transparent;
+    border: 0px transparent;
+    font-size: 24vmin;
+    text-align: center;
+    padding: 10px;
+    color: var(--DarkColor);
+}
+
+.padding-small {
+    padding: 2px;
+}
+
+.padding-medium {
+    padding: 8px;
+}
+
+.padding-large {
+    padding: 16px;
 }

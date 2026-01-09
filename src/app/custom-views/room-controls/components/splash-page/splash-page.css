@@ -7,6 +7,7 @@
   justify-content: stretch;
   cursor: pointer;
   position: relative;
+  font-family: "Phosphor", sans-serif;
 }
 
 .splash-language-selector {
@@ -41,7 +42,4 @@
   font-size: clamp(1rem, 2vw, 1.5rem);
 }
 
-.splash-prompt {
-  margin: 0;
-  padding: 1rem 2rem;
-}
+/* .splash-prompt styles now come from room-controls.component.css */

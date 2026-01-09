@@ -1,4 +1,4 @@
-import { Component, signal, effect, inject } from '@angular/core';
+import { Component, signal, effect, inject, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CustomViewBase } from '../../components/custom-views/base/custom-view-base.component';
 import { ControlSelectionConfig } from '../../models/custom-view.model';
@@ -18,7 +18,8 @@ import { IControlState } from '@q-sys/qrwc';
   ],
   templateUrl: './room-controls.component.html',
   styleUrl: './room-controls.component.css',
-  providers: [QrwcAdapterService]
+  providers: [QrwcAdapterService],
+  encapsulation: ViewEncapsulation.None
 })
 export class RoomControlsComponent extends CustomViewBase {
   protected readonly showSplash = signal(true);

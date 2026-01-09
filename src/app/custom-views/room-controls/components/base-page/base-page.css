@@ -5,6 +5,7 @@
   flex-direction: column;
   overflow: hidden;
   background-color: var(--LightColor);
+  font-family: "Phosphor", sans-serif;
 }
 
 .connection-notice {
