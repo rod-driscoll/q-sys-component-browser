@@ -179,25 +179,25 @@ export class QSysBrowserService {
         // Filter controls that match the search term (supports regex)
         const matchingControls = controls
           .filter(control =>
-            this.matchesPattern(control.Name, term) ||
-            this.matchesPattern(control.Type, term)
+            this.matchesPattern(control.name, term) ||
+            this.matchesPattern(control.type, term)
           )
           .map(control => ({
-            name: control.Name,
-            type: control.Type,
-            direction: control.Direction,
-            value: control.Value,
-            valueMin: control.ValueMin,
-            valueMax: control.ValueMax,
-            position: control.Position,
-            string: control.String,
-            choices: control.Choices,
-            stringMin: control.StringMin,
-            stringMax: control.StringMax,
+            name: control.name,
+            type: control.type,
+            direction: control.direction,
+            value: control.value,
+            valueMin: control.valueMin,
+            valueMax: control.valueMax,
+            position: control.position,
+            string: control.string,
+            choices: control.choices,
+            stringMin: control.stringMin,
+            stringMax: control.stringMax,
             componentName: component.name, // Include component name for display
-            units: control.Units,
-            pushAction: control.PushAction,
-            indicatorType: control.IndicatorType
+            units: control.units,
+            pushAction: control.pushAction,
+            indicatorType: control.indicatorType
           }));
 
         allControls.push(...matchingControls);
@@ -234,20 +234,20 @@ export class QSysBrowserService {
     try {
       const controls = await this.qsysService.getComponentControls(component.name);
       const controlInfos = controls.map(c => ({
-        name: c.Name,
-        type: c.Type,
-        direction: c.Direction,
-        value: c.Value,
-        valueMin: c.ValueMin,
-        valueMax: c.ValueMax,
-        position: c.Position,
-        string: c.String,
-        choices: c.Choices,
-        stringMin: c.StringMin,
-        stringMax: c.StringMax,
-        units: c.Units,
-        pushAction: c.PushAction,
-        indicatorType: c.IndicatorType
+        name: c.name,
+        type: c.type,
+        direction: c.direction,
+        value: c.value,
+        valueMin: c.valueMin,
+        valueMax: c.valueMax,
+        position: c.position,
+        string: c.string,
+        choices: c.choices,
+        stringMin: c.stringMin,
+        stringMax: c.stringMax,
+        units: c.units,
+        pushAction: c.pushAction,
+        indicatorType: c.indicatorType
       }));
 
       this.controls.set(controlInfos);
