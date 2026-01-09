@@ -35,7 +35,7 @@ class ComponentWrapper {
           this.name,
           controlData,
           this.webSocketManager,
-          this.changeGroup
+          qsysService
         );
         this.controls[controlData.name] = control;
       }
@@ -74,10 +74,10 @@ class ControlWrapper {
     private componentName: string,
     initialState: any,
     private webSocketManager: any,
-    private changeGroup: any
+    private qsysService: QSysService
   ) {
     this.state = this.normalizeState(initialState);
-    this.setupChangeGroupListener();
+    this.setupControlUpdateListener();
   }
 
   private normalizeState(rawState: any): IControlState {
@@ -95,22 +95,23 @@ class ControlWrapper {
     };
   }
 
-  private setupChangeGroupListener(): void {
-    // Listen for updates from the ChangeGroup using QRWC's subscribe method
-    const key = `${this.componentName}:${this.name}`;
-
-    // QRWC's ChangeGroup has a 'register' Map for callbacks
-    // We need to register our callback so it gets called during polling
-    if (!this.changeGroup.register) {
-      this.changeGroup.register = new Map();
-    }
-
-    // Register callback that will be invoked when this control changes
-    this.changeGroup.register.set(key, (change: any) => {
-      // Update our state
-      this.state = this.normalizeState(change);
-      // Notify all our listeners
-      this.updateListeners.forEach(listener => listener(this.state));
+  private setupControlUpdateListener(): void {
+    // Subscribe to QSysService's control updates observable
+    // This receives updates from the ChangeGroup polling that QSysService intercepts
+    this.qsysService.getControlUpdates().subscribe(update => {
+      // Check if this update is for our control
+      if (update.component === this.componentName && update.control === this.name) {
+        // Update our state with the new values
+        this.state = {
+          ...this.state,
+          Value: update.value,
+          Position: update.position ?? this.state.Position,
+          String: update.string ?? this.state.String,
+          Bool: update.Bool ?? (update.value === 1 || update.value === true),
+        };
+        // Notify all our listeners
+        this.updateListeners.forEach(listener => listener(this.state));
+      }
     });
   }
 
