@@ -1,4 +1,4 @@
-import { Injectable, signal, computed, inject } from '@angular/core';
+import { Injectable, signal, computed, inject, effect } from '@angular/core';
 import { Component } from '@q-sys/qrwc';
 import { QSysService } from '../../../services/qsys.service';
 
@@ -12,6 +12,8 @@ import { QSysService } from '../../../services/qsys.service';
 @Injectable()
 export class QrwcAdapterService {
   private qsysService = inject(QSysService);
+  private loadedComponents = signal<Record<string, Component<string>>>({});
+  private availableComponentNames = signal<string[]>([]);
 
   // List of required Q-SYS components for the room controls
   public readonly requiredComponents = [
@@ -31,33 +33,66 @@ export class QrwcAdapterService {
 
   // Components map (mimics QrwcAngularService interface)
   public readonly components = computed(() => {
-    if (!this.initialised()) {
-      return {};
-    }
-
-    // Build a components map from the QsysService
-    const componentsMap: Record<string, Component<string> | undefined> = {};
-
-    // Get the QRWC instance from QsysService to access components
-    const qrwc = (this.qsysService as any).qrwc;
-    if (qrwc && qrwc.components) {
-      return qrwc.components as Record<string, Component<string> | undefined>;
-    }
-
-    return componentsMap;
+    return this.loadedComponents();
   });
 
   // Computed signal that returns list of missing required components
   public readonly missingComponents = computed(() => {
     if (!this.initialised()) return [];
 
-    const available = this.components();
-    return this.requiredComponents.filter(name => !available[name]);
+    const available = this.availableComponentNames();
+    return this.requiredComponents.filter(name => !available.includes(name));
   });
 
   constructor() {
-    // Subscribe to connection status to extract IP address
-    this.qsysService.getConnectionStatus();
+    // When connected, load the required components
+    effect(() => {
+      if (this.initialised()) {
+        this.loadRequiredComponents();
+      }
+    });
+  }
+
+  /**
+   * Load the required components from Q-SYS using QRWC's getComponent method
+   */
+  private async loadRequiredComponents(): Promise<void> {
+    try {
+      const qrwc = (this.qsysService as any).qrwc;
+      if (!qrwc) {
+        console.error('QRWC instance not available');
+        return;
+      }
+
+      // First, get the list of available components
+      const cachedComponents = this.qsysService.getCachedComponents();
+      const componentNames = cachedComponents.map(c => c.name);
+      this.availableComponentNames.set(componentNames);
+
+      console.log('Loading room control components...');
+      const components: Record<string, Component<string>> = {};
+
+      // Load each required component
+      for (const componentName of this.requiredComponents) {
+        if (componentNames.includes(componentName)) {
+          try {
+            // Use QRWC's getComponent method to load the component with its controls
+            const component = await qrwc.getComponent(componentName);
+            components[componentName] = component;
+            console.log(`✓ Loaded component: ${componentName}`);
+          } catch (error) {
+            console.warn(`Failed to load component ${componentName}:`, error);
+          }
+        } else {
+          console.warn(`Component not found in Q-SYS design: ${componentName}`);
+        }
+      }
+
+      this.loadedComponents.set(components);
+      console.log(`Room controls: Loaded ${Object.keys(components).length} of ${this.requiredComponents.length} required components`);
+    } catch (error) {
+      console.error('Failed to load room control components:', error);
+    }
   }
 
   /**

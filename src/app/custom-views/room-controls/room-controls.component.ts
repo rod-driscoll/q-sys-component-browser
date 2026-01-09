@@ -53,6 +53,15 @@ export class RoomControlsComponent extends CustomViewBase {
     return [];
   }
 
+  /**
+   * Override loadControls to bypass standard control loading
+   * Room controls uses the QrwcAdapterService for direct component access
+   */
+  protected override async loadControls(): Promise<void> {
+    console.log('✓ Room controls initialized - using QrwcAdapterService for component access');
+    // No standard control loading needed - components accessed via adapter service
+  }
+
   navigateToBase(): void {
     this.showSplash.set(false);
   }
