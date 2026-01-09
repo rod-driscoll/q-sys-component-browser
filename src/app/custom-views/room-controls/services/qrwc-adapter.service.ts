@@ -159,8 +159,12 @@ export class QrwcAdapterService {
   public readonly requiredComponents = [
     'Room Controls',
     'UCI Text Helper',
-    'USB Video Bridge Core',
+  ];
+
+  // List of optional components that enable features if present
+  public readonly optionalComponents = [
     'HDMISourceSelect_1',
+    'USB Video Bridge Core',
   ];
 
   // Signal to track if we're connected to Q-SYS and components are loaded
@@ -184,7 +188,27 @@ export class QrwcAdapterService {
     return this.requiredComponents.filter(name => !available.includes(name));
   });
 
+  // Signal to check if video source selection is available
+  public readonly hasVideoSourceSelection = computed(() => {
+    const loaded = this.components();
+    return loaded && !!loaded['HDMISourceSelect_1'];
+  });
+
+  // Signal to check if camera controls are available
+  public readonly hasCameraControls = computed(() => {
+    const loaded = this.components();
+    return loaded && !!loaded['USB Video Bridge Core'];
+  });
+
   constructor() {
+    // Update connection IP address from QSysService
+    effect(() => {
+      const options = (this.qsysService as any).options;
+      if (options?.coreIp) {
+        this.connectionIpAddress.set(options.coreIp);
+      }
+    });
+
     // When connected, load the required components
     effect(() => {
       if (this.qsysService.isConnected() && !this.isLoading) {
@@ -230,8 +254,12 @@ export class QrwcAdapterService {
       const webSocketManager = (qrwc as any).webSocketManager;
       const changeGroup = (qrwc as any).changeGroup;
 
-      // Load each required component
-      for (const componentName of this.requiredComponents) {
+      // Load required and optional components
+      const allComponentsToLoad = [...this.requiredComponents, ...this.optionalComponents];
+
+      for (const componentName of allComponentsToLoad) {
+        const isRequired = this.requiredComponents.includes(componentName);
+
         if (componentNames.includes(componentName)) {
           try {
             // Create and initialize component wrapper
@@ -245,10 +273,18 @@ export class QrwcAdapterService {
             components[componentName] = component;
             console.log(`✓ Loaded component: ${componentName}`);
           } catch (error) {
-            console.warn(`Failed to load component ${componentName}:`, error);
+            if (isRequired) {
+              console.warn(`Failed to load required component ${componentName}:`, error);
+            } else {
+              console.log(`Optional component ${componentName} not loaded:`, error);
+            }
           }
         } else {
-          console.warn(`Component not found in Q-SYS design: ${componentName}`);
+          if (isRequired) {
+            console.warn(`Required component not found in Q-SYS design: ${componentName}`);
+          } else {
+            console.log(`Optional component not found in Q-SYS design: ${componentName}`);
+          }
         }
       }
 

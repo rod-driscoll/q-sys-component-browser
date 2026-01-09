@@ -40,17 +40,27 @@
     <div class="top-right">
       <button
         class="nav-icon button-transparent"
-        [class.active]="currentPage() === 'home'"
-        (click)="navigateToPage('home')">
+        (click)="navigateToSplash()">
         <span class="material-icons">home</span>
       </button>
 
-      <button
-        class="nav-icon button-transparent"
-        [class.active]="currentPage() === 'cameras'"
-        (click)="navigateToPage('cameras')">
-        <span class="material-icons">videocam</span>
-      </button>
+      @if (qrwc.hasVideoSourceSelection()) {
+        <button
+          class="nav-icon button-transparent"
+          [class.active]="currentPage() === 'video-source'"
+          (click)="navigateToPage('video-source')">
+          <span class="material-icons">tv</span>
+        </button>
+      }
+
+      @if (qrwc.hasCameraControls()) {
+        <button
+          class="nav-icon button-transparent"
+          [class.active]="currentPage() === 'cameras'"
+          (click)="navigateToPage('cameras')">
+          <span class="material-icons">videocam</span>
+        </button>
+      }
 
       <button
         class="nav-icon button-transparent"
@@ -78,10 +88,10 @@
 
     <!-- Main Content Area: Cards -->
     <div class="main-content">
-      @if (currentPage() === 'home') {
+      @if (currentPage() === 'video-source' && qrwc.hasVideoSourceSelection()) {
         <app-video-source></app-video-source>
       }
-      @if (currentPage() === 'cameras') {
+      @if (currentPage() === 'cameras' && qrwc.hasCameraControls()) {
         <app-cameras-card></app-cameras-card>
       }
       @if (currentPage() === 'help') {

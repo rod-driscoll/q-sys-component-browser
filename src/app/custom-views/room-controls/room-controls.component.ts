@@ -63,7 +63,11 @@ export class RoomControlsComponent extends CustomViewBase {
     // No standard control loading needed - components accessed via adapter service
   }
 
-  navigateToBase(): void {
+  protected navigateToBase(): void {
     this.showSplash.set(false);
+  }
+
+  protected navigateToSplash(): void {
+    this.showSplash.set(true);
   }
 }

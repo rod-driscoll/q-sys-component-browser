@@ -2,6 +2,6 @@
   @if (showSplash()) {
     <app-splash-page (onNavigateToBase)="navigateToBase()"></app-splash-page>
   } @else {
-    <app-base-page></app-base-page>
+    <app-base-page (onNavigateToSplash)="navigateToSplash()"></app-base-page>
   }
 </div>
