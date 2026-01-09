@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { QrwcAdapterService } from '../../services/qrwc-adapter.service';
 import { LanguageSelector } from '../language-selector/language-selector';
 import { VolumeControl } from '../volume-control/volume-control';
-import { HomeCard } from '../home-card/home-card';
+import { VideoSource } from '../video-source/video-source';
 import { CamerasCard } from '../cameras-card/cameras-card';
 import { PowerCard } from '../power-card/power-card';
 import { HelpCard } from '../help-card/help-card';
@@ -17,7 +17,7 @@ type PageType = 'home' | 'cameras' | 'help' | null;
     CommonModule,
     LanguageSelector,
     VolumeControl,
-    HomeCard,
+    VideoSource,
     CamerasCard,
     PowerCard,
     HelpCard

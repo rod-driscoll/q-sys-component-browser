@@ -3,12 +3,12 @@ import { CommonModule } from '@angular/common';
 import { QrwcAdapterService } from '../../services/qrwc-adapter.service';
 
 @Component({
-  selector: 'app-home-card',
+  selector: 'app-video-source',
   imports: [CommonModule],
-  templateUrl: './home-card.html',
-  styleUrl: './home-card.css',
+  templateUrl: './video-source.html',
+  styleUrl: './video-source.css',
 })
-export class HomeCard {
+export class VideoSource {
   readonly qrwc = inject(QrwcAdapterService);
   readonly sourceNames = signal<string[]>(['Source One', 'Source Two', 'Source Three']);
   readonly selectedSource = signal(0);
