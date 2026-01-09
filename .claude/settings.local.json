@@ -41,7 +41,9 @@
       "Bash(npm run deploy:pwa:*)",
       "Bash(npm run deploy:*)",
       "Bash(find:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)",
+      "Bash(git stash:*)"
     ]
   },
   "enabledMcpjsonServers": [
