@@ -52,8 +52,19 @@ export class CamerasCard {
   constructor() {
     // Bind to Q-SYS CameraRouter for camera selection
     effect(() => {
-      const cameraRouter = this.qrwc.components()?.['CameraRouter'];
+      const components = this.qrwc.components();
+      console.log('[CamerasCard] Checking for CameraRouter component...', {
+        hasComponents: !!components,
+        componentNames: components ? Object.keys(components) : [],
+        hasCameraRouter: !!(components?.['CameraRouter'])
+      });
+
+      const cameraRouter = components?.['CameraRouter'];
       if (cameraRouter) {
+        console.log('[CamerasCard] CameraRouter component found!', {
+          controlCount: Object.keys(cameraRouter.controls).length,
+          controls: Object.keys(cameraRouter.controls)
+        });
         this.hasCameraRouter.set(true);
 
         // Find all camera input controls (input.X.source.name)
@@ -66,6 +77,11 @@ export class CamerasCard {
           if (match) {
             const index = parseInt(match[1], 10);
             const control = cameraRouter.controls[controlName];
+
+            console.log(`[CamerasCard] Found camera input ${index}:`, {
+              controlName,
+              name: control.state.String || `Camera ${index}`
+            });
 
             cameras.push({
               index: index,
@@ -89,11 +105,15 @@ export class CamerasCard {
         cameras.sort((a, b) => a.index - b.index);
         this.cameraOptions.set(cameras);
 
+        console.log(`[CamerasCard] Configured ${cameras.length} camera options:`, cameras);
+
         // Set initial selected camera (default to first camera or camera 1)
         if (cameras.length > 0) {
           this.selectedCameraIndex.set(cameras[0].index);
+          console.log(`[CamerasCard] Selected default camera: ${cameras[0].index} (${cameras[0].name})`);
         }
       } else {
+        console.log('[CamerasCard] CameraRouter component NOT found - camera selection will not be available');
         this.hasCameraRouter.set(false);
       }
     });
