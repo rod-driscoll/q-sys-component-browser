@@ -107,10 +107,35 @@ export class CamerasCard {
 
         console.log(`[CamerasCard] Configured ${cameras.length} camera options:`, cameras);
 
-        // Set initial selected camera (default to first camera or camera 1)
-        if (cameras.length > 0) {
-          this.selectedCameraIndex.set(cameras[0].index);
-          console.log(`[CamerasCard] Selected default camera: ${cameras[0].index} (${cameras[0].name})`);
+        // Subscribe to the select.1 control to track which camera is currently selected in Q-SYS
+        const selectControl = cameraRouter.controls['select.1'];
+        if (selectControl) {
+          // Set initial selected camera from Q-SYS
+          const initialSelection = selectControl.state.Value ?? selectControl.state.Position;
+          if (initialSelection !== undefined) {
+            this.selectedCameraIndex.set(Math.round(initialSelection));
+            console.log(`[CamerasCard] Initial camera selection from Q-SYS: ${initialSelection}`);
+          } else if (cameras.length > 0) {
+            // Fallback to first camera if no value from Q-SYS
+            this.selectedCameraIndex.set(cameras[0].index);
+            console.log(`[CamerasCard] No selection from Q-SYS, defaulting to first camera: ${cameras[0].index}`);
+          }
+
+          // Listen for selection changes from Q-SYS
+          selectControl.on('update', (state) => {
+            const newSelection = state.Value ?? state.Position;
+            if (newSelection !== undefined) {
+              this.selectedCameraIndex.set(Math.round(newSelection));
+              console.log(`[CamerasCard] Camera selection changed in Q-SYS to: ${newSelection}`);
+            }
+          });
+        } else {
+          console.warn('[CamerasCard] select.1 control not found on CameraRouter');
+          // Fallback to first camera
+          if (cameras.length > 0) {
+            this.selectedCameraIndex.set(cameras[0].index);
+            console.log(`[CamerasCard] Defaulting to first camera: ${cameras[0].index}`);
+          }
         }
       } else {
         console.log('[CamerasCard] CameraRouter component NOT found - camera selection will not be available');
