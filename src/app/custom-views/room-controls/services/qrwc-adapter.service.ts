@@ -197,12 +197,12 @@ export class QrwcAdapterService {
 
   // List of required Q-SYS components for the room controls
   public readonly requiredComponents = [
-    'Room Controls',
     'UCI Text Helper',
   ];
 
   // List of optional components that enable features if present
   public readonly optionalComponents = [
+    'Room Controls',
     'HDMISourceSelect_1',
     'USB Video Bridge Core',
     'CameraRouter',
