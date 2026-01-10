@@ -737,12 +737,13 @@ export class QSysService {
 
       console.log(`✓ Subscribed to ${componentName} with ${controls.length} controls via ChangeGroup`);
 
+      // IMPORTANT: Set up poll interception BEFORE starting polling
+      // This ensures the interval captures our intercepted poll method
+      this.listenToChangeGroupUpdates(componentName);
+
       // Start ChangeGroup polling if not already started
       // Since we used componentFilter: () => false, QRWC didn't start polling automatically
       await this.ensureChangeGroupPollingStarted();
-
-      // Start listening to ChangeGroup polls
-      this.listenToChangeGroupUpdates(componentName);
 
     } catch (error) {
       console.error(`Failed to subscribe to component ${componentName}:`, error);
@@ -777,9 +778,10 @@ export class QSysService {
    * Used by room controls adapter to ensure updates are received
    */
   async ensureChangeGroupPollingAndInterception(): Promise<void> {
-    await this.ensureChangeGroupPollingStarted();
-    // Set up interception if not already done (pass null as component name since we emit for all)
+    // IMPORTANT: Set up interception BEFORE starting polling
+    // This ensures the interval uses our intercepted poll method
     this.listenToChangeGroupUpdates(null as any);
+    await this.ensureChangeGroupPollingStarted();
   }
 
   /**
