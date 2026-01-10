@@ -25,6 +25,12 @@ export class QSysService {
   // Keepalive timer to prevent connection timeout
   private keepaliveTimer: any = null;
 
+  // Reconnection state
+  private reconnectTimer: any = null;
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
+  private isReconnecting = false;
+
   // Connection state
   public isConnected = signal(false);
   private connectionStatus$ = new BehaviorSubject<boolean>(false);
@@ -115,6 +121,9 @@ export class QSysService {
         console.warn('QRWC Disconnected:', reason);
         this.isConnected.set(false);
         this.connectionStatus$.next(false);
+
+        // Attempt to reconnect automatically
+        this.attemptReconnect();
       });
 
       console.log('Connected to Q-SYS Core');
@@ -123,6 +132,15 @@ export class QSysService {
       // Components will be fetched via direct RPC call when needed
       this.isConnected.set(true);
       this.connectionStatus$.next(true);
+
+      // Reset reconnection state on successful connection
+      this.reconnectAttempts = 0;
+      this.isReconnecting = false;
+      if (this.reconnectTimer) {
+        clearTimeout(this.reconnectTimer);
+        this.reconnectTimer = null;
+      }
+
       console.log('QRWC initialization complete - ready to fetch components on-demand');
 
       // Start keepalive timer to prevent connection timeout
@@ -171,6 +189,59 @@ export class QSysService {
 
     this.isConnected.set(false);
     this.connectionStatus$.next(false);
+
+    // Stop any reconnection attempts when manually disconnecting
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    this.reconnectAttempts = 0;
+    this.isReconnecting = false;
+  }
+
+  /**
+   * Attempt to reconnect to Q-SYS Core with exponential backoff
+   */
+  private attemptReconnect(): void {
+    // Don't start multiple reconnection attempts
+    if (this.isReconnecting) {
+      return;
+    }
+
+    // Check if we've exceeded max attempts
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.error(`Max reconnection attempts (${this.maxReconnectAttempts}) reached. Please refresh the page to reconnect.`);
+      return;
+    }
+
+    this.isReconnecting = true;
+    this.reconnectAttempts++;
+
+    // Calculate delay with exponential backoff: 2s, 4s, 8s, 16s, 32s
+    const delayMs = Math.pow(2, this.reconnectAttempts) * 1000;
+
+    console.log(`Attempting reconnection ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${delayMs / 1000}s...`);
+
+    this.reconnectTimer = setTimeout(async () => {
+      if (!this.options) {
+        console.error('Cannot reconnect: No connection options stored');
+        this.isReconnecting = false;
+        return;
+      }
+
+      try {
+        console.log(`Reconnection attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}...`);
+        await this.connect(this.options);
+        console.log('✓ Reconnection successful');
+      } catch (error) {
+        console.error(`Reconnection attempt ${this.reconnectAttempts} failed:`, error);
+        this.isReconnecting = false;
+        // Try again if we haven't reached max attempts
+        if (this.reconnectAttempts < this.maxReconnectAttempts) {
+          this.attemptReconnect();
+        }
+      }
+    }, delayMs);
   }
 
   /**
