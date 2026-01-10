@@ -46,6 +46,9 @@ export class QSysService {
   // Store connection options
   private options: QrwcConnectionOptions | null = null;
 
+  // Track whether poll interceptor has been set up
+  private pollInterceptorSetup = false;
+
   constructor() { }
 
   /**
@@ -142,6 +145,12 @@ export class QSysService {
       }
 
       console.log('QRWC initialization complete - ready to fetch components on-demand');
+
+      // Re-apply poll interceptor if it was previously setup (handles reconnections)
+      if (this.pollInterceptorSetup) {
+        console.log('Re-applying poll interceptor after reconnection');
+        this.listenToChangeGroupUpdates(null as any);
+      }
 
       // Start keepalive timer to prevent connection timeout
       const webSocketManager = (this.qrwc as any).webSocketManager;
@@ -784,6 +793,9 @@ export class QSysService {
     // Store original poll method
     if (!(changeGroup as any)._originalPoll) {
       (changeGroup as any)._originalPoll = (changeGroup as any).poll.bind(changeGroup);
+
+      // Mark that we've set up the interceptor (for reconnection handling)
+      this.pollInterceptorSetup = true;
 
       // Replace with our interceptor
       (changeGroup as any).poll = async () => {
