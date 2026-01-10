@@ -53,6 +53,9 @@ export class QSysService {
   // Components can watch this to re-register with new ChangeGroup
   public reconnectionCount = signal(0);
 
+  // Track the current ChangeGroup ID to detect when it changes
+  private currentChangeGroupId: string | null = null;
+
   constructor() { }
 
   /**
@@ -118,16 +121,31 @@ export class QSysService {
       // QRWC starts polling automatically during createQrwc(), but we need to control
       // polling ourselves to avoid ChangeGroup ID conflicts after reconnection
       const changeGroup = (this.qrwc as any).changeGroup;
+      const newChangeGroupId = (changeGroup as any)?.id;
+
       console.log('Checking for QRWC automatic polling...', {
         hasChangeGroup: !!changeGroup,
-        hasIntervalRef: !!(changeGroup as any)?.intervalRef
+        hasIntervalRef: !!(changeGroup as any)?.intervalRef,
+        newChangeGroupId: newChangeGroupId,
+        previousChangeGroupId: this.currentChangeGroupId
       });
+
       if ((changeGroup as any).intervalRef) {
         console.log('Stopping QRWC automatic polling to prevent ChangeGroup conflicts');
         clearInterval((changeGroup as any).intervalRef);
         (changeGroup as any).intervalRef = null;
       } else {
         console.log('No QRWC automatic polling found (intervalRef not set yet)');
+      }
+
+      // Check if ChangeGroup ID has changed (indicates reconnection or new QRWC instance)
+      if (this.currentChangeGroupId && newChangeGroupId && this.currentChangeGroupId !== newChangeGroupId) {
+        console.log(`ChangeGroup ID changed from ${this.currentChangeGroupId} to ${newChangeGroupId} - triggering re-registration`);
+        this.currentChangeGroupId = newChangeGroupId;
+        this.reconnectionCount.update(count => count + 1);
+        console.log(`ChangeGroup changed - reconnection #${this.reconnectionCount()}`);
+      } else if (newChangeGroupId) {
+        this.currentChangeGroupId = newChangeGroupId;
       }
 
       // Listen for QRWC error events
@@ -156,9 +174,6 @@ export class QSysService {
       this.isConnected.set(true);
       this.connectionStatus$.next(true);
 
-      // Check if this was a reconnection (not initial connection)
-      const wasReconnecting = this.isReconnecting;
-
       // Reset reconnection state on successful connection
       this.reconnectAttempts = 0;
       this.isReconnecting = false;
@@ -169,13 +184,6 @@ export class QSysService {
 
       // Reset poll interceptor flag so it gets set up fresh when components register
       this.pollInterceptorSetup = false;
-
-      // Increment reconnection counter if this was a reconnection
-      // This signals to components that they need to re-register with the new ChangeGroup
-      if (wasReconnecting) {
-        this.reconnectionCount.update(count => count + 1);
-        console.log(`Reconnection #${this.reconnectionCount()} - components must re-register with new ChangeGroup`);
-      }
 
       console.log('QRWC initialization complete - ready to fetch components on-demand');
 
