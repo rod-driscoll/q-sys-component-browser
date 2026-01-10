@@ -67,6 +67,29 @@ class ComponentWrapper {
     });
   }
 
+  /**
+   * Re-register this component's controls with the ChangeGroup
+   * Called after reconnection when a new ChangeGroup is created
+   */
+  async reregisterWithChangeGroup(newWebSocketManager: any, newChangeGroup: any): Promise<void> {
+    console.log(`Re-registering component ${this.name} with new ChangeGroup ${newChangeGroup.id}`);
+
+    // Update references to new WebSocket manager and ChangeGroup
+    this.webSocketManager = newWebSocketManager;
+    this.changeGroup = newChangeGroup;
+
+    // Re-register all controls with the new ChangeGroup
+    await this.registerWithChangeGroup();
+
+    // Update all control wrappers with new WebSocket manager
+    for (const controlName in this.controls) {
+      const control = this.controls[controlName];
+      (control as any).webSocketManager = newWebSocketManager;
+    }
+
+    console.log(`Re-registered ${Object.keys(this.controls).length} controls for ${this.name}`);
+  }
+
   private async ensureChangeGroupPolling(): Promise<void> {
     if (!this.qsysService) {
       console.warn('Cannot ensure ChangeGroup polling - no QSysService reference');
@@ -232,6 +255,14 @@ export class QrwcAdapterService {
         this.loadRequiredComponents();
       }
     });
+
+    // Register callback for ChangeGroup changes
+    // This is more reliable than using an effect because it's called synchronously
+    this.qsysService.onChangeGroupChanged(async () => {
+      const reconnectionCount = this.qsysService.reconnectionCount();
+      console.log(`Detected reconnection #${reconnectionCount}, re-registering all components...`);
+      await this.reregisterAllComponents();
+    });
   }
 
   /**
@@ -312,6 +343,49 @@ export class QrwcAdapterService {
       console.error('Failed to load room control components:', error);
     } finally {
       this.isLoading = false;
+    }
+  }
+
+  /**
+   * Re-register all loaded components with the new ChangeGroup after reconnection
+   */
+  private async reregisterAllComponents(): Promise<void> {
+    try {
+      const qrwc = (this.qsysService as any).qrwc;
+      if (!qrwc) {
+        console.error('QRWC instance not available for re-registration');
+        return;
+      }
+
+      const webSocketManager = (qrwc as any).webSocketManager;
+      const changeGroup = (qrwc as any).changeGroup;
+
+      const components = this.loadedComponents();
+      const componentNames = Object.keys(components);
+
+      if (componentNames.length === 0) {
+        console.log('No components to re-register');
+        return;
+      }
+
+      console.log(`Re-registering ${componentNames.length} components with new ChangeGroup ${changeGroup.id}...`);
+
+      // Re-register each component with the new ChangeGroup
+      for (const componentName of componentNames) {
+        const component = components[componentName];
+        try {
+          await component.reregisterWithChangeGroup(webSocketManager, changeGroup);
+        } catch (error) {
+          console.error(`Failed to re-register component ${componentName}:`, error);
+        }
+      }
+
+      // Ensure poll interceptor is set up for the new ChangeGroup
+      await (this.qsysService as any).ensureChangeGroupPollingAndInterception();
+
+      console.log('✓ All components re-registered with new ChangeGroup');
+    } catch (error) {
+      console.error('Failed to re-register components:', error);
     }
   }
 

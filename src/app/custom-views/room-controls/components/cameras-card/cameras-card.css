@@ -4,6 +4,44 @@
   /* border: blueviolet 2px solid; */
 }
 
+/* Camera Selection Dropdown */
+.camera-selection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem 1rem;
+}
+
+.camera-select-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--DarkGreyColor);
+}
+
+.camera-select {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  border: 2px solid var(--MediumGreyColor);
+  border-radius: var(--BorderRadius);
+  background-color: var(--LightColor);
+  color: var(--DarkGreyColor);
+  cursor: pointer;
+  min-width: 200px;
+  transition: all 0.2s ease;
+}
+
+.camera-select:hover {
+  border-color: var(--PrimaryColor);
+}
+
+.camera-select:focus {
+  outline: none;
+  border-color: var(--PrimaryColor);
+  box-shadow: 0 0 0 3px rgba(var(--PrimaryColorRGB), 0.1);
+}
+
 .camera-controls-container {
   display: flex;
   flex-direction: row;

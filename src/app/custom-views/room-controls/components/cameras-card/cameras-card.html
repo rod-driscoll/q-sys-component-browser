@@ -1,4 +1,19 @@
 <div class="cameras-card bg-light">
+  <!-- Camera Selection Dropdown -->
+  @if (hasCameraRouter() && cameraOptions().length > 0) {
+    <div class="camera-selection">
+      <label for="camera-select" class="camera-select-label">Select Camera:</label>
+      <select
+        id="camera-select"
+        class="camera-select"
+        [value]="selectedCameraIndex()"
+        (change)="onCameraSelect($event)">
+        @for (camera of cameraOptions(); track camera.index) {
+          <option [value]="camera.index">{{ camera.name }}</option>
+        }
+      </select>
+    </div>
+  }
 
   <div class="camera-controls-container">
     <!-- Pan/Tilt Controls (Left Side) -->
@@ -24,15 +39,26 @@
       @for (control of zoomControls; track control.controlName; let idx = $index) {
         <div class="zoom-control-item">
           <div class="zoom-label">{{ idx === 0 ? videoPrivacyText() : idx === 1 ? zoomInText() : zoomOutText() }}</div>
-          <button
-            class="zoom-btn"
-            (mousedown)="activateControl(control.controlName)"
-            (mouseup)="deactivateControl(control.controlName)"
-            (mouseleave)="deactivateControl(control.controlName)"
-            (touchstart)="activateControl(control.controlName)"
-            (touchend)="deactivateControl(control.controlName)">
-            <span class="material-icons">{{ control.icon }}</span>
-          </button>
+          @if (idx === 0) {
+            <!-- Video Privacy Toggle Button -->
+            <button
+              class="zoom-btn"
+              [class.privacy-on]="isPrivacyOn()"
+              (click)="togglePrivacy()">
+              <span class="material-icons">{{ isPrivacyOn() ? 'videocam_off' : 'videocam' }}</span>
+            </button>
+          } @else {
+            <!-- Zoom In/Out Buttons (Press and Hold) -->
+            <button
+              class="zoom-btn"
+              (mousedown)="activateControl(control.controlName)"
+              (mouseup)="deactivateControl(control.controlName)"
+              (mouseleave)="deactivateControl(control.controlName)"
+              (touchstart)="activateControl(control.controlName)"
+              (touchend)="deactivateControl(control.controlName)">
+              <span class="material-icons">{{ control.icon }}</span>
+            </button>
+          }
         </div>
       }
     </div>
