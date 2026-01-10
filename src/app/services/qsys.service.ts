@@ -138,16 +138,6 @@ export class QSysService {
         console.log('No QRWC automatic polling found (intervalRef not set yet)');
       }
 
-      // Check if ChangeGroup ID has changed (indicates reconnection or new QRWC instance)
-      if (this.currentChangeGroupId && newChangeGroupId && this.currentChangeGroupId !== newChangeGroupId) {
-        console.log(`ChangeGroup ID changed from ${this.currentChangeGroupId} to ${newChangeGroupId} - triggering re-registration`);
-        this.currentChangeGroupId = newChangeGroupId;
-        this.reconnectionCount.update(count => count + 1);
-        console.log(`ChangeGroup changed - reconnection #${this.reconnectionCount()}`);
-      } else if (newChangeGroupId) {
-        this.currentChangeGroupId = newChangeGroupId;
-      }
-
       // Listen for QRWC error events
       this.qrwc.on('error', (error: Error) => {
         console.error('QRWC Error Event:', error.message);
@@ -184,6 +174,18 @@ export class QSysService {
 
       // Reset poll interceptor flag so it gets set up fresh when components register
       this.pollInterceptorSetup = false;
+
+      // Check if ChangeGroup ID has changed (indicates reconnection or new QRWC instance)
+      // IMPORTANT: This must happen AFTER isConnected.set(true) so that effects watching
+      // both isConnected and reconnectionCount will trigger properly
+      if (this.currentChangeGroupId && newChangeGroupId && this.currentChangeGroupId !== newChangeGroupId) {
+        console.log(`ChangeGroup ID changed from ${this.currentChangeGroupId} to ${newChangeGroupId} - triggering re-registration`);
+        this.currentChangeGroupId = newChangeGroupId;
+        this.reconnectionCount.update(count => count + 1);
+        console.log(`ChangeGroup changed - reconnection #${this.reconnectionCount()}`);
+      } else if (newChangeGroupId) {
+        this.currentChangeGroupId = newChangeGroupId;
+      }
 
       console.log('QRWC initialization complete - ready to fetch components on-demand');
 
