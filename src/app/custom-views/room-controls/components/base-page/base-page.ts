@@ -6,10 +6,11 @@ import { LanguageSelector } from '../language-selector/language-selector';
 import { VolumeControl } from '../volume-control/volume-control';
 import { VideoSource } from '../video-source/video-source';
 import { CamerasCard } from '../cameras-card/cameras-card';
+import { QsysCamerasCard } from '../qsys-cameras-card/qsys-cameras-card';
 import { PowerCard } from '../power-card/power-card';
 import { HelpCard } from '../help-card/help-card';
 
-type PageType = 'video-source' | 'cameras' | 'help' | null;
+type PageType = 'video-source' | 'cameras' | 'qsys-cameras' | 'help' | null;
 
 @Component({
   selector: 'app-base-page',
@@ -19,6 +20,7 @@ type PageType = 'video-source' | 'cameras' | 'help' | null;
     VolumeControl,
     VideoSource,
     CamerasCard,
+    QsysCamerasCard,
     PowerCard,
     HelpCard
   ],
@@ -82,6 +84,20 @@ export class BasePage {
         }
       }
     });
+
+    // If ONVIF cameras become unavailable and we're on that page, switch to another page
+    effect(() => {
+      if (!this.qrwc.hasOnvifCameras() && this.currentPage() === 'qsys-cameras') {
+        // Try video source first, then cameras, then help
+        if (this.qrwc.hasVideoSourceSelection()) {
+          this.currentPage.set('video-source');
+        } else if (this.qrwc.hasCameraControls()) {
+          this.currentPage.set('cameras');
+        } else {
+          this.currentPage.set('help');
+        }
+      }
+    });
   }
 
   navigateToPage(page: PageType): void {
@@ -98,7 +114,19 @@ export class BasePage {
 
   getCurrentPageName(): string {
     const pages = this.pageNames();
-    const index = this.currentPage() === 'video-source' ? 0 : this.currentPage() === 'cameras' ? 1 : 2;
+    let index = 2; // Default to help
+
+    if (this.currentPage() === 'video-source') {
+      index = 0;
+    } else if (this.currentPage() === 'cameras') {
+      index = 1;
+    } else if (this.currentPage() === 'qsys-cameras') {
+      // Use index 1 for qsys-cameras (same as cameras) or create a custom name
+      return pages[1] || 'Q-SYS Cameras';
+    } else if (this.currentPage() === 'help') {
+      index = 2;
+    }
+
     return pages[index] || this.currentPage() || 'Video Source';
   }
 

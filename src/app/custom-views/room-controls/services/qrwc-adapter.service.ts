@@ -241,6 +241,22 @@ export class QrwcAdapterService {
     return loaded && !!loaded['USB Video Bridge Core'];
   });
 
+  // Signal to check if ONVIF cameras are available
+  public readonly hasOnvifCameras = computed(() => {
+    const loaded = this.components();
+    if (!loaded) return false;
+
+    // Check if any component has type 'onvif_camera_operative'
+    for (const componentName in loaded) {
+      const component = loaded[componentName];
+      const componentType = (component as any).type;
+      if (componentType === 'onvif_camera_operative') {
+        return true;
+      }
+    }
+    return false;
+  });
+
   constructor() {
     // Update connection IP address from QSysService
     effect(() => {

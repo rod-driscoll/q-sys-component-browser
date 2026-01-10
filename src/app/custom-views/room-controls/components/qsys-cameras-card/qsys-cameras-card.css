@@ -1,0 +1,247 @@
+.qsys-cameras-card {
+  padding: 1rem 0rem;
+  margin: 0, auto;
+  /* border: blueviolet 2px solid; */
+}
+
+/* Camera Selection Dropdown */
+.camera-selection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem 1rem;
+}
+
+.camera-select-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--DarkGreyColor);
+}
+
+.camera-select {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  border: 2px solid var(--MediumGreyColor);
+  border-radius: var(--BorderRadius);
+  background-color: var(--LightColor);
+  color: var(--DarkGreyColor);
+  cursor: pointer;
+  min-width: 200px;
+  transition: all 0.2s ease;
+}
+
+.camera-select:hover {
+  border-color: var(--PrimaryColor);
+}
+
+.camera-select:focus {
+  outline: none;
+  border-color: var(--PrimaryColor);
+  box-shadow: 0 0 0 3px rgba(var(--PrimaryColorRGB), 0.1);
+}
+
+.camera-controls-container {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  /* border: pink 2px solid; */
+}
+
+.pan-tilt-section {
+  background-color: var(--MediumGreyColor);
+  width: 100%;
+  max-width: 80vw;
+  aspect-ratio: 16 / 9;
+  position: relative;
+  container-type: size;
+}
+.zoom-section {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  /* border: red 2px solid; */
+}
+
+/* Pan/Tilt Section */
+.pan-tilt-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 0;
+  height: 100%;
+  width: 100%;
+  padding: 0;
+  position: relative;
+  /* border: red 2px solid; */
+}
+
+/* Camera Preview - positioned behind control buttons */
+.camera-preview {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  pointer-events: none; /* Allow clicks to pass through to buttons */
+  user-select: none;
+}
+.pan-tilt-btn {
+  /* width: clamp(2rem, 20%, 4rem); */
+  /* height: clamp(2rem, 50%, 4rem); */
+  width: 30%;
+  height: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  background-color: var(--PrimaryColorLight);
+  border: 2px solid var(--MediumGreyColor);
+  border-radius: var(--BorderRadius);
+  position: relative;
+  z-index: 1; /* Position above camera preview */
+}
+.pan-tilt-btn:active {
+  transform: scale(0.95);
+  background-color: var(--PrimaryColor);
+}
+.pan-tilt-btn .material-icons {
+  font-size: clamp(1rem, 4cqh, 2.5rem);
+  color: var(--DarkGreyColor);
+}
+
+/* Position each button explicitly in the grid */
+.pan-tilt-btn[data-position="top-left"] {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+  align-self: start;
+}
+.pan-tilt-btn[data-position="top-center"] {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: center;
+  align-self: start;
+}
+.pan-tilt-btn[data-position="top-right"] {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+  align-self: start;
+}
+.pan-tilt-btn[data-position="middle-left"] {
+  grid-column: 1;
+  grid-row: 2;
+  justify-self: start;
+  align-self: center;
+}
+.pan-tilt-btn[data-position="middle-right"] {
+  grid-column: 3;
+  grid-row: 2;
+  justify-self: end;
+  align-self: center;
+}
+.pan-tilt-btn[data-position="bottom-left"] {
+  grid-column: 1;
+  grid-row: 3;
+  justify-self: start;
+  align-self: end;
+}
+.pan-tilt-btn[data-position="bottom-center"] {
+  grid-column: 2;
+  grid-row: 3;
+  justify-self: center;
+  align-self: end;
+}
+.pan-tilt-btn[data-position="bottom-right"] {
+  grid-column: 3;
+  grid-row: 3;
+  justify-self: end;
+  align-self: end;
+}
+
+/* Zoom Section */
+.zoom-control-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* border: grey 2px solid; */
+}
+
+.zoom-label {
+  font-size: clamp(0.7rem, 1.5vw, 1rem);
+  font-weight: bold;
+  color: var(--StopColor);
+  text-align: center;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+.zoom-btn {
+  width: clamp(2.5rem, 5vw, 3.5rem);
+  height: clamp(2.5rem, 5vw, 3.5rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  background-color: var(--LightColor);
+  /* border: 2px solid var(--MediumGreyColor); */
+  /* border-radius: 50%; */
+  flex-shrink: 0;
+}
+.zoom-btn:active {
+  transform: scale(0.95);
+}
+.zoom-btn .material-icons {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  color: var(--Color2);
+}
+
+/* When wrapping, make zoom section horizontal */
+@container (max-width: 690px) {
+  .camera-controls-container {
+    flex-direction: column;
+  }
+  .pan-tilt-section {
+    width: 100%;
+    max-width: 100%;
+    /* border: black 2px solid; */
+  }
+  .zoom-section {
+    flex-direction: row;
+    justify-content: space-evenly;
+    width: 100%;
+    /* border: black 2px solid; */
+  }
+  .zoom-control-item {
+    flex: 1 1 0;
+  }
+}
+/* Fallback for browsers without container queries */
+@media (max-width: 690px) {
+  .camera-controls-container {
+    flex-direction: column;
+  }
+  .pan-tilt-section {
+    width: 100%;
+    max-width: 100%;
+    /* border: black 2px solid; */
+  }
+  .zoom-section {
+    flex-direction: row;
+    justify-content: space-evenly;
+    width: 100%;
+    /* border: black 2px solid; */
+  }
+  .zoom-control-item {
+    flex: 1 1 0;
+  }
+}
