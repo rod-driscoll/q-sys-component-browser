@@ -43,7 +43,9 @@
       "Bash(find:*)",
       "Bash(git checkout:*)",
       "Bash(git merge:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(git diff:*)",
+      "Bash(exist\" errors.\n\nSolution: Immediately stop QRWC''s automatic polling right after createQrwc\\(\\)\nby clearing the intervalRef. We then manage polling ourselves through our\ninterceptor, giving us full control over when polling starts and ensuring\nthe correct ChangeGroup ID is always used.\n\nThis is the correct fix as mentioned by the user - QRWC starts polling as soon\nas components are discovered and it''s not possible to intercept early enough,\nwhich is why we use RPC commands and manual polling control.\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ]
   },
   "enabledMcpjsonServers": [

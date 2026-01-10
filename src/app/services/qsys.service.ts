@@ -49,6 +49,10 @@ export class QSysService {
   // Track whether poll interceptor has been set up
   private pollInterceptorSetup = false;
 
+  // Reconnection counter - increments on each successful reconnection
+  // Components can watch this to re-register with new ChangeGroup
+  public reconnectionCount = signal(0);
+
   constructor() { }
 
   /**
@@ -152,6 +156,9 @@ export class QSysService {
       this.isConnected.set(true);
       this.connectionStatus$.next(true);
 
+      // Check if this was a reconnection (not initial connection)
+      const wasReconnecting = this.isReconnecting;
+
       // Reset reconnection state on successful connection
       this.reconnectAttempts = 0;
       this.isReconnecting = false;
@@ -162,6 +169,13 @@ export class QSysService {
 
       // Reset poll interceptor flag so it gets set up fresh when components register
       this.pollInterceptorSetup = false;
+
+      // Increment reconnection counter if this was a reconnection
+      // This signals to components that they need to re-register with the new ChangeGroup
+      if (wasReconnecting) {
+        this.reconnectionCount.update(count => count + 1);
+        console.log(`Reconnection #${this.reconnectionCount()} - components must re-register with new ChangeGroup`);
+      }
 
       console.log('QRWC initialization complete - ready to fetch components on-demand');
 
