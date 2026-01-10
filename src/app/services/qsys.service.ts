@@ -790,8 +790,12 @@ export class QSysService {
         // Call original poll
         const webSocketManager = (this.qrwc as any).webSocketManager;
         try {
+          // Get the current ChangeGroup ID dynamically (important for reconnections)
+          const currentChangeGroup = (this.qrwc as any).changeGroup;
+          const changeGroupId = (currentChangeGroup as any).id;
+
           const pollResult = await webSocketManager.sendRpc('ChangeGroup.Poll', {
-            Id: (changeGroup as any).id
+            Id: changeGroupId
           });
 
           // Process changes for ALL components in ChangeGroup
