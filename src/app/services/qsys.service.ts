@@ -114,10 +114,16 @@ export class QSysService {
       // QRWC starts polling automatically during createQrwc(), but we need to control
       // polling ourselves to avoid ChangeGroup ID conflicts after reconnection
       const changeGroup = (this.qrwc as any).changeGroup;
+      console.log('Checking for QRWC automatic polling...', {
+        hasChangeGroup: !!changeGroup,
+        hasIntervalRef: !!(changeGroup as any)?.intervalRef
+      });
       if ((changeGroup as any).intervalRef) {
         console.log('Stopping QRWC automatic polling to prevent ChangeGroup conflicts');
         clearInterval((changeGroup as any).intervalRef);
         (changeGroup as any).intervalRef = null;
+      } else {
+        console.log('No QRWC automatic polling found (intervalRef not set yet)');
       }
 
       // Listen for QRWC error events
@@ -154,13 +160,16 @@ export class QSysService {
         this.reconnectTimer = null;
       }
 
+      // Reset poll interceptor flag so it gets set up fresh when components register
+      this.pollInterceptorSetup = false;
+
       console.log('QRWC initialization complete - ready to fetch components on-demand');
 
-      // Re-apply poll interceptor if it was previously setup (handles reconnections)
-      if (this.pollInterceptorSetup) {
-        console.log('Re-applying poll interceptor after reconnection');
-        this.listenToChangeGroupUpdates(null as any);
-      }
+      // Don't re-apply poll interceptor here after reconnection!
+      // The ChangeGroup object exists in QRWC but hasn't been created on Q-SYS Core yet.
+      // It will be properly initialized when components register controls via
+      // ensureChangeGroupPollingAndInterception(), which sets up both the interceptor
+      // AND ensures the ChangeGroup is created on Q-SYS by adding controls to it first.
 
       // Start keepalive timer to prevent connection timeout
       const webSocketManager = (this.qrwc as any).webSocketManager;
@@ -817,6 +826,8 @@ export class QSysService {
           // Get the current ChangeGroup ID dynamically (important for reconnections)
           const currentChangeGroup = (this.qrwc as any).changeGroup;
           const changeGroupId = (currentChangeGroup as any).id;
+
+          console.log('[Poll Interceptor] Polling with ChangeGroup ID:', changeGroupId);
 
           const pollResult = await webSocketManager.sendRpc('ChangeGroup.Poll', {
             Id: changeGroupId
