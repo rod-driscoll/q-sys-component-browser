@@ -110,6 +110,16 @@ export class QSysService {
         },
       });
 
+      // CRITICAL: Stop QRWC's internal ChangeGroup polling immediately
+      // QRWC starts polling automatically during createQrwc(), but we need to control
+      // polling ourselves to avoid ChangeGroup ID conflicts after reconnection
+      const changeGroup = (this.qrwc as any).changeGroup;
+      if ((changeGroup as any).intervalRef) {
+        console.log('Stopping QRWC automatic polling to prevent ChangeGroup conflicts');
+        clearInterval((changeGroup as any).intervalRef);
+        (changeGroup as any).intervalRef = null;
+      }
+
       // Listen for QRWC error events
       this.qrwc.on('error', (error: Error) => {
         console.error('QRWC Error Event:', error.message);
