@@ -437,7 +437,7 @@ export class QSysService {
 
   /**
    * Get component controls via RPC call
-   * Uses Component.Get to get full control definitions including Choices arrays
+   * Uses Component.GetControls to get control definitions
    */
   private async getComponentControlsViaRpc(componentName: string): Promise<any[]> {
     if (!this.qrwc) {
@@ -448,8 +448,8 @@ export class QSysService {
       console.log(`Fetching controls for component: ${componentName}`);
 
       const webSocketManager = (this.qrwc as any).webSocketManager;
-      // Use Component.Get instead of Component.GetControls to get full control definitions with Choices
-      const result = await webSocketManager.sendRpc('Component.Get', { Name: componentName });
+      // Use Component.GetControls to get control names for ChangeGroup registration
+      const result = await webSocketManager.sendRpc('Component.GetControls', { Name: componentName });
 
       console.log(`Fetched ${result.Controls.length} controls for ${componentName}`);
       return result.Controls;
