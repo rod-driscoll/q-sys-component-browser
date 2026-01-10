@@ -244,16 +244,27 @@ export class QrwcAdapterService {
   // Signal to check if ONVIF cameras are available
   public readonly hasOnvifCameras = computed(() => {
     const loaded = this.components();
-    if (!loaded) return false;
+    if (!loaded) {
+      console.log('[QrwcAdapterService] hasOnvifCameras: No components loaded yet');
+      return false;
+    }
+
+    console.log('[QrwcAdapterService] Checking for ONVIF cameras...', {
+      componentCount: Object.keys(loaded).length,
+      componentNames: Object.keys(loaded)
+    });
 
     // Check if any component has type 'onvif_camera_operative'
     for (const componentName in loaded) {
       const component = loaded[componentName];
       const componentType = (component as any).type;
+      console.log(`[QrwcAdapterService] Component: ${componentName}, type: ${componentType}`);
       if (componentType === 'onvif_camera_operative') {
+        console.log(`[QrwcAdapterService] ✓ Found ONVIF camera: ${componentName}`);
         return true;
       }
     }
+    console.log('[QrwcAdapterService] No ONVIF cameras found');
     return false;
   });
 
@@ -349,6 +360,26 @@ export class QrwcAdapterService {
             console.warn(`Required component not found in Q-SYS design: ${componentName}`);
           } else {
             console.log(`Optional component not found in Q-SYS design: ${componentName}`);
+          }
+        }
+      }
+
+      // Also discover and load all ONVIF camera components
+      console.log('Discovering ONVIF camera components...');
+      for (const cachedComponent of cachedComponents) {
+        if (cachedComponent.type === 'onvif_camera_operative' && !components[cachedComponent.name]) {
+          try {
+            console.log(`Found ONVIF camera: ${cachedComponent.name}, loading...`);
+            const component = new ComponentWrapper(
+              cachedComponent.name,
+              webSocketManager,
+              changeGroup
+            );
+            await component.initialize(this.qsysService);
+            components[cachedComponent.name] = component;
+            console.log(`✓ Loaded ONVIF camera: ${cachedComponent.name}`);
+          } catch (error) {
+            console.warn(`Failed to load ONVIF camera ${cachedComponent.name}:`, error);
           }
         }
       }
