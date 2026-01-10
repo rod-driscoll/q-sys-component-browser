@@ -205,6 +205,7 @@ export class QrwcAdapterService {
   public readonly optionalComponents = [
     'HDMISourceSelect_1',
     'USB Video Bridge Core',
+    'CameraRouter',
   ];
 
   // Signal to track if we're connected to Q-SYS and components are loaded
