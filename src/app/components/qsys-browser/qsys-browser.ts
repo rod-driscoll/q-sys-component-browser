@@ -587,16 +587,29 @@ export class QsysBrowser implements OnInit, OnDestroy {
       this.browserService.setControls(controlList);
       console.log(`✓ Loaded ${controlList.length} controls for ${component.name}`);
 
-      // Subscribe to component-level event listeners for live updates (only for QRWC components)
-      if (component.discoveryMethod === 'qrwc') {
-        try {
-          this.loadingSubStage.set('Subscribing to control updates...');
-          this.qsysService.subscribeToComponent(component.name);
-        } catch (error) {
-          console.log('Failed to subscribe to QRWC component updates:', error);
-        }
-      } else {
-        console.log('Skipping QRWC subscription (WebSocket-discovered component)');
+      // Note: We don't use subscribeToComponent() because it creates ChangeGroup conflicts
+      // Instead, we manually register controls with ChangeGroup and set up poll interceptor
+      // This allows us to receive updates without QRWC's automatic component subscriptions
+      try {
+        const qrwc = (this.qsysService as any).qrwc;
+        const changeGroup = (qrwc as any).changeGroup;
+        const webSocketManager = (qrwc as any).webSocketManager;
+
+        // Register controls with ChangeGroup for updates
+        const controlsToRegister = controlList.map(ctrl => ({ Name: ctrl.name }));
+        await webSocketManager.sendRpc('ChangeGroup.AddComponentControl', {
+          Id: changeGroup.id,
+          Component: {
+            Name: component.name,
+            Controls: controlsToRegister
+          }
+        });
+        console.log(`Registered ${controlList.length} controls with ChangeGroup for ${component.name}`);
+
+        // Ensure poll interceptor is set up
+        await (this.qsysService as any).ensureChangeGroupPollingAndInterception();
+      } catch (error) {
+        console.warn('Failed to set up ChangeGroup polling interception:', error);
       }
 
       this.loadingSubStage.set(`✓ Loaded ${controlList.length} controls`);
