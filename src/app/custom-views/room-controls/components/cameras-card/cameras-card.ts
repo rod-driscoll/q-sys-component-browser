@@ -31,6 +31,7 @@ export class CamerasCard {
   readonly cameraOptions = signal<CameraOption[]>([]);
   readonly selectedCameraIndex = signal<number>(1);
   readonly hasCameraRouter = signal(false);
+  readonly cameraPreviewUrl = signal<string | null>(null);
 
   readonly panTiltControls: CameraControl[] = [
     { name: 'Pan Left & Tilt Up', icon: 'north_west', controlName: 'pan.left.tilt.up', position: 'top-left' },
@@ -52,8 +53,19 @@ export class CamerasCard {
   constructor() {
     // Bind to Q-SYS CameraRouter for camera selection
     effect(() => {
-      const cameraRouter = this.qrwc.components()?.['CameraRouter'];
+      const components = this.qrwc.components();
+      console.log('[CamerasCard] Checking for CameraRouter component...', {
+        hasComponents: !!components,
+        componentNames: components ? Object.keys(components) : [],
+        hasCameraRouter: !!(components?.['CameraRouter'])
+      });
+
+      const cameraRouter = components?.['CameraRouter'];
       if (cameraRouter) {
+        console.log('[CamerasCard] CameraRouter component found!', {
+          controlCount: Object.keys(cameraRouter.controls).length,
+          controls: Object.keys(cameraRouter.controls)
+        });
         this.hasCameraRouter.set(true);
 
         // Find all camera input controls (input.X.source.name)
@@ -66,6 +78,11 @@ export class CamerasCard {
           if (match) {
             const index = parseInt(match[1], 10);
             const control = cameraRouter.controls[controlName];
+
+            console.log(`[CamerasCard] Found camera input ${index}:`, {
+              controlName,
+              name: control.state.String || `Camera ${index}`
+            });
 
             cameras.push({
               index: index,
@@ -89,19 +106,49 @@ export class CamerasCard {
         cameras.sort((a, b) => a.index - b.index);
         this.cameraOptions.set(cameras);
 
-        // Set initial selected camera (default to first camera or camera 1)
-        if (cameras.length > 0) {
-          this.selectedCameraIndex.set(cameras[0].index);
+        console.log(`[CamerasCard] Configured ${cameras.length} camera options:`, cameras);
+
+        // Subscribe to the select.1 control to track which camera is currently selected in Q-SYS
+        const selectControl = cameraRouter.controls['select.1'];
+        if (selectControl) {
+          // Set initial selected camera from Q-SYS
+          const initialSelection = selectControl.state.Value ?? selectControl.state.Position;
+          if (initialSelection !== undefined) {
+            this.selectedCameraIndex.set(Math.round(initialSelection));
+            console.log(`[CamerasCard] Initial camera selection from Q-SYS: ${initialSelection}`);
+          } else if (cameras.length > 0) {
+            // Fallback to first camera if no value from Q-SYS
+            this.selectedCameraIndex.set(cameras[0].index);
+            console.log(`[CamerasCard] No selection from Q-SYS, defaulting to first camera: ${cameras[0].index}`);
+          }
+
+          // Listen for selection changes from Q-SYS
+          selectControl.on('update', (state) => {
+            const newSelection = state.Value ?? state.Position;
+            if (newSelection !== undefined) {
+              this.selectedCameraIndex.set(Math.round(newSelection));
+              console.log(`[CamerasCard] Camera selection changed in Q-SYS to: ${newSelection}`);
+            }
+          });
+        } else {
+          console.warn('[CamerasCard] select.1 control not found on CameraRouter');
+          // Fallback to first camera
+          if (cameras.length > 0) {
+            this.selectedCameraIndex.set(cameras[0].index);
+            console.log(`[CamerasCard] Defaulting to first camera: ${cameras[0].index}`);
+          }
         }
       } else {
+        console.log('[CamerasCard] CameraRouter component NOT found - camera selection will not be available');
         this.hasCameraRouter.set(false);
       }
     });
 
-    // Bind to Q-SYS USB Video Bridge Core for privacy state
+    // Bind to Q-SYS USB Video Bridge Core for privacy state and camera preview
     effect(() => {
       const videoComponent = this.qrwc.components()?.['USB Video Bridge Core'];
       if (videoComponent) {
+        // Handle privacy control
         const privacyControl = videoComponent.controls['toggle.privacy'];
         if (privacyControl) {
           // Set initial value
@@ -110,6 +157,22 @@ export class CamerasCard {
           privacyControl.on('update', (state) => {
             this.isPrivacyOn.set(state.Bool ?? false);
           });
+        }
+
+        // Handle camera preview (jpeg.data control)
+        const jpegControl = videoComponent.controls['jpeg.data'];
+        if (jpegControl) {
+          // Parse initial JSON and extract base64 image
+          this.updateCameraPreview(jpegControl.state.String);
+
+          // Subscribe to updates
+          jpegControl.on('update', (state) => {
+            this.updateCameraPreview(state.String);
+          });
+
+          console.log('[CamerasCard] Subscribed to jpeg.data control for camera preview');
+        } else {
+          console.warn('[CamerasCard] jpeg.data control not found on USB Video Bridge Core');
         }
       }
     });
@@ -150,6 +213,33 @@ export class CamerasCard {
       }
 
     });
+  }
+
+  /**
+   * Parse jpeg.data control JSON and update camera preview
+   * The JSON contains an 'IconData' property with base64-encoded JPEG
+   */
+  private updateCameraPreview(jsonString: string | undefined): void {
+    if (!jsonString) {
+      this.cameraPreviewUrl.set(null);
+      return;
+    }
+
+    try {
+      const data = JSON.parse(jsonString);
+      if (data.IconData && typeof data.IconData === 'string') {
+        // IconData is base64-encoded JPEG, create data URL
+        const dataUrl = `data:image/jpeg;base64,${data.IconData}`;
+        this.cameraPreviewUrl.set(dataUrl);
+        console.log('[CamerasCard] Camera preview updated');
+      } else {
+        console.warn('[CamerasCard] jpeg.data JSON missing IconData property');
+        this.cameraPreviewUrl.set(null);
+      }
+    } catch (error) {
+      console.error('[CamerasCard] Failed to parse jpeg.data JSON:', error);
+      this.cameraPreviewUrl.set(null);
+    }
   }
 
   onCameraSelect(event: Event): void {
