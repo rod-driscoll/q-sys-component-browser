@@ -256,16 +256,12 @@ export class QrwcAdapterService {
       }
     });
 
-    // Watch for reconnections and re-register all loaded components with new ChangeGroup
-    effect(() => {
+    // Register callback for ChangeGroup changes
+    // This is more reliable than using an effect because it's called synchronously
+    this.qsysService.onChangeGroupChanged(async () => {
       const reconnectionCount = this.qsysService.reconnectionCount();
-      const isConnected = this.qsysService.isConnected();
-
-      // Skip initial load (reconnectionCount = 0)
-      if (reconnectionCount > 0 && isConnected) {
-        console.log(`Detected reconnection #${reconnectionCount}, re-registering all components...`);
-        this.reregisterAllComponents();
-      }
+      console.log(`Detected reconnection #${reconnectionCount}, re-registering all components...`);
+      await this.reregisterAllComponents();
     });
   }
 

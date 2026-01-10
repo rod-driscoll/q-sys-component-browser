@@ -56,7 +56,18 @@ export class QSysService {
   // Track the current ChangeGroup ID to detect when it changes
   private currentChangeGroupId: string | null = null;
 
+  // Callback to notify when ChangeGroup changes (for component re-registration)
+  private changeGroupChangedCallback: (() => Promise<void>) | null = null;
+
   constructor() { }
+
+  /**
+   * Register a callback to be invoked when ChangeGroup ID changes
+   * Used by QrwcAdapterService to re-register components
+   */
+  onChangeGroupChanged(callback: () => Promise<void>): void {
+    this.changeGroupChangedCallback = callback;
+  }
 
   /**
    * Connect to Q-SYS Core using QRWC library
@@ -183,6 +194,13 @@ export class QSysService {
         this.currentChangeGroupId = newChangeGroupId;
         this.reconnectionCount.update(count => count + 1);
         console.log(`ChangeGroup changed - reconnection #${this.reconnectionCount()}`);
+
+        // Invoke callback to re-register components with new ChangeGroup
+        if (this.changeGroupChangedCallback) {
+          this.changeGroupChangedCallback().catch(error => {
+            console.error('Error in ChangeGroup changed callback:', error);
+          });
+        }
       } else if (newChangeGroupId) {
         this.currentChangeGroupId = newChangeGroupId;
       }
