@@ -1,5 +1,6 @@
 import { Component, inject, effect, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { QrwcAdapterService } from '../../services/qrwc-adapter.service';
 
 interface CameraControl {
@@ -9,9 +10,15 @@ interface CameraControl {
   position?: string;
 }
 
+interface CameraOption {
+  index: number;
+  name: string;
+  selectControl: string;
+}
+
 @Component({
   selector: 'app-cameras-card',
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './cameras-card.html',
   styleUrl: './cameras-card.css',
 })
@@ -21,6 +28,9 @@ export class CamerasCard {
   readonly zoomInText = signal('Zoom In');
   readonly zoomOutText = signal('Zoom Out');
   readonly isPrivacyOn = signal(false);
+  readonly cameraOptions = signal<CameraOption[]>([]);
+  readonly selectedCameraIndex = signal<number>(1);
+  readonly hasCameraRouter = signal(false);
 
   readonly panTiltControls: CameraControl[] = [
     { name: 'Pan Left & Tilt Up', icon: 'north_west', controlName: 'pan.left.tilt.up', position: 'top-left' },
@@ -40,6 +50,54 @@ export class CamerasCard {
   ];
 
   constructor() {
+    // Bind to Q-SYS CameraRouter for camera selection
+    effect(() => {
+      const cameraRouter = this.qrwc.components()?.['CameraRouter'];
+      if (cameraRouter) {
+        this.hasCameraRouter.set(true);
+
+        // Find all camera input controls (input.X.source.name)
+        const cameras: CameraOption[] = [];
+        const controlNames = Object.keys(cameraRouter.controls);
+
+        // Look for pattern: input.X.source.name
+        controlNames.forEach(controlName => {
+          const match = controlName.match(/^input\.(\d+)\.source\.name$/);
+          if (match) {
+            const index = parseInt(match[1], 10);
+            const control = cameraRouter.controls[controlName];
+
+            cameras.push({
+              index: index,
+              name: control.state.String || `Camera ${index}`,
+              selectControl: `select.${index}`
+            });
+
+            // Subscribe to name updates
+            control.on('update', (state) => {
+              const updatedCameras = this.cameraOptions().map(cam =>
+                cam.index === index
+                  ? { ...cam, name: state.String || `Camera ${index}` }
+                  : cam
+              );
+              this.cameraOptions.set(updatedCameras);
+            });
+          }
+        });
+
+        // Sort by index
+        cameras.sort((a, b) => a.index - b.index);
+        this.cameraOptions.set(cameras);
+
+        // Set initial selected camera (default to first camera or camera 1)
+        if (cameras.length > 0) {
+          this.selectedCameraIndex.set(cameras[0].index);
+        }
+      } else {
+        this.hasCameraRouter.set(false);
+      }
+    });
+
     // Bind to Q-SYS USB Video Bridge Core for privacy state
     effect(() => {
       const videoComponent = this.qrwc.components()?.['USB Video Bridge Core'];
@@ -92,6 +150,21 @@ export class CamerasCard {
       }
 
     });
+  }
+
+  onCameraSelect(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    const selectedIndex = parseInt(target.value, 10);
+
+    const cameraRouter = this.qrwc.components()?.['CameraRouter'];
+    if (!cameraRouter) return;
+
+    const selectControl = cameraRouter.controls[`select.${selectedIndex}`];
+    if (!selectControl) return;
+
+    // Trigger the select control
+    selectControl.update(true);
+    this.selectedCameraIndex.set(selectedIndex);
   }
 
   togglePrivacy(): void {
