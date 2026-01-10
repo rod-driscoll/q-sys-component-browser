@@ -19,6 +19,16 @@
     <!-- Pan/Tilt Controls (Left Side) -->
     <div class="pan-tilt-section">
       <div class="pan-tilt-grid">
+        <!-- Camera Preview Background -->
+        @if (cameraPreviewUrl()) {
+          <img
+            class="camera-preview"
+            [src]="cameraPreviewUrl()"
+            alt="Camera Preview"
+            draggable="false">
+        }
+
+        <!-- Pan/Tilt Control Buttons -->
         @for (control of panTiltControls; track control.controlName) {
           <button
             class="pan-tilt-btn"

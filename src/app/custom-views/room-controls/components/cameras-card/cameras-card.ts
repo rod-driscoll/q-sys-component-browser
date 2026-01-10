@@ -31,6 +31,7 @@ export class CamerasCard {
   readonly cameraOptions = signal<CameraOption[]>([]);
   readonly selectedCameraIndex = signal<number>(1);
   readonly hasCameraRouter = signal(false);
+  readonly cameraPreviewUrl = signal<string | null>(null);
 
   readonly panTiltControls: CameraControl[] = [
     { name: 'Pan Left & Tilt Up', icon: 'north_west', controlName: 'pan.left.tilt.up', position: 'top-left' },
@@ -143,10 +144,11 @@ export class CamerasCard {
       }
     });
 
-    // Bind to Q-SYS USB Video Bridge Core for privacy state
+    // Bind to Q-SYS USB Video Bridge Core for privacy state and camera preview
     effect(() => {
       const videoComponent = this.qrwc.components()?.['USB Video Bridge Core'];
       if (videoComponent) {
+        // Handle privacy control
         const privacyControl = videoComponent.controls['toggle.privacy'];
         if (privacyControl) {
           // Set initial value
@@ -155,6 +157,22 @@ export class CamerasCard {
           privacyControl.on('update', (state) => {
             this.isPrivacyOn.set(state.Bool ?? false);
           });
+        }
+
+        // Handle camera preview (jpeg.data control)
+        const jpegControl = videoComponent.controls['jpeg.data'];
+        if (jpegControl) {
+          // Parse initial JSON and extract base64 image
+          this.updateCameraPreview(jpegControl.state.String);
+
+          // Subscribe to updates
+          jpegControl.on('update', (state) => {
+            this.updateCameraPreview(state.String);
+          });
+
+          console.log('[CamerasCard] Subscribed to jpeg.data control for camera preview');
+        } else {
+          console.warn('[CamerasCard] jpeg.data control not found on USB Video Bridge Core');
         }
       }
     });
@@ -195,6 +213,33 @@ export class CamerasCard {
       }
 
     });
+  }
+
+  /**
+   * Parse jpeg.data control JSON and update camera preview
+   * The JSON contains an 'IconData' property with base64-encoded JPEG
+   */
+  private updateCameraPreview(jsonString: string | undefined): void {
+    if (!jsonString) {
+      this.cameraPreviewUrl.set(null);
+      return;
+    }
+
+    try {
+      const data = JSON.parse(jsonString);
+      if (data.IconData && typeof data.IconData === 'string') {
+        // IconData is base64-encoded JPEG, create data URL
+        const dataUrl = `data:image/jpeg;base64,${data.IconData}`;
+        this.cameraPreviewUrl.set(dataUrl);
+        console.log('[CamerasCard] Camera preview updated');
+      } else {
+        console.warn('[CamerasCard] jpeg.data JSON missing IconData property');
+        this.cameraPreviewUrl.set(null);
+      }
+    } catch (error) {
+      console.error('[CamerasCard] Failed to parse jpeg.data JSON:', error);
+      this.cameraPreviewUrl.set(null);
+    }
   }
 
   onCameraSelect(event: Event): void {
