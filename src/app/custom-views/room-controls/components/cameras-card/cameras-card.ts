@@ -159,11 +159,13 @@ export class CamerasCard {
     const cameraRouter = this.qrwc.components()?.['CameraRouter'];
     if (!cameraRouter) return;
 
-    const selectControl = cameraRouter.controls[`select.${selectedIndex}`];
+    // For video_router components, 'select.1' is output 1
+    // We set its value to the camera input index (2, 3, etc.)
+    const selectControl = cameraRouter.controls['select.1'];
     if (!selectControl) return;
 
-    // Trigger the select control
-    selectControl.update(true);
+    // Set the output to route to the selected camera input
+    selectControl.update(selectedIndex);
     this.selectedCameraIndex.set(selectedIndex);
   }
 
