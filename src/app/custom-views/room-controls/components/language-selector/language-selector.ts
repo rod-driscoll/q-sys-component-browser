@@ -52,8 +52,15 @@ export class LanguageSelector {
     const control = component.controls['LanguageSelect'];
     if (!control) return;
 
-    // Update Q-SYS with selected language
-    control.update(language);
+    // Find the index of the selected language in the Choices array
+    const choices = control.state.Choices;
+    if (!choices) return;
+
+    const languageIndex = choices.indexOf(language);
+    if (languageIndex === -1) return;
+
+    // Update Q-SYS with selected language by position (index)
+    control.setPosition(languageIndex);
     this.showLanguageList.set(false);
   }
 }
