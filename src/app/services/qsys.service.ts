@@ -648,54 +648,43 @@ export class QSysService {
   }
 
   /**
-   * Load component via QRWC to get full control data including Choices
-   * Component.GetControls RPC doesn't include Choices, so we need to load via QRWC
+   * Fetch Choices for Text controls using Component.Get RPC
+   * Component.GetControls doesn't include Choices, but Component.Get might
    */
-  private async loadComponentViaQRWC(componentName: string): Promise<any> {
+  private async fetchChoicesViaComponentGet(componentName: string, textControlNames: string[]): Promise<Map<string, string[]>> {
+    const webSocketManager = (this.qrwc as any).webSocketManager;
+    const choicesMap = new Map<string, string[]>();
+
     try {
-      console.log(`Loading component via QRWC to get Choices: ${componentName}`);
+      console.log(`Fetching current values for ${textControlNames.length} Text controls via Component.Get...`);
 
-      // Add component to QRWC (this loads it with full metadata including Choices)
-      const component = await (this.qrwc as any).addComponent(componentName);
+      // Call Component.Get to get current state including Choices
+      const result = await webSocketManager.sendRpc('Component.Get', {
+        Name: componentName,
+        Controls: textControlNames.map(name => ({ Name: name }))
+      });
 
-      console.log(`✓ Loaded ${componentName} via QRWC, checking for Choices...`);
-
-      // Count controls with Choices
-      let choicesCount = 0;
-      for (const controlName in component.controls) {
-        const control = component.controls[controlName];
-        if (control.state.Choices && control.state.Choices.length > 0) {
-          choicesCount++;
+      // Extract Choices from result
+      if (result.Controls && Array.isArray(result.Controls)) {
+        for (const control of result.Controls) {
+          if (control.Choices && Array.isArray(control.Choices) && control.Choices.length > 0) {
+            choicesMap.set(control.Name, control.Choices);
+          }
         }
       }
 
-      console.log(`  Found ${choicesCount} controls with Choices in QRWC component`);
-
-      return component;
+      console.log(`✓ Found Choices for ${choicesMap.size} controls via Component.Get`);
     } catch (error) {
-      console.warn(`Failed to load component via QRWC: ${componentName}`, error);
-      return null;
+      console.warn(`Failed to fetch Choices via Component.Get for ${componentName}:`, error);
     }
+
+    return choicesMap;
   }
 
   /**
-   * Merge Choices from QRWC component into RPC control states
+   * Merge Choices into RPC control states
    */
-  private mergeChoicesFromQRWC(rpcStates: any[], qrwcComponent: any): any[] {
-    if (!qrwcComponent || !qrwcComponent.controls) {
-      return rpcStates;
-    }
-
-    // Create a map of control names to Choices from QRWC
-    const choicesMap = new Map<string, string[]>();
-    for (const controlName in qrwcComponent.controls) {
-      const control = qrwcComponent.controls[controlName];
-      if (control.state.Choices && control.state.Choices.length > 0) {
-        choicesMap.set(controlName, control.state.Choices);
-      }
-    }
-
-    // Merge Choices into RPC states
+  private mergeChoicesIntoStates(rpcStates: any[], choicesMap: Map<string, string[]>): any[] {
     return rpcStates.map(state => {
       const choices = choicesMap.get(state.Name);
       if (choices) {
@@ -725,14 +714,16 @@ export class QSysService {
       }
 
       // Check if any Text controls exist (potential combo boxes)
-      const hasTextControls = controlStates.some(state => state.Type === 'Text');
+      const textControlNames = controlStates
+        .filter(state => state.Type === 'Text')
+        .map(state => state.Name);
 
-      if (hasTextControls) {
-        // Load component via QRWC to get Choices (Component.GetControls RPC doesn't include them)
-        const qrwcComponent = await this.loadComponentViaQRWC(componentName);
+      if (textControlNames.length > 0) {
+        // Fetch Choices for Text controls using Component.Get RPC
+        const choicesMap = await this.fetchChoicesViaComponentGet(componentName, textControlNames);
 
-        // Merge Choices from QRWC into RPC control states
-        controlStates = this.mergeChoicesFromQRWC(controlStates, qrwcComponent);
+        // Merge Choices into control states
+        controlStates = this.mergeChoicesIntoStates(controlStates, choicesMap);
       }
 
       const controls: any[] = [];
