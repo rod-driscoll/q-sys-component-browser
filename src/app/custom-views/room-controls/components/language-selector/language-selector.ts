@@ -62,7 +62,7 @@ export class LanguageSelector {
     });
   }
 
-  private async fetchLanguageChoices(): Promise<void> {
+  private async fetchLanguageChoices(retryCount = 0, maxRetries = 3): Promise<void> {
     try {
       // Access the underlying webSocketManager to make RPC call
       const qrwc = (this.qrwc as any).qsysService?.qrwc;
@@ -75,6 +75,13 @@ export class LanguageSelector {
       if (!webSocketManager) {
         console.error('[LanguageSelector] WebSocketManager not available');
         return;
+      }
+
+      // Add a small delay before fetching to allow Q-SYS to initialize
+      if (retryCount > 0) {
+        const delay = retryCount * 500; // 500ms, 1000ms, 1500ms
+        console.log(`[LanguageSelector] Retry ${retryCount}/${maxRetries}, waiting ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
 
       // Fetch control details via RPC
@@ -91,10 +98,24 @@ export class LanguageSelector {
         this.availableLanguages.set(languageSelectControl.Choices);
         console.log('[LanguageSelector] Fetched languages via RPC:', languageSelectControl.Choices);
       } else {
-        console.warn('[LanguageSelector] LanguageSelect control has no Choices');
+        console.warn('[LanguageSelector] LanguageSelect control has no Choices (attempt ' + (retryCount + 1) + ')');
+
+        // Retry if we haven't exceeded max retries
+        if (retryCount < maxRetries) {
+          console.log('[LanguageSelector] Retrying to fetch language choices...');
+          await this.fetchLanguageChoices(retryCount + 1, maxRetries);
+        } else {
+          console.error('[LanguageSelector] Failed to fetch language choices after ' + maxRetries + ' retries');
+        }
       }
     } catch (error) {
       console.error('[LanguageSelector] Failed to fetch language choices:', error);
+
+      // Retry on error if we haven't exceeded max retries
+      if (retryCount < maxRetries) {
+        console.log('[LanguageSelector] Retrying after error...');
+        await this.fetchLanguageChoices(retryCount + 1, maxRetries);
+      }
     }
   }
 
