@@ -648,61 +648,61 @@ export class QSysService {
   }
 
   /**
-   * Fetch ALL controls with retry to get Choices that may be missing initially
-   * Q-SYS doesn't always return Choices immediately, so we retry with delays
-   * Returns updated control states with Choices populated
+   * Load component via QRWC to get full control data including Choices
+   * Component.GetControls RPC doesn't include Choices, so we need to load via QRWC
    */
-  private async fetchAllControlsWithRetry(
-    componentName: string,
-    initialStates: any[],
-    maxRetries: number = 2
-  ): Promise<any[]> {
-    const webSocketManager = (this.qrwc as any).webSocketManager;
+  private async loadComponentViaQRWC(componentName: string): Promise<any> {
+    try {
+      console.log(`Loading component via QRWC to get Choices: ${componentName}`);
 
-    // Check if there are any Text controls (potential combo boxes)
-    // We can't rely on Position being present when Choices is undefined
-    const hasTextControls = initialStates.some(state => state.Type === 'Text');
+      // Add component to QRWC (this loads it with full metadata including Choices)
+      const component = await (this.qrwc as any).addComponent(componentName);
 
-    if (!hasTextControls) {
-      return initialStates; // No Text controls, no need to retry
+      console.log(`✓ Loaded ${componentName} via QRWC, checking for Choices...`);
+
+      // Count controls with Choices
+      let choicesCount = 0;
+      for (const controlName in component.controls) {
+        const control = component.controls[controlName];
+        if (control.state.Choices && control.state.Choices.length > 0) {
+          choicesCount++;
+        }
+      }
+
+      console.log(`  Found ${choicesCount} controls with Choices in QRWC component`);
+
+      return component;
+    } catch (error) {
+      console.warn(`Failed to load component via QRWC: ${componentName}`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Merge Choices from QRWC component into RPC control states
+   */
+  private mergeChoicesFromQRWC(rpcStates: any[], qrwcComponent: any): any[] {
+    if (!qrwcComponent || !qrwcComponent.controls) {
+      return rpcStates;
     }
 
-    // Count how many Text controls have Choices
-    const textControlsWithChoices = initialStates.filter(state =>
-      state.Type === 'Text' && state.Choices && state.Choices.length > 0
-    ).length;
-
-    const totalTextControls = initialStates.filter(state => state.Type === 'Text').length;
-
-    console.log(`Found ${totalTextControls} Text controls, ${textControlsWithChoices} have Choices. Retrying to fetch missing Choices...`);
-
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        // Wait before retry (500ms, 1000ms)
-        const delay = attempt * 500;
-        await new Promise(resolve => setTimeout(resolve, delay));
-
-        const result = await webSocketManager.sendRpc('Component.GetControls', {
-          Name: componentName
-        });
-
-        // Count Text controls with Choices in retry result
-        const retryTextWithChoices = result.Controls.filter((c: any) =>
-          c.Type === 'Text' && c.Choices && c.Choices.length > 0
-        ).length;
-
-        // If we got more Choices than before, use the retry result
-        if (retryTextWithChoices > textControlsWithChoices) {
-          console.log(`✓ Retry attempt ${attempt} found ${retryTextWithChoices} Text controls with Choices (was ${textControlsWithChoices})`);
-          return result.Controls;
-        }
-      } catch (error) {
-        console.warn(`Failed to fetch controls on retry attempt ${attempt}:`, error);
+    // Create a map of control names to Choices from QRWC
+    const choicesMap = new Map<string, string[]>();
+    for (const controlName in qrwcComponent.controls) {
+      const control = qrwcComponent.controls[controlName];
+      if (control.state.Choices && control.state.Choices.length > 0) {
+        choicesMap.set(controlName, control.state.Choices);
       }
     }
 
-    console.warn(`Retries did not improve Choices data, using initial result`);
-    return initialStates; // Return original data if retries don't help
+    // Merge Choices into RPC states
+    return rpcStates.map(state => {
+      const choices = choicesMap.get(state.Name);
+      if (choices) {
+        return { ...state, Choices: choices };
+      }
+      return state;
+    });
   }
 
   /**
@@ -724,9 +724,16 @@ export class QSysService {
         return [];
       }
 
-      // Retry fetching all controls if combo boxes are missing Choices
-      // This is more efficient than fetching each control individually
-      controlStates = await this.fetchAllControlsWithRetry(componentName, controlStates, 2);
+      // Check if any Text controls exist (potential combo boxes)
+      const hasTextControls = controlStates.some(state => state.Type === 'Text');
+
+      if (hasTextControls) {
+        // Load component via QRWC to get Choices (Component.GetControls RPC doesn't include them)
+        const qrwcComponent = await this.loadComponentViaQRWC(componentName);
+
+        // Merge Choices from QRWC into RPC control states
+        controlStates = this.mergeChoicesFromQRWC(controlStates, qrwcComponent);
+      }
 
       const controls: any[] = [];
 
