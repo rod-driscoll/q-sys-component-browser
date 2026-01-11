@@ -648,6 +648,43 @@ export class QSysService {
   }
 
   /**
+   * Fetch Choices for a specific control with retry logic
+   * Q-SYS doesn't always return Choices immediately, so we retry with delays
+   */
+  private async fetchControlChoicesWithRetry(
+    componentName: string,
+    controlName: string,
+    maxRetries: number = 3
+  ): Promise<string[] | undefined> {
+    const webSocketManager = (this.qrwc as any).webSocketManager;
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        // Add delay before retry (0ms, 500ms, 1000ms)
+        if (attempt > 0) {
+          const delay = attempt * 500;
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+
+        const result = await webSocketManager.sendRpc('Component.GetControls', {
+          Name: componentName
+        });
+
+        const control = result?.Controls?.find((c: any) => c.Name === controlName);
+        if (control?.Choices && control.Choices.length > 0) {
+          console.log(`✓ Fetched Choices for ${controlName} on attempt ${attempt + 1}:`, control.Choices);
+          return control.Choices;
+        }
+      } catch (error) {
+        console.warn(`Failed to fetch Choices for ${controlName} on attempt ${attempt + 1}:`, error);
+      }
+    }
+
+    console.warn(`Failed to fetch Choices for ${controlName} after ${maxRetries} attempts`);
+    return undefined;
+  }
+
+  /**
    * Get all controls for a specific component
    * Returns a promise that resolves with the control list
    * Uses direct RPC call to avoid QRWC's ChangeGroup registration
@@ -667,6 +704,35 @@ export class QSysService {
       }
 
       const controls: any[] = [];
+
+      // First pass: identify potential combo boxes (Text controls with Position but no Choices)
+      const potentialComboBoxes: string[] = [];
+      for (const state of controlStates) {
+        if (state.Type === 'Text' && state.Position !== undefined && (!state.Choices || state.Choices.length === 0)) {
+          potentialComboBoxes.push(state.Name);
+        }
+      }
+
+      // Fetch Choices for potential combo boxes in parallel
+      if (potentialComboBoxes.length > 0) {
+        console.log(`Found ${potentialComboBoxes.length} potential combo boxes, fetching Choices...`);
+        const choicesPromises = potentialComboBoxes.map(controlName =>
+          this.fetchControlChoicesWithRetry(componentName, controlName, 3)
+        );
+        const choicesResults = await Promise.all(choicesPromises);
+
+        // Update controlStates with fetched Choices
+        for (let i = 0; i < potentialComboBoxes.length; i++) {
+          const controlName = potentialComboBoxes[i];
+          const choices = choicesResults[i];
+          if (choices) {
+            const stateIndex = controlStates.findIndex((s: any) => s.Name === controlName);
+            if (stateIndex !== -1) {
+              controlStates[stateIndex].Choices = choices;
+            }
+          }
+        }
+      }
 
       for (const state of controlStates) {
         const controlName = state.Name;
