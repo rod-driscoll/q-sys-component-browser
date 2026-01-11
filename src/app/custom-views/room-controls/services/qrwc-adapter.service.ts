@@ -197,12 +197,12 @@ export class QrwcAdapterService {
 
   // List of required Q-SYS components for the room controls
   public readonly requiredComponents = [
+    'Room Controls',
     'UCI Text Helper',
   ];
 
   // List of optional components that enable features if present
   public readonly optionalComponents = [
-    'Room Controls',
     'HDMISourceSelect_1',
     'USB Video Bridge Core',
     'CameraRouter',
@@ -239,33 +239,6 @@ export class QrwcAdapterService {
   public readonly hasCameraControls = computed(() => {
     const loaded = this.components();
     return loaded && !!loaded['USB Video Bridge Core'];
-  });
-
-  // Signal to check if ONVIF cameras are available
-  public readonly hasOnvifCameras = computed(() => {
-    const loaded = this.components();
-    if (!loaded) {
-      console.log('[QrwcAdapterService] hasOnvifCameras: No components loaded yet');
-      return false;
-    }
-
-    console.log('[QrwcAdapterService] Checking for ONVIF cameras...', {
-      componentCount: Object.keys(loaded).length,
-      componentNames: Object.keys(loaded)
-    });
-
-    // Check if any component has type 'onvif_camera_operative'
-    for (const componentName in loaded) {
-      const component = loaded[componentName];
-      const componentType = (component as any).type;
-      console.log(`[QrwcAdapterService] Component: ${componentName}, type: ${componentType}`);
-      if (componentType === 'onvif_camera_operative') {
-        console.log(`[QrwcAdapterService] ✓ Found ONVIF camera: ${componentName}`);
-        return true;
-      }
-    }
-    console.log('[QrwcAdapterService] No ONVIF cameras found');
-    return false;
   });
 
   constructor() {

@@ -62,15 +62,6 @@
         </button>
       }
 
-      @if (qrwc.hasOnvifCameras()) {
-        <button
-          class="nav-icon button-transparent"
-          [class.active]="currentPage() === 'qsys-cameras'"
-          (click)="navigateToPage('qsys-cameras')">
-          <span class="material-icons">video_camera_front</span>
-        </button>
-      }
-
       <button
         class="nav-icon button-transparent"
         [class.active]="currentPage() === 'help'"
@@ -102,9 +93,6 @@
       }
       @if (currentPage() === 'cameras' && qrwc.hasCameraControls()) {
         <app-cameras-card></app-cameras-card>
-      }
-      @if (currentPage() === 'qsys-cameras' && qrwc.hasOnvifCameras()) {
-        <app-qsys-cameras-card></app-qsys-cameras-card>
       }
       @if (currentPage() === 'help') {
         <app-help-card></app-help-card>

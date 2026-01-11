@@ -1,0 +1,182 @@
+<!-- Empty State -->
+@if (cameraCards().length === 0) {
+  <div class="empty-state">
+    <div class="empty-icon">📷</div>
+    <h2>No ONVIF cameras found</h2>
+    <p>No ONVIF camera components (onvif_camera_operative) found in the Q-SYS design.</p>
+  </div>
+}
+
+<!-- Camera Cards -->
+@else {
+  <div class="controls-header">
+    <h2>{{ cameraCards().length }} Camera{{ cameraCards().length === 1 ? '' : 's' }}</h2>
+  </div>
+
+  <div class="cameras-grid">
+    @for (camera of cameraCards(); track camera.componentName) {
+      <div class="camera-card">
+        <div class="camera-card-header">
+          <h3>{{ camera.displayName }}</h3>
+        </div>
+
+        <!-- Video Window with Directional Arrows -->
+        <div class="video-window">
+          <!-- Camera Preview Image -->
+          @if (camera.previewUrl) {
+            <img [src]="camera.previewUrl" alt="Camera Preview" class="camera-preview-image" />
+          }
+
+          <div class="video-overlay">
+            <!-- Top Left Arrow -->
+            <button
+              class="arrow-button arrow-up-left"
+              (mousedown)="activateControl(camera.componentName, 'pan.left.tilt.up')"
+              (mouseup)="deactivateControl(camera.componentName, 'pan.left.tilt.up')"
+              (mouseleave)="deactivateControl(camera.componentName, 'pan.left.tilt.up')"
+              (touchstart)="activateControl(camera.componentName, 'pan.left.tilt.up')"
+              (touchend)="deactivateControl(camera.componentName, 'pan.left.tilt.up')"
+              title="Pan Left & Tilt Up"
+            >
+              ↖
+            </button>
+
+            <!-- Up Arrow -->
+            <button
+              class="arrow-button arrow-up"
+              (mousedown)="activateControl(camera.componentName, 'tilt.up')"
+              (mouseup)="deactivateControl(camera.componentName, 'tilt.up')"
+              (mouseleave)="deactivateControl(camera.componentName, 'tilt.up')"
+              (touchstart)="activateControl(camera.componentName, 'tilt.up')"
+              (touchend)="deactivateControl(camera.componentName, 'tilt.up')"
+              title="Tilt Up"
+            >
+              ↑
+            </button>
+
+            <!-- Top Right Arrow -->
+            <button
+              class="arrow-button arrow-up-right"
+              (mousedown)="activateControl(camera.componentName, 'pan.right.tilt.up')"
+              (mouseup)="deactivateControl(camera.componentName, 'pan.right.tilt.up')"
+              (mouseleave)="deactivateControl(camera.componentName, 'pan.right.tilt.up')"
+              (touchstart)="activateControl(camera.componentName, 'pan.right.tilt.up')"
+              (touchend)="deactivateControl(camera.componentName, 'pan.right.tilt.up')"
+              title="Pan Right & Tilt Up"
+            >
+              ↗
+            </button>
+
+            <!-- Left Arrow -->
+            <button
+              class="arrow-button arrow-left"
+              (mousedown)="activateControl(camera.componentName, 'pan.left')"
+              (mouseup)="deactivateControl(camera.componentName, 'pan.left')"
+              (mouseleave)="deactivateControl(camera.componentName, 'pan.left')"
+              (touchstart)="activateControl(camera.componentName, 'pan.left')"
+              (touchend)="deactivateControl(camera.componentName, 'pan.left')"
+              title="Pan Left"
+            >
+              ←
+            </button>
+
+            <!-- Center spacer (no control) -->
+            <div class="arrow-spacer"></div>
+
+            <!-- Right Arrow -->
+            <button
+              class="arrow-button arrow-right"
+              (mousedown)="activateControl(camera.componentName, 'pan.right')"
+              (mouseup)="deactivateControl(camera.componentName, 'pan.right')"
+              (mouseleave)="deactivateControl(camera.componentName, 'pan.right')"
+              (touchstart)="activateControl(camera.componentName, 'pan.right')"
+              (touchend)="deactivateControl(camera.componentName, 'pan.right')"
+              title="Pan Right"
+            >
+              →
+            </button>
+
+            <!-- Bottom Left Arrow -->
+            <button
+              class="arrow-button arrow-down-left"
+              (mousedown)="activateControl(camera.componentName, 'pan.left.tilt.down')"
+              (mouseup)="deactivateControl(camera.componentName, 'pan.left.tilt.down')"
+              (mouseleave)="deactivateControl(camera.componentName, 'pan.left.tilt.down')"
+              (touchstart)="activateControl(camera.componentName, 'pan.left.tilt.down')"
+              (touchend)="deactivateControl(camera.componentName, 'pan.left.tilt.down')"
+              title="Pan Left & Tilt Down"
+            >
+              ↙
+            </button>
+
+            <!-- Down Arrow -->
+            <button
+              class="arrow-button arrow-down"
+              (mousedown)="activateControl(camera.componentName, 'tilt.down')"
+              (mouseup)="deactivateControl(camera.componentName, 'tilt.down')"
+              (mouseleave)="deactivateControl(camera.componentName, 'tilt.down')"
+              (touchstart)="activateControl(camera.componentName, 'tilt.down')"
+              (touchend)="deactivateControl(camera.componentName, 'tilt.down')"
+              title="Tilt Down"
+            >
+              ↓
+            </button>
+
+            <!-- Bottom Right Arrow -->
+            <button
+              class="arrow-button arrow-down-right"
+              (mousedown)="activateControl(camera.componentName, 'pan.right.tilt.down')"
+              (mouseup)="deactivateControl(camera.componentName, 'pan.right.tilt.down')"
+              (mouseleave)="deactivateControl(camera.componentName, 'pan.right.tilt.down')"
+              (touchstart)="activateControl(camera.componentName, 'pan.right.tilt.down')"
+              (touchend)="deactivateControl(camera.componentName, 'pan.right.tilt.down')"
+              title="Pan Right & Tilt Down"
+            >
+              ↘
+            </button>
+          </div>
+        </div>
+
+        <!-- Camera Control Buttons -->
+        <div class="camera-controls">
+          <div class="control-row">
+            <button
+              class="control-button"
+              (mousedown)="activateControl(camera.componentName, 'zoom.in')"
+              (mouseup)="deactivateControl(camera.componentName, 'zoom.in')"
+              (mouseleave)="deactivateControl(camera.componentName, 'zoom.in')"
+              (touchstart)="activateControl(camera.componentName, 'zoom.in')"
+              (touchend)="deactivateControl(camera.componentName, 'zoom.in')"
+              title="Zoom In"
+            >
+              🔍+
+            </button>
+
+            <button
+              class="control-button"
+              (mousedown)="activateControl(camera.componentName, 'zoom.out')"
+              (mouseup)="deactivateControl(camera.componentName, 'zoom.out')"
+              (mouseleave)="deactivateControl(camera.componentName, 'zoom.out')"
+              (touchstart)="activateControl(camera.componentName, 'zoom.out')"
+              (touchend)="deactivateControl(camera.componentName, 'zoom.out')"
+              title="Zoom Out"
+            >
+              🔍−
+            </button>
+          </div>
+
+          <div class="control-row">
+            <button
+              class="control-button"
+              (click)="togglePrivacy(camera.componentName)"
+              [class.active]="camera.privacyOn"
+              title="Privacy"
+            >
+              Privacy
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}
