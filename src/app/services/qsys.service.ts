@@ -649,7 +649,30 @@ export class QSysService {
 
   /**
    * Fetch Choices for Text controls using Component.Get RPC
-   * Component.GetControls doesn't include Choices, but Component.Get might
+   *
+   * IMPORTANT - Q-SYS COMBO BOX PATTERN:
+   * ======================================
+   * Q-SYS combo boxes have these characteristics:
+   * - Type: "Text"
+   * - Choices: array of strings (the dropdown options)
+   * - Position: current selected index (optional)
+   * - String: current selected value
+   *
+   * Q-SYS RPC API BEHAVIOR:
+   * -----------------------
+   * Component.GetControls - Returns control METADATA but NO Choices array
+   * Component.Get         - Returns control CURRENT VALUES including Choices array ✓
+   *
+   * SOLUTION PATTERN:
+   * -----------------
+   * 1. Use Component.GetControls to get all control metadata (fast)
+   * 2. Filter for Text controls (potential combo boxes)
+   * 3. Use Component.Get to fetch current values for Text controls (includes Choices)
+   * 4. Merge Choices from Component.Get into the control metadata
+   * 5. Detect combo boxes: Type === "Text" AND Choices.length > 0
+   *
+   * This pattern must be used whenever loading controls to ensure combo boxes
+   * have their Choices array populated and can display dropdown options in the UI.
    */
   private async fetchChoicesViaComponentGet(componentName: string, textControlNames: string[]): Promise<Map<string, string[]>> {
     const webSocketManager = (this.qrwc as any).webSocketManager;
@@ -737,7 +760,9 @@ export class QSysService {
         // Override type based on control properties (Q-SYS often reports incorrect types)
 
         // Priority 1: If it has Choices AND Type is "Text", it's a Combo box
+        // IMPORTANT: This is the COMBO BOX DETECTION pattern (see fetchChoicesViaComponentGet for details)
         // Q-SYS combo boxes have Type: "Text" with a Choices array
+        // Choices must be fetched via Component.Get RPC (not included in Component.GetControls)
         // They may also have Position (index into Choices), ValueMin, and ValueMax
         // The key identifier is: Type="Text" + Choices.length > 0
         if (state.Choices && Array.isArray(state.Choices) && state.Choices.length > 0 &&
