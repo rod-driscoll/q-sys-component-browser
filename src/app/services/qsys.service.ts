@@ -676,27 +676,32 @@ export class QSysService {
 
         // Override type based on control properties (Q-SYS often reports incorrect types)
 
-        // Priority 1: If it has Choices, it's a Combo box (or List Box)
-        // This overrides Position checks because even if it has a position (e.g. index),
-        // the presence of choices means we should show a dropdown.
-        // EXCEPTION: If it has ValueMin AND ValueMax, it's likely an Integer Knob with choices (steps),
-        // so we should let it fall through to the Knob check.
+        // Priority 1: If it has Choices AND Type is "Text", it's a Combo box
+        // Q-SYS combo boxes have Type: "Text" with a Choices array
+        // They may also have Position (index into Choices), ValueMin, and ValueMax
+        // The key identifier is: Type="Text" + Choices.length > 0
         if (state.Choices && Array.isArray(state.Choices) && state.Choices.length > 0 &&
-          (state.ValueMin === undefined || state.ValueMax === undefined)) {
+          controlType === 'Text') {
           controlType = 'Combo box';
-          // Debug logging for ChannelSelect controls
-          if (controlName.includes('ChannelSelect')) {
-            console.log(`✓ Detected Combo box: ${controlName} (${state.Choices.length} choices)`);
+          // Debug logging
+          if (controlName.includes('Select')) {
+            console.log(`✓ Detected Combo box: ${controlName} (${state.Choices.length} choices)`, {
+              Type: state.Type,
+              hasPosition: state.Position !== undefined,
+              hasValueMin: state.ValueMin !== undefined,
+              hasValueMax: state.ValueMax !== undefined
+            });
           }
-        } else if (controlName.includes('ChannelSelect')) {
-          // Debug: log when ChannelSelect is NOT detected as combo box
+        } else if (controlName.includes('Select') && state.Choices) {
+          // Debug: log when Select controls with Choices are NOT detected as combo box
           console.log(`✗ NOT Combo box: ${controlName}`, {
             hasChoices: !!state.Choices,
             isArray: Array.isArray(state.Choices),
             choicesLength: state.Choices?.length,
+            originalType: state.Type,
+            hasPosition: state.Position !== undefined,
             hasValueMin: state.ValueMin !== undefined,
-            hasValueMax: state.ValueMax !== undefined,
-            originalType: state.Type
+            hasValueMax: state.ValueMax !== undefined
           });
         }
         // Priority 2: Check for Position - Array types with Position (but no choices) are Integer Knobs
