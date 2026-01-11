@@ -659,16 +659,22 @@ export class QSysService {
   ): Promise<any[]> {
     const webSocketManager = (this.qrwc as any).webSocketManager;
 
-    // Check if any potential combo boxes are missing Choices
-    const needsRetry = initialStates.some(state =>
-      state.Type === 'Text' && state.Position !== undefined && (!state.Choices || state.Choices.length === 0)
-    );
+    // Check if there are any Text controls (potential combo boxes)
+    // We can't rely on Position being present when Choices is undefined
+    const hasTextControls = initialStates.some(state => state.Type === 'Text');
 
-    if (!needsRetry) {
-      return initialStates; // No retry needed, all Choices are present
+    if (!hasTextControls) {
+      return initialStates; // No Text controls, no need to retry
     }
 
-    console.log(`Some combo boxes missing Choices, will retry fetching controls for ${componentName}...`);
+    // Count how many Text controls have Choices
+    const textControlsWithChoices = initialStates.filter(state =>
+      state.Type === 'Text' && state.Choices && state.Choices.length > 0
+    ).length;
+
+    const totalTextControls = initialStates.filter(state => state.Type === 'Text').length;
+
+    console.log(`Found ${totalTextControls} Text controls, ${textControlsWithChoices} have Choices. Retrying to fetch missing Choices...`);
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -680,13 +686,14 @@ export class QSysService {
           Name: componentName
         });
 
-        // Check if we got Choices this time
-        const gotChoices = result.Controls.some((c: any) =>
-          c.Type === 'Text' && c.Position !== undefined && c.Choices && c.Choices.length > 0
-        );
+        // Count Text controls with Choices in retry result
+        const retryTextWithChoices = result.Controls.filter((c: any) =>
+          c.Type === 'Text' && c.Choices && c.Choices.length > 0
+        ).length;
 
-        if (gotChoices) {
-          console.log(`✓ Successfully fetched Choices on retry attempt ${attempt}`);
+        // If we got more Choices than before, use the retry result
+        if (retryTextWithChoices > textControlsWithChoices) {
+          console.log(`✓ Retry attempt ${attempt} found ${retryTextWithChoices} Text controls with Choices (was ${textControlsWithChoices})`);
           return result.Controls;
         }
       } catch (error) {
@@ -694,8 +701,8 @@ export class QSysService {
       }
     }
 
-    console.warn(`Failed to fetch Choices after ${maxRetries} retries, using initial data`);
-    return initialStates; // Return original data if retries fail
+    console.warn(`Retries did not improve Choices data, using initial result`);
+    return initialStates; // Return original data if retries don't help
   }
 
   /**
