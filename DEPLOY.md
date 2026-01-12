@@ -268,11 +268,15 @@ If the archive creation fails:
 - Check that the dist directory exists and contains build output
 - Verify the path in the `ch5-archive` script matches your Angular output path
 
-### Display Issues
+### Display Issues (Black Screen)
 
-If the app doesn't display correctly on the touchpanel:
+If the app doesn't display correctly on the touchpanel or shows a black screen:
+- **See the comprehensive debugging guide: [CRESTRON-DEBUGGING.md](docs/CRESTRON-DEBUGGING.md)**
 - Verify `baseHref: "./"` is set in angular.json
 - Check that all asset paths in HTML use relative paths (no leading `/`)
+- Access Chrome DevTools remotely (`chrome://inspect`) to view console errors
+- Test the build locally first with `npx http-server` before deploying
+- Check files were deployed via SSH: `ssh crestron@TOUCHPANEL_IP` then `ls /display`
 - Review browser console on touchpanel for asset loading errors
 - Ensure the touchpanel firmware supports your Angular version
 
