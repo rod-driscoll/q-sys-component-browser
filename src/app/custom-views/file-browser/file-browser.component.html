@@ -51,8 +51,56 @@
     </div>
   }
 
-  <!-- File List -->
-  @if (!isLoading() && !errorMessage()) {
+  <!-- File Viewer -->
+  @if (fileContent() !== null && !isLoading()) {
+    <div class="file-viewer">
+      <div class="file-viewer-header">
+        <div class="file-viewer-title">
+          <span class="file-icon">{{ getEntryIcon({ name: viewingFile() || '', type: 'file' }) }}</span>
+          <span>{{ viewingFile() }}</span>
+        </div>
+        <button class="btn-close" (click)="closeFileView()" title="Close">
+          ✕
+        </button>
+      </div>
+
+      <div class="file-viewer-content">
+        @if (isTextContent(fileContentType())) {
+          <!-- Text Content -->
+          <pre class="text-content">{{ fileContent() }}</pre>
+        } @else if (isImageContent(fileContentType())) {
+          <!-- Image Content -->
+          <div class="media-container">
+            <img [src]="getMediaDataUrl()" [alt]="viewingFile() || ''" class="media-image" />
+          </div>
+        } @else if (isAudioContent(fileContentType())) {
+          <!-- Audio Content -->
+          <div class="media-container">
+            <audio controls class="media-audio">
+              <source [src]="getMediaDataUrl()" [type]="fileContentType() || ''" />
+              Your browser does not support the audio element.
+            </audio>
+          </div>
+        } @else if (isVideoContent(fileContentType())) {
+          <!-- Video Content -->
+          <div class="media-container">
+            <video controls class="media-video">
+              <source [src]="getMediaDataUrl()" [type]="fileContentType() || ''" />
+              Your browser does not support the video element.
+            </video>
+          </div>
+        } @else {
+          <!-- Unsupported Content -->
+          <div class="unsupported-content">
+            <span class="unsupported-icon">📄</span>
+            <p>Preview not available for this file type</p>
+            <p class="content-type">{{ fileContentType() }}</p>
+          </div>
+        }
+      </div>
+    </div>
+  } @else if (!isLoading() && !errorMessage()) {
+    <!-- File List -->
     <div class="file-list">
       @if (entries().length === 0) {
         <div class="empty-state">

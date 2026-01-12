@@ -19,6 +19,7 @@ interface FileSystemMessage {
   path?: string;
   entries?: FileEntry[];
   content?: string;
+  contentType?: string;
   error?: string;
   message?: string;
 }
@@ -42,6 +43,9 @@ export class FileSystemService {
   public entries = signal<FileEntry[]>([]);
   public isLoading = signal<boolean>(false);
   public error = signal<string | null>(null);
+  public fileContent = signal<string | null>(null);
+  public fileContentType = signal<string | null>(null);
+  public viewingFile = signal<string | null>(null);
 
   constructor() {}
 
@@ -128,6 +132,19 @@ export class FileSystemService {
           });
           this.entries.set(sorted);
           this.currentPath.set(message.path);
+          this.error.set(null);
+          // Clear file view when navigating
+          this.fileContent.set(null);
+          this.fileContentType.set(null);
+          this.viewingFile.set(null);
+        }
+        break;
+
+      case 'read':
+        console.log('Received file content, type:', message.contentType);
+        if (message.content !== undefined) {
+          this.fileContent.set(message.content);
+          this.fileContentType.set(message.contentType || 'text/plain');
           this.error.set(null);
         }
         break;
@@ -252,5 +269,41 @@ export class FileSystemService {
    */
   refresh(): void {
     this.listDirectory(this.currentPath());
+  }
+
+  /**
+   * Read a file's content
+   */
+  readFile(fileName: string): void {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      console.error('Cannot read file - WebSocket not ready');
+      this.error.set('Not connected to file system');
+      return;
+    }
+
+    const path = this.currentPath();
+    const filePath = path ? `${path}${fileName}` : fileName;
+
+    console.log('Sending file read request for:', filePath);
+    this.isLoading.set(true);
+    this.error.set(null);
+    this.viewingFile.set(fileName);
+
+    const message = {
+      type: 'read',
+      path: filePath
+    };
+
+    console.log('Sending WebSocket message:', message);
+    this.ws.send(JSON.stringify(message));
+  }
+
+  /**
+   * Close file view and return to directory listing
+   */
+  closeFile(): void {
+    this.fileContent.set(null);
+    this.fileContentType.set(null);
+    this.viewingFile.set(null);
   }
 }

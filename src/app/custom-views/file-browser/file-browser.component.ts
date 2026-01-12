@@ -23,6 +23,9 @@ export class FileBrowserComponent implements OnInit, OnDestroy {
   get isLoading() { return this.fileSystemService.isLoading; }
   get errorMessage() { return this.fileSystemService.error; }
   get isConnected() { return this.fileSystemService.isConnected; }
+  get fileContent() { return this.fileSystemService.fileContent; }
+  get fileContentType() { return this.fileSystemService.fileContentType; }
+  get viewingFile() { return this.fileSystemService.viewingFile; }
 
   // Path breadcrumbs for navigation
   pathParts = computed(() => {
@@ -121,9 +124,67 @@ export class FileBrowserComponent implements OnInit, OnDestroy {
     if (entry.type === 'directory') {
       this.openDirectory(entry);
     } else {
-      // Could implement file download/preview here
-      console.log('File selected:', entry.name);
+      this.openFile(entry);
     }
+  }
+
+  /**
+   * Open a file for viewing
+   */
+  openFile(entry: FileEntry): void {
+    if (entry.type !== 'file') return;
+    this.fileSystemService.readFile(entry.name);
+  }
+
+  /**
+   * Close file view
+   */
+  closeFileView(): void {
+    this.fileSystemService.closeFile();
+  }
+
+  /**
+   * Check if content type is text-based
+   */
+  isTextContent(contentType: string | null): boolean {
+    if (!contentType) return false;
+    return contentType.startsWith('text/') ||
+           contentType === 'application/json' ||
+           contentType === 'application/xml';
+  }
+
+  /**
+   * Check if content type is an image
+   */
+  isImageContent(contentType: string | null): boolean {
+    if (!contentType) return false;
+    return contentType.startsWith('image/');
+  }
+
+  /**
+   * Check if content type is audio
+   */
+  isAudioContent(contentType: string | null): boolean {
+    if (!contentType) return false;
+    return contentType.startsWith('audio/');
+  }
+
+  /**
+   * Check if content type is video
+   */
+  isVideoContent(contentType: string | null): boolean {
+    if (!contentType) return false;
+    return contentType.startsWith('video/');
+  }
+
+  /**
+   * Get data URL for media content
+   */
+  getMediaDataUrl(): string {
+    const content = this.fileContent();
+    const contentType = this.fileContentType();
+    if (!content || !contentType) return '';
+    return `data:${contentType};base64,${content}`;
   }
 
   /**

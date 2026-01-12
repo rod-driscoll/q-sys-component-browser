@@ -219,6 +219,132 @@
   font-size: 1.1rem;
 }
 
+/* File Viewer */
+.file-viewer {
+  background-color: var(--DarkGreyColor);
+  border-radius: var(--BorderRadius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 200px);
+}
+
+.file-viewer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background-color: var(--PrimaryColorDark);
+  border-bottom: 2px solid var(--PrimaryColor);
+}
+
+.file-viewer-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--LightColor);
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.file-icon {
+  font-size: 1.5rem;
+}
+
+.btn-close {
+  background-color: var(--StopColor);
+  border: none;
+  color: var(--LightColor);
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--BorderRadius);
+  font-size: 1.2rem;
+  transition: all 0.2s;
+  min-width: 40px;
+}
+
+.btn-close:hover {
+  background-color: rgba(180, 15, 0, 0.8);
+  transform: scale(1.05);
+}
+
+.file-viewer-content {
+  flex: 1;
+  overflow: auto;
+  padding: 1.5rem;
+}
+
+/* Text Content */
+.text-content {
+  background-color: rgba(0, 0, 0, 0.3);
+  color: var(--LightColor);
+  padding: 1.5rem;
+  border-radius: var(--BorderRadius);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-x: auto;
+  margin: 0;
+}
+
+/* Media Content */
+.media-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  min-height: 300px;
+}
+
+.media-image {
+  max-width: 100%;
+  max-height: 70vh;
+  border-radius: var(--BorderRadius);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.media-audio {
+  width: 100%;
+  max-width: 600px;
+}
+
+.media-video {
+  max-width: 100%;
+  max-height: 70vh;
+  border-radius: var(--BorderRadius);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Unsupported Content */
+.unsupported-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  gap: 1rem;
+  color: var(--MediumGreyColor);
+}
+
+.unsupported-icon {
+  font-size: 4rem;
+  opacity: 0.5;
+}
+
+.unsupported-content p {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.content-type {
+  font-size: 0.9rem !important;
+  font-family: 'Courier New', Courier, monospace;
+  color: var(--MediumGreyColor);
+  opacity: 0.7;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .view-content {
@@ -249,5 +375,22 @@
     padding: 0.4rem 0.6rem;
     font-size: 1rem;
     min-width: 35px;
+  }
+
+  .file-viewer-header {
+    padding: 0.75rem 1rem;
+  }
+
+  .file-viewer-title {
+    font-size: 1rem;
+  }
+
+  .file-viewer-content {
+    padding: 1rem;
+  }
+
+  .text-content {
+    font-size: 0.8rem;
+    padding: 1rem;
   }
 }

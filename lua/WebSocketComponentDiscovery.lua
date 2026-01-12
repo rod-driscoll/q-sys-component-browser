@@ -2483,11 +2483,96 @@ server:ws('/ws/file-system', function(ws)
           entries = fileEntries
         })
 
-      -- Handle read file request (future enhancement)
+      -- Handle read file request
       elseif message.type == 'read' then
+        local filePath = message.path
+        if not filePath then
+          ws:Write({
+            type = 'error',
+            error = 'No file path provided'
+          })
+          return
+        end
+
+        print('File browser: Reading file: ' .. filePath)
+
+        -- Detect content type based on file extension
+        local function getContentType(fileName)
+          local ext = fileName:match('%.([^%.]+)$')
+          if not ext then return 'application/octet-stream' end
+          ext = ext:lower()
+
+          -- Text types
+          if ext == 'txt' then return 'text/plain' end
+          if ext == 'lua' then return 'text/plain' end
+          if ext == 'js' then return 'text/javascript' end
+          if ext == 'json' then return 'application/json' end
+          if ext == 'xml' then return 'application/xml' end
+          if ext == 'html' then return 'text/html' end
+          if ext == 'css' then return 'text/css' end
+          if ext == 'log' then return 'text/plain' end
+
+          -- Image types
+          if ext == 'jpg' or ext == 'jpeg' then return 'image/jpeg' end
+          if ext == 'png' then return 'image/png' end
+          if ext == 'gif' then return 'image/gif' end
+          if ext == 'bmp' then return 'image/bmp' end
+          if ext == 'svg' then return 'image/svg+xml' end
+
+          -- Audio types
+          if ext == 'wav' then return 'audio/wav' end
+          if ext == 'mp3' then return 'audio/mpeg' end
+          if ext == 'aac' then return 'audio/aac' end
+          if ext == 'flac' then return 'audio/flac' end
+          if ext == 'ogg' then return 'audio/ogg' end
+
+          -- Video types
+          if ext == 'mp4' then return 'video/mp4' end
+          if ext == 'avi' then return 'video/x-msvideo' end
+          if ext == 'mov' then return 'video/quicktime' end
+          if ext == 'mkv' then return 'video/x-matroska' end
+          if ext == 'webm' then return 'video/webm' end
+
+          return 'application/octet-stream'
+        end
+
+        local contentType = getContentType(filePath)
+
+        -- Read file content
+        local readSuccess, content = pcall(function()
+          local file = io.open(filePath, 'rb')
+          if not file then
+            error('Failed to open file')
+          end
+          local data = file:read('*all')
+          file:close()
+          return data
+        end)
+
+        if not readSuccess then
+          print('File browser: Failed to read file: ' .. tostring(content))
+          ws:Write({
+            type = 'error',
+            path = filePath,
+            error = 'Failed to read file: ' .. tostring(content)
+          })
+          return
+        end
+
+        -- Convert binary content to base64 for non-text files
+        local responseContent = content
+        if not contentType:match('^text/') and contentType ~= 'application/json' and contentType ~= 'application/xml' then
+          -- Base64 encode for binary files (media files) using Q-SYS native function
+          responseContent = Crypto.Base64Encode(content)
+        end
+
+        print('File browser: Successfully read file, size: ' .. #content .. ' bytes, type: ' .. contentType)
+
         ws:Write({
-          type = 'error',
-          error = 'File reading not yet implemented'
+          type = 'read',
+          path = filePath,
+          content = responseContent,
+          contentType = contentType
         })
 
       else
