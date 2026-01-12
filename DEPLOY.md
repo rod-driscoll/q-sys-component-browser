@@ -125,3 +125,167 @@ For more information about the Q-SYS Media Resources API, see:
 - Store bearer tokens securely
 - Use appropriate Access Control settings on your Core
 - Consider using HTTPS and bearer tokens for production deployments
+
+---
+
+# Deploying to Crestron Touchpanels
+
+This application can be deployed to Crestron touchpanels as a CH5Z (Crestron HTML5 Zip) archive file.
+
+## Prerequisites
+
+- Crestron touchpanel with CH5 support
+- Network access to the touchpanel
+- SSH credentials for the touchpanel (default: `crestron` / `crestron`)
+- `@crestron/ch5-utilities-cli` installed (already included in devDependencies)
+
+## Build Configuration
+
+The Angular build is pre-configured for Crestron deployment with `baseHref: "./"` in [angular.json](angular.json), which ensures relative paths work correctly when deployed to Crestron's `/display/` directory.
+
+### Asset Path Requirements
+
+**HTML Templates**: Use relative paths without leading `/`
+```html
+<!-- Correct -->
+<img src="assets/images/logo.png" />
+
+<!-- Incorrect -->
+<img src="/assets/images/logo.png" />
+```
+
+**CSS Files**: Leading slash is acceptable - Angular build with `baseHref: "./"` handles it
+```css
+/* Both work correctly */
+background-image: url(/assets/fonts/font.ttf);
+background-image: url(../assets/fonts/font.ttf);
+```
+
+The `baseHref: "./"` configuration ensures all resources load correctly relative to the HTML file location when deployed to Crestron touchpanels.
+
+## Deployment Commands
+
+### Build CH5Z Archive
+
+Create a CH5Z archive file for deployment:
+
+```bash
+npm run ch5-archive
+```
+
+This will:
+1. Build the Angular app (`ng build`)
+2. Package the build output as a CH5Z file
+3. Output to `dist/q-sys-component-browser.ch5z`
+
+### Deploy to Touchpanel
+
+Deploy the CH5Z file to a Crestron touchpanel:
+
+```bash
+npm run ch5-deploy
+```
+
+This deploys to the touchpanel at `192.168.104.109` (configured in [package.json](package.json#L19)).
+
+### Deploy to Different IP
+
+To deploy to a different touchpanel:
+
+```bash
+npx ch5-cli deploy -H <TOUCHPANEL_IP> -t touchscreen -p dist/q-sys-component-browser.ch5z
+```
+
+Example:
+```bash
+npx ch5-cli deploy -H 192.168.1.50 -t touchscreen -p dist/q-sys-component-browser.ch5z
+```
+
+## CH5 CLI Options
+
+The Crestron CH5 utilities CLI provides these commands:
+
+### Archive Command
+
+```bash
+npx ch5-cli archive -p <project-name> -d <dist-dir> -o <output-dir>
+```
+
+- `-p` - Project name (becomes the CH5Z filename)
+- `-d` - Distribution directory (Angular build output)
+- `-o` - Output directory (where CH5Z file is created)
+
+### Deploy Command
+
+```bash
+npx ch5-cli deploy -H <host> -t <type> -p <path>
+```
+
+- `-H` - Touchpanel IP address or hostname
+- `-t` - Device type (`touchscreen`, `server`, etc.)
+- `-p` - Path to CH5Z file to deploy
+- `-u` - Username (default: `crestron`)
+- `-w` - Password (default: `crestron`)
+
+## Accessing the Application
+
+After successful deployment, the application will be accessible on the Crestron touchpanel at:
+
+```
+/display/index.html
+```
+
+Or via the touchpanel's web interface (if enabled):
+
+```
+http://<TOUCHPANEL_IP>/display/index.html
+```
+
+## Troubleshooting
+
+### Connection Errors
+
+If deployment fails with connection errors:
+- Verify the touchpanel IP address is correct
+- Ensure SSH is enabled on the touchpanel
+- Check network connectivity
+- Verify firewall rules allow SSH (port 22)
+
+### Authentication Errors
+
+If you get authentication errors:
+- Default credentials: `crestron` / `crestron`
+- Check if default credentials have been changed
+- Use `-u` and `-w` flags to specify custom credentials:
+  ```bash
+  npx ch5-cli deploy -H 192.168.1.50 -t touchscreen -u admin -w password -p dist/q-sys-component-browser.ch5z
+  ```
+
+### Build Errors
+
+If the archive creation fails:
+- Ensure `ng build` completes successfully first
+- Check that the dist directory exists and contains build output
+- Verify the path in the `ch5-archive` script matches your Angular output path
+
+### Display Issues
+
+If the app doesn't display correctly on the touchpanel:
+- Verify `baseHref: "./"` is set in angular.json
+- Check that all asset paths in HTML use relative paths (no leading `/`)
+- Review browser console on touchpanel for asset loading errors
+- Ensure the touchpanel firmware supports your Angular version
+
+## CH5 Documentation
+
+For more information about Crestron CH5 development:
+- [Crestron CH5 Archives Documentation](https://sdkcon78221.crestron.com/sdk/Crestron_HTML5UI/Content/Topics/UI-CH5-Archives.htm)
+- [CH5 Utilities CLI](https://www.npmjs.com/package/@crestron/ch5-utilities-cli)
+
+## Updating Deployment Configuration
+
+To change the default deployment IP, edit [package.json](package.json#L19):
+
+```json
+"ch5-deploy": "npx ch5-cli deploy -H YOUR_IP_HERE -t touchscreen -p dist/q-sys-component-browser.ch5z"
+```

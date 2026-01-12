@@ -14,7 +14,9 @@
     "favicon": "node create-favicon.js",
     "icons": "node create-pwa-icons.js",
     "build:pwa": "npm run icons && ng build --configuration production",
-    "deploy:pwa": "npm run build:pwa && npm run deploy"
+    "deploy:pwa": "npm run build:pwa && npm run deploy",
+    "ch5-archive": "ng build && npx ch5-cli archive -p q-sys-component-browser -d dist/q-sys-component-browser/browser -o dist",
+    "ch5-deploy": "npx ch5-cli deploy -H 192.168.104.109 -t touchscreen -p dist/q-sys-component-browser.ch5z"
   },
   "prettier": {
     "printWidth": 100,
@@ -47,6 +49,7 @@
     "@angular/compiler-cli": "^20.3.0",
     "@angular/pwa": "^20.3.13",
     "@angular/service-worker": "^20.3.15",
+    "@crestron/ch5-utilities-cli": "^2.0.0",
     "@types/jasmine": "~5.1.0",
     "jasmine-core": "~5.9.0",
     "karma": "~6.4.0",
