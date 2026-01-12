@@ -1,0 +1,92 @@
+<div class="view-container">
+  <!-- Navigation Header -->
+  <app-navigation-header [title]="title" />
+
+  <!-- Main Content -->
+  <main class="view-content">
+    <!-- Breadcrumb Navigation -->
+  <div class="breadcrumb-bar">
+    <button class="btn-icon" (click)="navigateUp()" [disabled]="pathParts().length === 0" title="Up">
+      ⬆️
+    </button>
+
+    <div class="breadcrumb">
+      @if (pathParts().length === 0) {
+        <span class="breadcrumb-current">Root</span>
+      } @else {
+        <button class="breadcrumb-link" (click)="navigateToPathPart(-1)">
+          Root
+        </button>
+        @for (part of pathParts(); track $index; let isLast = $last) {
+          <span class="breadcrumb-separator">/</span>
+          @if (isLast) {
+            <span class="breadcrumb-current">{{ part }}</span>
+          } @else {
+            <button class="breadcrumb-link" (click)="navigateToPathPart($index)">
+              {{ part }}
+            </button>
+          }
+        }
+      }
+    </div>
+
+    <button class="btn-icon" (click)="refresh()" title="Refresh">
+      🔄
+    </button>
+  </div>
+
+  <!-- Error Message -->
+  @if (errorMessage()) {
+    <div class="error-banner">
+      <span class="error-icon">⚠️</span>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>Loading...</p>
+    </div>
+  }
+
+  <!-- File List -->
+  @if (!isLoading() && !errorMessage()) {
+    <div class="file-list">
+      @if (entries().length === 0) {
+        <div class="empty-state">
+          <span class="empty-icon">📭</span>
+          <p>This directory is empty</p>
+        </div>
+      } @else {
+        <div class="file-list-header">
+          <div class="col-name">Name</div>
+          <div class="col-type">Type</div>
+          <div class="col-size">Size</div>
+        </div>
+
+        @for (entry of entries(); track entry.name) {
+          <div
+            class="file-entry"
+            [class.directory]="entry.type === 'directory'"
+            (dblclick)="onEntryDoubleClick(entry)"
+            (click)="entry.type === 'directory' ? openDirectory(entry) : null"
+          >
+            <div class="col-name">
+              <span class="entry-icon">{{ getEntryIcon(entry) }}</span>
+              <span class="entry-name">{{ entry.name }}</span>
+            </div>
+            <div class="col-type">
+              {{ entry.type === 'directory' ? 'Folder' : 'File' }}
+            </div>
+            <div class="col-size">
+              {{ formatFileSize(entry.size) }}
+            </div>
+          </div>
+        }
+      }
+    </div>
+  }
+  </main>
+</div>

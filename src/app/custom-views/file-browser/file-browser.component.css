@@ -1,0 +1,253 @@
+.view-container {
+  min-height: 100vh;
+  background: #1a1a1a;
+  display: flex;
+  flex-direction: column;
+}
+
+.view-content {
+  flex: 1;
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Breadcrumb Navigation */
+.breadcrumb-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background-color: var(--DarkGreyColor);
+  border-radius: var(--BorderRadius);
+  margin-bottom: 1.5rem;
+}
+
+.breadcrumb {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  font-size: 1rem;
+}
+
+.breadcrumb-separator {
+  color: var(--MediumGreyColor);
+  margin: 0 0.25rem;
+}
+
+.breadcrumb-link {
+  background: none;
+  border: none;
+  color: var(--PrimaryColorLight);
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.breadcrumb-link:hover {
+  background-color: var(--PrimaryColorDark);
+  color: var(--LightColor);
+}
+
+.breadcrumb-current {
+  color: var(--LightColor);
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+}
+
+.btn-icon {
+  background-color: var(--PrimaryColor);
+  border: none;
+  color: var(--LightColor);
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--BorderRadius);
+  font-size: 1.2rem;
+  transition: all 0.2s;
+  min-width: 40px;
+}
+
+.btn-icon:hover:not(:disabled) {
+  background-color: var(--PrimaryColorDark);
+  transform: scale(1.05);
+}
+
+.btn-icon:disabled {
+  background-color: var(--DarkGreyColor);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Error Banner */
+.error-banner {
+  background-color: rgba(180, 15, 0, 0.2);
+  border: 2px solid var(--StopColor);
+  border-radius: var(--BorderRadius);
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--LightColor);
+}
+
+.error-icon {
+  font-size: 1.5rem;
+}
+
+/* Loading State */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  gap: 1rem;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid var(--DarkGreyColor);
+  border-top-color: var(--PrimaryColor);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-container p {
+  color: var(--MediumGreyColor);
+  font-size: 1rem;
+}
+
+/* File List */
+.file-list {
+  background-color: var(--DarkGreyColor);
+  border-radius: var(--BorderRadius);
+  overflow: hidden;
+}
+
+.file-list-header {
+  display: grid;
+  grid-template-columns: 1fr 150px 120px;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background-color: var(--PrimaryColorDark);
+  color: var(--LightColor);
+  font-weight: 600;
+  border-bottom: 2px solid var(--PrimaryColor);
+}
+
+.file-entry {
+  display: grid;
+  grid-template-columns: 1fr 150px 120px;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background-color 0.2s;
+  cursor: default;
+}
+
+.file-entry:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.file-entry.directory {
+  cursor: pointer;
+}
+
+.file-entry.directory:hover {
+  background-color: rgba(0, 118, 191, 0.2);
+}
+
+.file-entry:last-child {
+  border-bottom: none;
+}
+
+.col-name {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--LightColor);
+  overflow: hidden;
+}
+
+.entry-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.entry-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.col-type,
+.col-size {
+  display: flex;
+  align-items: center;
+  color: var(--MediumGreyColor);
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  gap: 1rem;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  opacity: 0.5;
+}
+
+.empty-state p {
+  color: var(--MediumGreyColor);
+  font-size: 1.1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .view-content {
+    padding: 1rem;
+  }
+
+  .file-list-header,
+  .file-entry {
+    grid-template-columns: 1fr 80px;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .col-type {
+    display: none;
+  }
+
+  .breadcrumb-bar {
+    gap: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  .breadcrumb {
+    font-size: 0.9rem;
+  }
+
+  .btn-icon {
+    padding: 0.4rem 0.6rem;
+    font-size: 1rem;
+    min-width: 35px;
+  }
+}

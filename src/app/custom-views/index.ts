@@ -18,6 +18,7 @@ import { LIGHTING_CONTROLS_METADATA } from './lighting-controls/lighting-control
 import { CAMERA_CONTROLS_METADATA } from './camera-controls/camera-controls.metadata';
 import { QSYS_CAMERAS_METADATA } from './qsys-cameras/qsys-cameras.metadata';
 import { ROOM_CONTROLS_METADATA } from './room-controls/room-controls.metadata';
+import { FILE_BROWSER_METADATA } from './file-browser/file-browser.metadata';
 
 /**
  * Array of all custom view metadata
@@ -30,6 +31,7 @@ export const CUSTOM_VIEW_METADATA = [
   CAMERA_CONTROLS_METADATA,
   QSYS_CAMERAS_METADATA,
   ROOM_CONTROLS_METADATA,
+  FILE_BROWSER_METADATA,
 ];
 
 /**
@@ -66,5 +68,10 @@ export const CUSTOM_VIEW_ROUTES: Routes = [
     path: ROOM_CONTROLS_METADATA.route,
     loadComponent: () => import('./room-controls/room-controls.component').then(m => m.RoomControlsComponent),
     title: ROOM_CONTROLS_METADATA.title
+  },
+  {
+    path: FILE_BROWSER_METADATA.route,
+    loadComponent: () => import('./file-browser/file-browser.component').then(m => m.FileBrowserComponent),
+    title: FILE_BROWSER_METADATA.title
   },
 ];

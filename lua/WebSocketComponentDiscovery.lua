@@ -1103,7 +1103,8 @@ HttpServer = (function()
     _server = TcpSocketServer.New(),
     _routes = {},
     _middleware = {},
-    _dataCoroutines = {}
+    _dataCoroutines = {},
+    _wsMessageHandlers = {}  -- Store WebSocket message handlers by socket
   }
 
   local function respond(sock, code, body, options)
@@ -1242,7 +1243,7 @@ HttpServer = (function()
   }
 
   local WebSocket = {
-    New = function(req, res, callback)
+    New = function(req, res, callback, server)
 
       if(not(req.headers['upgrade'] and req.headers['upgrade'][1] == 'websocket')) then
         res.sendStatus(400);
@@ -1271,9 +1272,115 @@ HttpServer = (function()
       res.status(101).send()
       
       local socket = rawget(res, 'socket');
+
+      -- WebSocket frame parser
+      local function parseWebSocketFrame()
+        if socket.BufferLength < 2 then
+          return nil -- Need at least 2 bytes for header
+        end
+
+        -- Read first 2 bytes to get frame info
+        local header = socket:Read(2)
+        if not header or #header < 2 then
+          return nil
+        end
+
+        local byte1 = string.byte(header, 1)
+        local byte2 = string.byte(header, 2)
+
+        -- Use bitstring library for bit operations (Q-SYS compatible)
+        local fin = (byte1 >= 0x80)
+        local opcode = byte1 % 16
+        local masked = (byte2 >= 0x80)
+        local payloadLen = byte2 % 128
+
+        -- Read extended payload length if needed
+        if payloadLen == 126 then
+          if socket.BufferLength < 2 then return nil end
+          local lenBytes = socket:Read(2)
+          payloadLen = string.byte(lenBytes, 1) * 256 + string.byte(lenBytes, 2)
+        elseif payloadLen == 127 then
+          if socket.BufferLength < 8 then return nil end
+          local lenBytes = socket:Read(8)
+          -- For simplicity, just read lower 4 bytes (max ~4GB)
+          payloadLen = string.byte(lenBytes, 5) * 16777216 +
+                       string.byte(lenBytes, 6) * 65536 +
+                       string.byte(lenBytes, 7) * 256 +
+                       string.byte(lenBytes, 8)
+        end
+
+        -- Read mask key if present
+        local maskKey = nil
+        if masked then
+          if socket.BufferLength < 4 then return nil end
+          maskKey = socket:Read(4)
+        end
+
+        -- Read payload
+        if socket.BufferLength < payloadLen then return nil end
+        local payload = socket:Read(payloadLen)
+
+        -- Unmask payload if needed (XOR operation)
+        if masked and maskKey then
+          local unmasked = {}
+          for i = 1, #payload do
+            local maskByte = string.byte(maskKey, ((i - 1) % 4) + 1)
+            local payloadByte = string.byte(payload, i)
+
+            -- Manual XOR implementation (Q-SYS Lua compatible)
+            local xor_value = 0
+            local bit = 1
+            for j = 0, 7 do
+              local mask_bit = (maskByte % 2 == 1)
+              local payload_bit = (payloadByte % 2 == 1)
+              if mask_bit ~= payload_bit then
+                xor_value = xor_value + bit
+              end
+              maskByte = math.floor(maskByte / 2)
+              payloadByte = math.floor(payloadByte / 2)
+              bit = bit * 2
+            end
+
+            unmasked[i] = string.char(xor_value)
+          end
+          payload = table.concat(unmasked)
+        end
+
+        return {
+          opcode = opcode,
+          payload = payload,
+          fin = fin
+        }
+      end
+
       socket.Data = function()
-        socket:Read(socket.BufferLength); -- clear buffers
-        -- print('wsdata', socket:Read(1024));
+        -- Try to parse incoming WebSocket frames
+        while socket.BufferLength > 0 do
+          local frame = parseWebSocketFrame()
+          if not frame then
+            break -- Need more data
+          end
+
+          -- Handle frame based on opcode
+          if frame.opcode == 0x01 then -- Text frame
+            -- Trigger callback if set in handlers table
+            if server and server._wsMessageHandlers and server._wsMessageHandlers[socket] then
+              server._wsMessageHandlers[socket](socket, frame.payload)
+            end
+          elseif frame.opcode == 0x08 then -- Close frame
+            -- Clean up handler
+            if server and server._wsMessageHandlers then
+              server._wsMessageHandlers[socket] = nil
+            end
+            socket:Disconnect()
+            break
+          elseif frame.opcode == 0x09 then -- Ping frame
+            -- Send pong response
+            local pongFrame = string.char(0x8A, 0x00) -- FIN + Pong opcode, 0 payload
+            socket:Write(pongFrame)
+          end
+          -- Ignore other opcodes (binary, pong, etc.)
+        end
       end;
 
       local function frameData(data)
@@ -1294,13 +1401,15 @@ HttpServer = (function()
         return packet;
       end;
 
-      local wsObject = setmetatable({}, {
+      local wsObject = setmetatable({socket = socket, server = server}, {
         __newindex = function(t,k,v)
           if(k == 'Closed') then
             if(type(v) ~= 'function') then
               error('Property "Closed" expects function, ' .. type(v) .. ' was given.');
             end;
             socket.Closed = v;
+          elseif(k == 'socket') then
+            rawset(t, k, v);
           end;
         end,
         __index = function(t,k)
@@ -1312,6 +1421,8 @@ HttpServer = (function()
             end
           elseif(k == 'IsConnected') then
             return socket.IsConnected;
+          elseif(k == 'socket') then
+            return rawget(t, 'socket');
           else
             error('Property "' .. k .. ' does not exist on WebSocket.');
           end;
@@ -1542,7 +1653,7 @@ HttpServer = (function()
                 error('Expected "function" argument, got ' .. type(handler));
               end;
               addRoute(server, route, 'get', function(req, res)
-                WebSocket.New(req, res, handler);
+                WebSocket.New(req, res, handler, server);
               end)
             end;
           end;
@@ -2285,6 +2396,116 @@ server:post('/api/components/:componentName/controls/:controlName', function(req
   socket:Write('HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n{"success":true}')
 end)
 
+-- ========== File Browser WebSocket Endpoint ==========
+--[[
+  File System Browser via WebSocket
+  Provides directory listing and file operations using Q-SYS dir library
+  Protocol: JSON messages with type field
+
+  Message types:
+  - Client -> Server: { type: "list", path: "/media/audio" }
+  - Server -> Client: { type: "list", path: "/media/audio", entries: [{name, type, size}] }
+  - Server -> Client: { type: "error", error: "error message" }
+]]
+
+server:ws('/ws/file-system', function(ws)
+  print('File browser WebSocket client connected')
+
+  -- Send welcome message
+  ws:Write({
+    type = 'connected',
+    message = 'File browser connected to Q-SYS Core'
+  })
+
+  -- Get the underlying socket to set message handler
+  local socket = ws.socket
+
+  -- Handle incoming messages via the handlers table
+  if socket then
+    server._wsMessageHandlers[socket] = function(_, data)
+      print('File browser: Received message: ' .. tostring(data))
+
+      local success, message = pcall(function()
+        return json.decode(data)
+      end)
+
+      if not success then
+        print('File browser: Invalid JSON: ' .. tostring(message))
+        ws:Write({
+          type = 'error',
+          error = 'Invalid JSON'
+        })
+        return
+      end
+
+      -- Handle list directory request
+      if message.type == 'list' then
+        local path = message.path or 'design/'
+        -- Ensure path ends with '/' for dir.get() API
+        if not path:match('/$') then
+          path = path .. '/'
+        end
+        print('File browser: Listing directory: ' .. path)
+
+        -- Use dir.get() to list directory contents (Q-SYS API)
+        local listSuccess, entries = pcall(function()
+          return dir.get(path)
+        end)
+
+        if not listSuccess then
+          print('File browser: Failed to list directory: ' .. tostring(entries))
+          ws:Write({
+            type = 'error',
+            path = path,
+            error = 'Failed to access directory: ' .. tostring(entries)
+          })
+          return
+        end
+
+        -- Transform entries to our format
+        local fileEntries = {}
+        if entries then
+          for _, entry in ipairs(entries) do
+            table.insert(fileEntries, {
+              name = entry.name,
+              type = entry.type, -- 'file' or 'directory'
+              size = entry.size or 0
+            })
+          end
+        end
+
+        print('File browser: Found ' .. #fileEntries .. ' entries')
+
+        -- Send response
+        ws:Write({
+          type = 'list',
+          path = path,
+          entries = fileEntries
+        })
+
+      -- Handle read file request (future enhancement)
+      elseif message.type == 'read' then
+        ws:Write({
+          type = 'error',
+          error = 'File reading not yet implemented'
+        })
+
+      else
+        ws:Write({
+          type = 'error',
+          error = 'Unknown message type: ' .. tostring(message.type)
+        })
+      end
+    end
+  else
+    print('ERROR: Could not set up file browser message handler - socket not found')
+  end
+
+  ws.Closed = function()
+    print('File browser WebSocket client disconnected')
+  end
+end)
+
 -- Start server
 function Listen()
   if Controls.port.Value == 0 then Controls.port.Value = 9091 end
@@ -2295,6 +2516,7 @@ Listen()
 
 print(('HTTP Server with WebSocket support started on port %.f'):format(Controls.port.Value))
 print(('WebSocket endpoint: ws://[CORE-IP]:%.f/ws/discovery'):format(Controls.port.Value))
+print(('WebSocket endpoint: ws://[CORE-IP]:%.f/ws/file-system'):format(Controls.port.Value))
 print(('HTTP API endpoint: http://[CORE-IP]:%.f/api/components'):format(Controls.port.Value))
 
 -- ========== END: WebSocket Component Discovery ==========
