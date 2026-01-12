@@ -119,7 +119,7 @@ export class SettingsDialogComponent {
 
       await this.qsysService.connect({
         coreIp: environment.RUNTIME_CORE_IP,
-        secure: false,
+        secure: true,
         pollInterval: 35,
       });
 

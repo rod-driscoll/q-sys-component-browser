@@ -271,6 +271,8 @@ If the archive creation fails:
 ### Display Issues (Black Screen)
 
 If the app doesn't display correctly on the touchpanel or shows a black screen:
+
+- **Use Eruda Debug Console**: All Crestron builds automatically include Eruda, a mobile-friendly debug console. Look for the icon in the bottom-right corner of the touchpanel screen and tap it to view console logs, network requests, and errors directly on the device.
 - **See the comprehensive debugging guide: [CRESTRON-DEBUGGING.md](docs/CRESTRON-DEBUGGING.md)**
 - Verify `baseHref: "./"` is set in angular.json
 - Check that all asset paths in HTML use relative paths (no leading `/`)

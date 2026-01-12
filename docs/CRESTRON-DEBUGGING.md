@@ -6,7 +6,30 @@ When the application shows a black screen on a Crestron touchpanel, follow these
 
 Crestron touchpanels run a Chromium-based browser. You can access the developer console to see errors.
 
-### Method A: Remote Debugging via Chrome DevTools
+### Method A: Eruda On-Device Debug Console (Recommended)
+
+**Eruda is automatically enabled for all Crestron builds.** It provides a mobile-friendly debug console directly on the touchpanel.
+
+1. After deploying to the touchpanel, look for a small icon in the **bottom-right corner** of the screen
+2. Tap the icon to open the Eruda console
+3. Use the tabs at the top to access different debugging tools:
+   - **Console**: View console.log, errors, warnings
+   - **Elements**: Inspect HTML elements
+   - **Network**: Monitor network requests
+   - **Resources**: View localStorage, cookies, scripts
+   - **Sources**: View loaded JavaScript files
+   - **Info**: Device and browser information
+
+**Features:**
+
+- No remote connection required - works directly on the device
+- Drag the icon to reposition it
+- Persists across page reloads
+- Captures all console output from page load
+
+**Note:** If you don't see the Eruda icon, the app may have failed to load. Check the touchpanel's system logs or try Method B below.
+
+### Method B: Remote Debugging via Chrome DevTools
 
 1. Enable remote debugging on the touchpanel:
    - Navigate to the touchpanel's web interface: `http://TOUCHPANEL_IP`

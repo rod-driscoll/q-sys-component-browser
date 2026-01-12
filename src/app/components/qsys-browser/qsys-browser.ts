@@ -273,7 +273,7 @@ export class QsysBrowser implements OnInit, OnDestroy {
     // Connect to Q-SYS Core using runtime IP (can be overridden via URL params)
     this.qsysService.connect({
       coreIp: environment.RUNTIME_CORE_IP,
-      secure: false,
+      secure: true,
       pollInterval: 35,
     }).catch((error) => {
       // Check if this is a certificate error

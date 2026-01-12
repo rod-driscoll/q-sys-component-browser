@@ -191,11 +191,24 @@ export class QSysService {
       // both isConnected and reconnectionCount will trigger properly
       if (this.currentChangeGroupId && newChangeGroupId && this.currentChangeGroupId !== newChangeGroupId) {
         console.log(`ChangeGroup ID changed from ${this.currentChangeGroupId} to ${newChangeGroupId} - triggering re-registration`);
+
+        // CRITICAL: Stop ChangeGroup polling immediately after reconnection
+        // The new ChangeGroup ID exists on the client but doesn't exist on Q-SYS Core yet
+        // (no controls have been added to it). Polling with this ID will fail with
+        // "Change group does not exist" until components re-register and add controls.
+        // We must stop polling now and let component re-registration restart it.
+        if ((changeGroup as any).intervalRef) {
+          console.log('⚠ Stopping ChangeGroup polling (new ChangeGroup not yet created on Q-SYS Core)');
+          clearInterval((changeGroup as any).intervalRef);
+          (changeGroup as any).intervalRef = null;
+        }
+
         this.currentChangeGroupId = newChangeGroupId;
         this.reconnectionCount.update(count => count + 1);
         console.log(`ChangeGroup changed - reconnection #${this.reconnectionCount()}`);
 
         // Invoke callback to re-register components with new ChangeGroup
+        // This will add controls to the new ChangeGroup and restart polling
         if (this.changeGroupChangedCallback) {
           this.changeGroupChangedCallback().catch(error => {
             console.error('Error in ChangeGroup changed callback:', error);
@@ -237,6 +250,19 @@ export class QSysService {
     this.stopKeepalive();
 
     if (this.qrwc) {
+      // CRITICAL: Stop ChangeGroup polling BEFORE disconnecting
+      // This prevents the old polling interval from continuing to run after disconnect/reconnect
+      try {
+        const changeGroup = (this.qrwc as any).changeGroup;
+        if (changeGroup && (changeGroup as any).intervalRef) {
+          console.log('Stopping ChangeGroup polling before disconnect');
+          clearInterval((changeGroup as any).intervalRef);
+          (changeGroup as any).intervalRef = null;
+        }
+      } catch (error) {
+        console.warn('Error stopping ChangeGroup polling:', error);
+      }
+
       // Try to disconnect the QRWC instance
       // The QRWC library may not have a disconnect method, so we access the WebSocket directly
       try {
@@ -319,6 +345,13 @@ export class QSysService {
    */
   getConnectionStatus(): Observable<boolean> {
     return this.connectionStatus$.asObservable();
+  }
+
+  /**
+   * Get the core IP address from connection options
+   */
+  getCoreIp(): string | null {
+    return this.options?.coreIp || null;
   }
 
   /**
@@ -944,11 +977,16 @@ export class QSysService {
 
     // Override the ChangeGroup's poll method to intercept results
     // Store original poll method
-    if (!(changeGroup as any)._originalPoll) {
+    // IMPORTANT: Check both _originalPoll AND pollInterceptorSetup flag
+    // After reconnection, QRWC creates a new ChangeGroup instance without _originalPoll,
+    // but our service-level flag might still be true from the old instance
+    if (!(changeGroup as any)._originalPoll && !this.pollInterceptorSetup) {
       (changeGroup as any)._originalPoll = (changeGroup as any).poll.bind(changeGroup);
 
       // Mark that we've set up the interceptor (for reconnection handling)
       this.pollInterceptorSetup = true;
+
+      console.log('✓ Poll interceptor set up for ChangeGroup:', (changeGroup as any).id);
 
       // Replace with our interceptor
       (changeGroup as any).poll = async () => {
