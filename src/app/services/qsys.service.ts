@@ -118,7 +118,7 @@ export class QSysService {
       // Use componentFilter to prevent loading ANY components initially (avoids timeout errors)
       this.qrwc = await Qrwc.createQrwc({
         socket,
-        pollingInterval: this.options.pollInterval || 35,
+        pollingInterval: this.options.pollInterval || 350,
         componentFilter: () => false, // Don't load any components during initialization
         logger: {
           debug: () => { }, // Suppress debug messages (polling spam)

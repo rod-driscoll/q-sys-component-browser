@@ -86,7 +86,7 @@ A ChangeGroup is Q-SYS's mechanism for efficiently receiving control value updat
 const socket = new WebSocket(`ws://${coreIp}/qrc`);
 this.qrwc = await Qrwc.createQrwc({
   socket,
-  pollingInterval: 35,
+  pollingInterval: 350,
   componentFilter: () => false  // Don't load components during init
 });
 
@@ -369,10 +369,10 @@ class ComponentWrapper {
 
 #### Polling Interval
 
-Default: 35 seconds (QRWC default)
+Default: 350 milliseconds (QRWC default)
 
 ```typescript
-pollingInterval: 35
+pollingInterval: 350
 ```
 
 **Trade-offs:**
