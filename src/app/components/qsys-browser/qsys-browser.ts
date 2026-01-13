@@ -406,6 +406,12 @@ export class QsysBrowser implements OnInit, OnDestroy {
       console.log(`✓ Loaded ${componentList.length} components`);
 
       this.loadingSubStage.set(`✓ Loaded ${componentList.length} components`);
+
+      console.log('DEBUG: loadComponents - calling loadComponentsViaWebSocket');
+      // Auto-start Secure Discovery to find script-based components
+      this.loadComponentsViaWebSocket();
+      console.log('DEBUG: loadComponents - called loadComponentsViaWebSocket');
+
       setTimeout(() => {
         this.loadingStage.set('');
         this.loadingSubStage.set('');
@@ -430,10 +436,10 @@ export class QsysBrowser implements OnInit, OnDestroy {
 
   // Load components via WebSocket discovery endpoint
   loadComponentsViaWebSocket(): void {
+    console.log('DEBUG: loadComponentsViaWebSocket - ENTERED');
     console.log('Requesting component discovery via WebSocket...');
-    this.isLoadingComponents = true;
-    this.loadingStage.set('WebSocket Discovery');
-    this.loadingSubStage.set('Connecting to WebSocket server...');
+    // Don't set global loading state to prevent UI flicker/blocking if just adding extra components
+    this.loadingSubStage.set('Connecting to Secure Discovery...');
     this.wsDiscoveryService.connect();
     this.wsDiscoveryService.connectUpdates();
   }

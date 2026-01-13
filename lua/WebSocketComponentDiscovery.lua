@@ -2604,4 +2604,89 @@ print(('WebSocket endpoint: ws://[CORE-IP]:%.f/ws/discovery'):format(Controls.po
 print(('WebSocket endpoint: ws://[CORE-IP]:%.f/ws/file-system'):format(Controls.port.Value))
 print(('HTTP API endpoint: http://[CORE-IP]:%.f/api/components'):format(Controls.port.Value))
 
+-- ========== SECURE DISCOVERY OVERLAY ==========
+-- If the required controls exist, enable secure discovery via QRC tunneling
+
+-- Shared function to generate discovery JSON (reused by both modes)
+-- Note: In the legacy code, this logic was inside the route handler. 
+-- We need to extract it, but since the legacy code is complex and closures might be an issue,
+-- we will create a dedicated generator here that replicates the logic for the secure path,
+-- or ideally, refactor the route to use this.
+-- For minimal risk to legacy, we will duplicate the "gathering" logic for the secure path first.
+
+function GenerateSecureDiscoveryJson()
+  local components = Component.GetComponents()
+  local componentList = {}
+
+  for _, cmp in ipairs(components) do
+    if cmp.Name and cmp.Name ~= "" then
+      -- Get control count via GetControls
+      local controls = Component.GetControls(cmp.Name)
+      local controlCount = 0
+      if controls and controls.Controls then
+        controlCount = #controls.Controls
+      end
+
+      table.insert(componentList, {
+        name = cmp.Name,
+        type = cmp.Type or "Unknown",
+        controlCount = controlCount,
+        controls = {}, -- Don't send all controls in discovery to keep payload small
+        properties = cmp.Properties or {}
+      })
+    end
+  end
+
+  return require('rapidjson').encode({
+    timestamp = os.time(),
+    totalComponents = #componentList,
+    components = componentList
+  })
+end
+
+-- Chunking constants for Text Control output (limit is usually 64KB, but we stay safe)
+local CHUNK_SIZE = 40000 
+
+if Controls.json_output and Controls.trigger_update then
+  print("Secure Discovery Controls detected. Enabling QRC Tunnel.")
+  
+  -- Function to write JSON to output control with chunking
+  local function WriteJsonToControl(jsonStr)
+    if #jsonStr <= CHUNK_SIZE then
+      -- Fits in one chunk
+      Controls.json_output.String = jsonStr
+    else
+      -- Needs chunking
+      -- Reset status
+      Controls.json_output.String = "START:" .. math.ceil(#jsonStr / CHUNK_SIZE)
+      
+      -- Helper to split string
+      local chunks = {}
+      for i = 1, #jsonStr, CHUNK_SIZE do
+        table.insert(chunks, string.sub(jsonStr, i, i + CHUNK_SIZE - 1))
+      end
+      
+      -- Write chunks sequentially
+      -- Note: In a real async environment, we might need delays, but Q-SYS Lua is single threaded events.
+      -- Writing to a control triggers an update. For the client to catch all, 
+      -- we might need a protocol. 
+      -- Simple Protocol: "CHUNK:index:total:data"
+      
+      for i, chunk in ipairs(chunks) do
+        Controls.json_output.String = string.format("CHUNK:%d:%d:%s", i, #chunks, chunk)
+      end
+      
+      Controls.json_output.String = "END"
+    end
+  end
+
+  Controls.trigger_update.EventHandler = function()
+    print("Received Secure Discovery Request via Trigger")
+    local jsonStr = GenerateSecureDiscoveryJson()
+    WriteJsonToControl(jsonStr)
+  end
+else
+  print("Secure Discovery Controls NOT detected. Running in Legacy Mode only.")
+end
+
 -- ========== END: WebSocket Component Discovery ==========

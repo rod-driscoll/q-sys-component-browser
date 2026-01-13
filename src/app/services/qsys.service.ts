@@ -553,7 +553,7 @@ export class QSysService {
    * Set control value via RPC
    * Uses Component.Set RPC directly
    */
-  private async setControlViaRpc(componentName: string, controlName: string, value: any): Promise<void> {
+  async setControlViaRpc(componentName: string, controlName: string, value: any): Promise<void> {
     if (!this.qrwc) {
       throw new Error('Not connected to Q-SYS Core');
     }

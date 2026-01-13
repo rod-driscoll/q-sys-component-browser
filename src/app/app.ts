@@ -16,7 +16,7 @@ export class App implements OnInit {
 
   @ViewChild(SettingsDialogComponent) settingsDialog!: SettingsDialogComponent;
 
-  constructor(private qsysService: QSysService) {}
+  constructor(private qsysService: QSysService) { }
 
   ngOnInit(): void {
     // Parse URL parameters for dynamic Q-SYS Core connection settings
@@ -96,8 +96,8 @@ export class App implements OnInit {
       // Log the active connection settings
       console.log(`Active Q-SYS Core IP: ${environment.RUNTIME_CORE_IP}`);
       console.log(`Active Q-SYS Core Port: ${environment.RUNTIME_CORE_PORT}`);
-      console.log(`WebSocket Discovery URL: ${environment.QSYS_WS_DISCOVERY_URL}`);
-      console.log(`HTTP API URL: ${environment.QSYS_HTTP_API_URL}`);
+      // console.log(`WebSocket Discovery URL: ${environment.QSYS_WS_DISCOVERY_URL}`); 
+      // console.log(`HTTP API URL: ${environment.QSYS_HTTP_API_URL}`);
     } else {
       console.log(`Using default Q-SYS Core connection: ${environment.RUNTIME_CORE_IP}:${environment.RUNTIME_CORE_PORT}`);
     }

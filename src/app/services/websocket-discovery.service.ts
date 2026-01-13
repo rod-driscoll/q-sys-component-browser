@@ -1,5 +1,6 @@
-import { Injectable, signal } from '@angular/core';
-import { environment } from '../../environments/environment';
+import { Injectable, signal, inject } from '@angular/core';
+import { QSysService } from './qsys.service';
+import { LuaScriptService } from './lua-script.service';
 
 export interface DiscoveryMessage {
   type: string;
@@ -30,17 +31,18 @@ export interface ComponentUpdate {
   providedIn: 'root'
 })
 export class WebSocketDiscoveryService {
-  private ws: WebSocket | null = null;
-  private updatesWs: WebSocket | null = null;
+  private qsysService = inject(QSysService);
+  private luaScriptService = inject(LuaScriptService);
 
-  // Use getters to always reference current runtime IP
-  private get wsUrl(): string {
-    return environment.QSYS_WS_DISCOVERY_URL;
-  }
+  // Direct Control Names (MUST match what is in the Lua script)
+  private readonly TRIGGER_CONTROL = 'trigger_update';
+  private readonly OUTPUT_CONTROL = 'json_output';
 
-  private get updatesUrl(): string {
-    return environment.QSYS_WS_UPDATES_URL;
-  }
+  // Script name to search for (Logic in LuaScriptService)
+  private readonly SCRIPT_NAME_KEY = 'WebSocket Component Discovery';
+
+  // State
+  private boundComponentName: string | null = null;
 
   // Signals for reactive state
   public isConnected = signal<boolean>(false);
@@ -50,144 +52,206 @@ export class WebSocketDiscoveryService {
   public connectionFailed = signal<boolean>(false);
   public loadingStage = signal<string>('');
 
-  constructor() {}
+  // Internal state for chunk reassembly
+  private jsonBuffer = '';
+  private expectedChunks = 0;
+  private receivedChunks = 0;
+
+  constructor() { }
 
   /**
-   * Connect to the WebSocket discovery endpoint
-   * Automatically receives full component discovery data on connection
+   * Connect to the Discovery Service
+   * "Smart Discovery": Scans for the script component, then binds to standard controls.
    */
-  connect(): void {
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      console.log('WebSocket already connected');
+  async connect(): Promise<void> {
+    if (this.isConnected()) {
+      console.log('Discovery already connected');
       return;
     }
 
-    console.log('Connecting to WebSocket discovery endpoint:', this.wsUrl);
-    this.loadingStage.set('Connecting to WebSocket...');
-    this.ws = new WebSocket(this.wsUrl);
+    console.log('Initiating Secure Component Discovery (No Named Controls)...');
+    this.loadingStage.set('Connecting to Q-SYS Core...');
 
-    this.ws.onopen = () => {
-      console.log('✓ Connected to WebSocket discovery endpoint');
-      this.isConnected.set(true);
-      this.error.set(null);
-      this.connectionFailed.set(false);
-      this.loadingStage.set('✓ WebSocket connected, waiting for data...');
-    };
-
-    this.ws.onmessage = (event) => {
-      try {
-        const message: DiscoveryMessage = JSON.parse(event.data);
-        console.log('Received WebSocket message:', message.type);
-
-        if (message.type === 'discovery' && message.data) {
-          console.log(`Received discovery data: ${message.data.totalComponents} components`);
-          this.loadingStage.set(`Received ${message.data.totalComponents} components`);
-          this.discoveryData.set(message.data);
-        } else if (message.type === 'connected') {
-          console.log('WebSocket acknowledged:', message.message);
-          this.loadingStage.set('WebSocket connection acknowledged');
+    try {
+      // Ensure Q-SYS Service is connected
+      if (!this.qsysService.isConnected()) {
+        this.loadingStage.set('Waiting for QRAM connection...');
+        let attempts = 0;
+        while (!this.qsysService.isConnected() && attempts < 20) {
+          await new Promise(r => setTimeout(r, 500));
+          attempts++;
         }
-      } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
-        this.error.set('Failed to parse discovery data');
-        this.loadingStage.set('');
+        if (!this.qsysService.isConnected()) {
+          throw new Error('Q-SYS Core connection failed');
+        }
       }
-    };
 
-    this.ws.onerror = (error) => {
-      console.error('WebSocket discovery error:', error);
-      this.error.set('Failed to connect to WebSocket server. Please ensure the WebSocket server script is loaded in a Q-SYS component.');
-      this.isConnected.set(false);
+      this.loadingStage.set('Scanning for Discovery Script...');
+
+      // Step 1: Find the component running the script
+      this.boundComponentName = await this.findDiscoveryComponent();
+
+      if (this.boundComponentName) {
+        console.log(`Found Discovery Script in component: ${this.boundComponentName}`);
+        this.loadingStage.set(`Found script in '${this.boundComponentName}', establishing tunnel...`);
+
+        // Step 2: Bind to its direct controls
+        await this.setupSecureTunnel(this.boundComponentName);
+      } else {
+        throw new Error('Discovery Script not found on Core. Please ensure WebSocketComponentDiscovery.lua is running in a script component.');
+      }
+
+    } catch (err: any) {
+      console.error('Discovery Connection Failed:', err);
+      this.error.set(err.message || 'Failed to connect');
       this.connectionFailed.set(true);
-      this.loadingStage.set('');
-    };
-
-    this.ws.onclose = (event) => {
-      console.log('WebSocket discovery connection closed', event.code, event.reason);
-      this.isConnected.set(false);
-      this.ws = null;
-      this.loadingStage.set('');
-
-      // If closed without ever connecting successfully, mark as failed
-      if (!this.discoveryData()) {
-        this.connectionFailed.set(true);
-      }
-    };
+      this.loadingStage.set('Connection Failed');
+    }
   }
 
   /**
-   * Connect to the WebSocket updates endpoint
-   * Receives real-time component control updates
+   * Scans components to find the one running the discovery script
    */
-  connectUpdates(): void {
-    if (this.updatesWs && this.updatesWs.readyState === WebSocket.OPEN) {
-      console.log('Updates WebSocket already connected');
-      return;
+  private async findDiscoveryComponent(): Promise<string | null> {
+    try {
+      const components = await this.qsysService.getComponents(true);
+      console.log(`Scanning ${components.length} components for Script signature...`);
+
+      // Filter for potential scripts
+      // Optimization: Prioritize components with "Script" in name or type, or specifically "webserver" as per user config
+      const candidates = components.filter(c =>
+        (c.type && c.type === 'device_controller_script') &&
+        (c.controlCount > 0) // Fallback: Check all components with controls if needed, but this is slow.
+      );
+
+      console.log(`Debug: Filtered ${candidates.length} candidates for deep scan from ${components.length} total.`);
+
+      for (const comp of candidates) {
+        try {
+          // RPC to get just the Code control
+          const webSocketManager = (this.qsysService as any).qrwc?.webSocketManager;
+          if (!webSocketManager) {
+            console.error('WebSocketManager not found');
+            continue;
+          }
+
+          console.log(`Debug: Scanning component "${comp.name}"...`);
+          // Fetch 'Code' control - Note: 'code' (lowercase) or 'Code' (Titlecase)
+          // The user said "code" control. Q-SYS RPC is case sensitive for Names? Usually TitleCase "Code".
+          // We will try both or just "Code" as standard. User said 'code'.
+          const result = await webSocketManager.sendRpc('Component.Get', {
+            Name: comp.name,
+            Controls: [{ Name: 'code' }]
+          }).catch(() => null);
+          console.log(`Debug: Scan result for ${comp.name}:`, result);
+
+          if (result && result.Controls) {
+            console.log(`Debug: Scanning component ${comp.name} for Code control...`);
+            const codeControl = result.Controls.find((c: any) => c.Name === 'Code' || c.Name === 'code');
+            if (codeControl) {
+              console.log(`Debug: Checked ${comp.name}, found Code control (Length: ${codeControl.String?.length})`);
+              if (codeControl.String && this.luaScriptService.isScriptPresent(codeControl.String, this.SCRIPT_NAME_KEY)) {
+                console.log(`Debug: MATCH FOUND in ${comp.name}`);
+                return comp.name;
+              }
+            }
+          }
+        } catch (scanErr) {
+          // Ignore individual component scan errors
+          // console.debug(`Skipping scan of ${comp.name}`, scanErr);
+        }
+      }
+      return null;
+    } catch (e) {
+      console.error('Scan failed', e);
+      return null;
     }
+  }
 
-    console.log('Connecting to WebSocket updates endpoint:', this.updatesUrl);
-    this.updatesWs = new WebSocket(this.updatesUrl);
+  /**
+   * Sets up the secure tunnel using Direct Component Controls
+   */
+  private async setupSecureTunnel(componentName: string): Promise<void> {
+    // Subscribe to Control Updates
+    this.qsysService.getControlUpdates().subscribe(update => {
+      // Check if update is for OUR component and output control
+      // Note: Component.Get (triggered by 'trigger_update') might send updates with Name=json_output
+      if (update.component === componentName && (update.control === this.OUTPUT_CONTROL || (update as any).name === this.OUTPUT_CONTROL || (update as any).Name === this.OUTPUT_CONTROL)) {
+        const val = (update as any).String || (update as any).string || update.value;
+        if (val !== undefined) {
+          this.handleTunnelData(val);
+        }
+      }
+    });
 
-    this.updatesWs.onopen = () => {
-      console.log('✓ Connected to WebSocket updates endpoint');
-    };
+    // Send Trigger to start discovery
+    // Using existing public accessor
+    await this.qsysService.setControlViaRpc(componentName, this.TRIGGER_CONTROL, 1);
 
-    this.updatesWs.onmessage = (event) => {
+    // Also, we might want to manually Poll the output control once to be sure, 
+    // in case the Trigger doesn't cause an auto-push of the output control change if we aren't "subscribed/change-grouped".
+    // A simple follow-up Get can help ensure we see the result.
+    setTimeout(async () => {
       try {
-        const message = JSON.parse(event.data);
-        console.log('Received update message:', message.type, message.componentName || '');
+        const webSocketManager = (this.qsysService as any).qrwc?.webSocketManager;
+        if (webSocketManager) {
+          const res = await webSocketManager.sendRpc('Component.Get', {
+            Name: componentName,
+            Controls: [{ Name: this.OUTPUT_CONTROL }]
+          });
+          if (res && res.Controls && res.Controls.length > 0) {
+            this.handleTunnelData(res.Controls[0].String);
+          }
+        }
+      } catch (e) { console.warn('Poll failed', e); }
+    }, 500);
 
-        if (message.type === 'componentUpdate') {
-          console.log(`Component update: ${message.componentName} - ${message.controls?.length || 0} controls`);
-          this.componentUpdate.set(message);
-        } else if (message.type === 'connected') {
-          console.log('Updates WebSocket acknowledged:', message.message);
-        } else
-          console.warn('Unknown update message type:', message.type);
-      } catch (error) {
-        console.error('Error parsing update message:', error);
+    this.isConnected.set(true);
+    this.error.set(null);
+    this.loadingStage.set('Secure Tunnel Established');
+  }
+
+  /**
+   * Handles incoming data from the secure tunnel
+   */
+  private handleTunnelData(data: string): void {
+    if (!data) return;
+
+    if (data.startsWith('START:')) {
+      this.jsonBuffer = '';
+      this.expectedChunks = parseInt(data.split(':')[1], 10);
+      this.receivedChunks = 0;
+      this.loadingStage.set(`Receiving Data (0/${this.expectedChunks})...`);
+    } else if (data.startsWith('CHUNK:')) {
+      const parts = data.match(/^CHUNK:(\d+):(\d+):(.*)$/);
+      if (parts) {
+        const content = parts[3];
+        this.jsonBuffer += content;
+        this.receivedChunks++;
+        this.loadingStage.set(`Receiving Data (${this.receivedChunks}/${this.expectedChunks})...`);
       }
-    };
-
-    this.updatesWs.onerror = (error) => {
-      console.error('Updates WebSocket error:', error);
-    };
-
-    this.updatesWs.onclose = () => {
-      console.log('Updates WebSocket connection closed');
-      this.updatesWs = null;
-    };
-  }
-
-  /**
-   * Disconnect from the WebSocket
-   */
-  disconnect(): void {
-    if (this.ws) {
-      console.log('Disconnecting WebSocket');
-      this.ws.close();
-      this.ws = null;
-      this.isConnected.set(false);
-    }
-    if (this.updatesWs) {
-      console.log('Disconnecting Updates WebSocket');
-      this.updatesWs.close();
-      this.updatesWs = null;
+    } else if (data === 'END') {
+      this.processDiscoveryJson(this.jsonBuffer);
+      this.jsonBuffer = '';
+    } else if (data.trim().startsWith('{')) {
+      this.processDiscoveryJson(data);
     }
   }
 
-  /**
-   * Reconnect to the WebSocket
-   */
-  reconnect(): void {
-    this.disconnect();
-    setTimeout(() => this.connect(), 500);
+  private processDiscoveryJson(jsonStr: string): void {
+    try {
+      const data = JSON.parse(jsonStr);
+      console.log(`Received secure discovery data: ${data.totalComponents} components`);
+      this.discoveryData.set(data);
+    } catch (e) {
+      console.error('Failed to parse discovery JSON', e);
+      this.error.set('Invalid Data Received');
+    }
   }
 
-  /**
-   * Get discovery data (non-reactive)
-   */
-  getDiscoveryData(): DiscoveryData | null {
-    return this.discoveryData();
-  }
+  // Legacy stubs
+  connectUpdates(): void { }
+  disconnect(): void { this.isConnected.set(false); }
+  reconnect(): void { this.connect(); }
+  getDiscoveryData(): DiscoveryData | null { return this.discoveryData(); }
 }

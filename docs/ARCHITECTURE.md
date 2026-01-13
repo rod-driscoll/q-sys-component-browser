@@ -83,7 +83,7 @@ A ChangeGroup is Q-SYS's mechanism for efficiently receiving control value updat
 
 ```typescript
 // QSysService.connect()
-const socket = new WebSocket(`ws://${coreIp}/qrc`);
+const socket = new WebSocket(`wss://${coreIp}/qrc`);
 this.qrwc = await Qrwc.createQrwc({
   socket,
   pollingInterval: 350,
