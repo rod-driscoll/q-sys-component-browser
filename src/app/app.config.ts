@@ -7,12 +7,14 @@ import { routes } from './app.routes';
 import { CustomViewRegistryService } from './services/custom-view-registry.service';
 import { CUSTOM_VIEW_METADATA } from './custom-views';
 import { PwaUpdateService } from './services/pwa-update.service';
+import { count } from 'rxjs';
 
 /**
  * Initialize custom view registry on app startup
  */
 function initializeCustomViewRegistry(registry: CustomViewRegistryService): () => void {
   return () => {
+    console.log('AppConfig: Initializing Custom View Registry with metadata...');
     registry.registerViews(CUSTOM_VIEW_METADATA);
   };
 }

@@ -22,9 +22,10 @@ export class CustomViewRegistryService {
    * @param metadata Array of view metadata to register
    */
   registerViews(metadata: CustomViewMetadata[]): void {
+    console.log(`Registering ${metadata.length} custom views...`);
     const sorted = [...metadata].sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
     this.views.set(sorted);
-    console.log(`✓ Registered ${sorted.length} custom views:`, sorted.map(v => v.title));
+    console.log(`✓ I have Registered ${sorted.length} custom views:`, sorted.map(v => v.title));
   }
 
   /**

@@ -1,0 +1,129 @@
+<div class="view-container">
+  <!-- Navigation Header -->
+  <app-navigation-header [title]="title" />
+
+  <!-- Main Content -->
+  <main class="view-content">
+    <!-- Controls Bar -->
+    <div class="controls-bar">
+      <button class="btn-refresh" (click)="refresh()" title="Refresh">
+        🔄 Refresh
+      </button>
+    </div>
+
+    <!-- Error Message -->
+    @if (errorMessage()) {
+      <div class="error-banner">
+        <span class="error-icon">⚠️</span>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+
+    <!-- Loading State -->
+    @if (isLoading()) {
+      <div class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Loading named controls...</p>
+      </div>
+    }
+
+    <!-- Named Controls Grid -->
+    @if (!isLoading() && !errorMessage()) {
+      @if (namedControls().length === 0) {
+        <div class="empty-state">
+          <span class="empty-icon">🎛️</span>
+          <p>No named controls found</p>
+          <p class="empty-hint">Named controls are defined in ExternalControls.xml</p>
+        </div>
+      } @else {
+        <div class="controls-grid">
+          @for (control of namedControls(); track control.id) {
+            <div class="control-card">
+              <!-- Control Header -->
+              <div class="control-header">
+                <div class="control-title">
+                  <span class="control-icon">{{ getControlIcon(control.type) }}</span>
+                  <span class="control-name">{{ control.controlName }}</span>
+                </div>
+                <span class="control-type-badge">{{ control.type }}</span>
+              </div>
+
+              <!-- Control Info -->
+              <div class="control-info">
+                <div class="info-row">
+                  <span class="info-label">Component:</span>
+                  <span class="info-value">{{ control.componentLabel }}</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">Control ID:</span>
+                  <span class="info-value">{{ control.controlId }}</span>
+                </div>
+                @if (control.mode !== 'W') {
+                  <div class="info-row">
+                    <span class="info-label">Value:</span>
+                    <span class="info-value">{{ getDisplayValue(control) }}</span>
+                  </div>
+                }
+              </div>
+
+              <!-- Control Interactive Element -->
+              <div class="control-interactive">
+                @if (control.type === 'Float' || control.type === 'Integer') {
+                  <!-- Knob Control -->
+                  @if (control.mode === 'RW' || control.mode === 'W') {
+                    <app-knob-control
+                      [control]="toControlInfo(control)"
+                      (valueChange)="onControlValueChange(control, $event)"
+                    />
+                  } @else {
+                    <div class="readonly-value">
+                      <span class="value-display">{{ getDisplayValue(control) }}</span>
+                      @if (control.minimumValue !== undefined && control.maximumValue !== undefined) {
+                        <span class="value-range">
+                          ({{ control.minimumValue }} - {{ control.maximumValue }})
+                        </span>
+                      }
+                    </div>
+                  }
+                } @else if (control.type === 'Boolean') {
+                  <!-- Boolean Control -->
+                  @if (control.mode === 'RW' || control.mode === 'W') {
+                    <app-boolean-control
+                      [control]="toControlInfo(control)"
+                      (valueChange)="onControlValueChange(control, $event)"
+                    />
+                  } @else {
+                    <div class="readonly-value">
+                      <span class="value-display">{{ getDisplayValue(control) }}</span>
+                    </div>
+                  }
+                } @else if (control.type === 'Trigger') {
+                  <!-- Trigger Button -->
+                  <button
+                    class="btn-trigger"
+                    (click)="onTriggerClick(control)"
+                    [disabled]="control.mode === 'R'"
+                  >
+                    Trigger
+                  </button>
+                } @else if (control.type === 'String') {
+                  <!-- Text Control -->
+                  @if (control.mode === 'RW' || control.mode === 'W') {
+                    <app-text-control
+                      [control]="toControlInfo(control)"
+                      (valueChange)="onControlValueChange(control, $event)"
+                    />
+                  } @else {
+                    <div class="readonly-value">
+                      <span class="value-display">{{ getDisplayValue(control) }}</span>
+                    </div>
+                  }
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+  </main>
+</div>
