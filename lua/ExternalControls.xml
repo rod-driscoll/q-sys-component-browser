@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Design DesignName="GC Built Pilates 20251212 [10.0.2]" CompileGUID="">
+  <Snapshots>
+    <Snapshot Name="Global" Count="4" CodeName="global_snapshot" />
+    <Snapshot Name="System On-Off" Count="2" CodeName="e64be515-0c21-4e4c-908c-1bf1dc08c7c1" />
+    <Snapshot Name="SPEAKER-ZONING" Count="8" CodeName="afb95fb8-cc37-4c3a-992c-a30402cda5e0" />
+    <Snapshot Name="BGM" Count="8" CodeName="b25a0a7c-3b3e-42ff-b6de-6ae7d791d2c7" />
+    <Snapshot Name="Camera Snapshot" Count="8" CodeName="79d97920-6ce8-4870-87e3-86375ee392cc" />
+  </Snapshots>
+  <ExternalControls>
+    <Control Id="Room On Trigger" ControlId="SystemOn" ControlName="SystemOn" ComponentId="lF,po4P;D[JT'O$MooXQ" ComponentName="Room Controls : Text Controller" ComponentLabel="Room Controls DEV" Type="Trigger" Mode="RW" Size="1" />
+    <Control Id="Room Off Trigger" ControlId="SystemOff" ControlName="SystemOff" ComponentId="lF,po4P;D[JT'O$MooXQ" ComponentName="Room Controls : Text Controller" ComponentLabel="Room Controls DEV" Type="Trigger" Mode="RW" Size="1" />
+    <Control Id="GAIN" ControlId="gain" ControlName="Gain" ComponentId="Amt@sbEkmj]'81p]#7pd" ComponentName="Program gain : Stereo Gain" ComponentLabel="Program gain" Type="Float" Mode="RW" MinimumValue="-40" MaximumValue="0" Size="1" />
+  </ExternalControls>
+</Design>
