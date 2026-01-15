@@ -9,63 +9,21 @@
   min-height: 100vh;
 }
 
-.header {
+/* Global Search */
+.global-search-container {
   margin-bottom: 16px;
-  padding: 16px 20px;
-  background-color: #2c3e50;
-  margin: -20px -20px 16px -20px;
-  /* border: green 2px solid; */
-}
-
-.header-main {
-  max-width: 1200px;
-  margin: 0 auto;
+  position: relative;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  /* border: blue 2px solid; */
+  align-items: center;
+  gap: 8px;
 }
 
-.header-left {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  flex: 1;
-  min-width: 0;
-  /* border: yellow 2px solid; */
-}
-
-.header-left-content {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-  /* border: orange 2px solid; */
-}
-
-.header-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
-  flex-shrink: 0;
-  /* border: red 2px solid; */
-}
-
-.header h1 {
-  margin: 0;
-  font-size: 20px;
-  color: #ffffff;
-}
-
-/* Back Button */
 .back-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   padding: 0;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -85,78 +43,6 @@
 
 .back-button:active {
   transform: translateX(0);
-}
-
-.connection-status {
-  padding: 4px 12px;
-  border-radius: 12px;
-  background-color: #f44336;
-  color: white;
-  font-weight: 500;
-  font-size: 12px;
-}
-
-.connection-status.connected {
-  background-color: #4caf50;
-}
-
-.ws-connection-status {
-  padding: 4px 12px;
-  border-radius: 12px;
-  background-color: #3498db;
-  color: white;
-  font-weight: 500;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.ws-connection-status.connected {
-  background-color: #2ecc71;
-}
-
-.core-ip {
-  color: #5dade2;
-  font-family: 'Courier New', monospace;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.core-info {
-  color: #bdc3c7;
-  font-size: 11px;
-  font-weight: 500;
-}
-
-.project-detail-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-}
-
-.detail-label {
-  font-weight: 600;
-  color: #bdc3c7;
-}
-
-.detail-value {
-  color: #ffffff;
-  font-family: 'Courier New', monospace;
-  background-color: rgba(255, 255, 255, 0.1);
-  padding: 2px 8px;
-  border-radius: 3px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-/* Global Search */
-.global-search-container {
-  margin-top: 16px;
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .global-search-input {

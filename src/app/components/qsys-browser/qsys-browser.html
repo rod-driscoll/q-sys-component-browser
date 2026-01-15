@@ -1,51 +1,20 @@
 <div class="qsys-browser">
-  <!-- Header -->
-  <div class="header">
-    <div class="header-main">
-      <div class="header-left">
-        <button class="back-button" (click)="navigateToMenu()" title="Back to Menu">
-          ←
-        </button>
-        <div class="header-left-content">
-          <h1>Q-SYS Component Browser</h1>
-          <div class="project-detail-item">
-            <span class="detail-label">Project:</span>
-            <span class="detail-value">{{ designName || 'Loading...' }}</span>
-          </div>
-        </div>
-      </div>
-      <div class="header-right">
-        <div class="connection-status" [class.connected]="isConnected()">
-          {{ isConnected() ? 'Core Connected' : 'Core Disconnected' }}
-        </div>
-        @if (wsDiscoveryService.isConnected()) {
-          <div class="ws-connection-status connected" [title]="'Communication via ' + (wsDiscoveryService.useControlBasedCommunication() ? 'json_output Control' : 'Lua WebSocket Updates')">
-            {{ wsDiscoveryService.useControlBasedCommunication() ? 'Control-Based' : 'WebSocket' }}
-          </div>
-        }
-        <div class="core-ip">
-          {{ coreIp }}@if (!wsDiscoveryService.useControlBasedCommunication()) { :{{ corePort }} }
-        </div>
-        @if (corePlatform && coreState) {
-          <div class="core-info">{{ corePlatform }} ({{ coreState }})</div>
-        }
-      </div>
-    </div>
-
-    <!-- Global Control Search -->
-    <div class="global-search-container">
-      <input
-        type="text"
-        class="global-search-input"
-        placeholder="🔍 Search all controls (supports regex)..."
-        [(ngModel)]="globalSearchTerm"
-        (input)="onGlobalSearchChange()"
-        [disabled]="!isConnected()"
-      />
-      @if (globalSearchTerm) {
-        <button class="clear-search-button" (click)="clearGlobalSearch()">✕</button>
-      }
-    </div>
+  <!-- Global Control Search (moved up since header is now at app level) -->
+  <div class="global-search-container">
+    <button class="back-button" (click)="navigateToMenu()" title="Back to Menu">
+      ←
+    </button>
+    <input
+      type="text"
+      class="global-search-input"
+      placeholder="🔍 Search all controls (supports regex)..."
+      [(ngModel)]="globalSearchTerm"
+      (input)="onGlobalSearchChange()"
+      [disabled]="!isConnected()"
+    />
+    @if (globalSearchTerm) {
+      <button class="clear-search-button" (click)="clearGlobalSearch()">✕</button>
+    }
   </div>
 
   <!-- Loading Notifications with Stage Details -->
