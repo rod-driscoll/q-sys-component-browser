@@ -357,25 +357,34 @@ export class HeaderComponent {
   wsDiscoveryService = inject(WebSocketDiscoveryService);
 
   showConnectionDetails = false;
+  private cachedStatus: any = null;
+  private cachedStatusTime = 0;
+  private cacheTimeout = 5000; // Cache for 5 seconds
+
+  // Get cached core status to avoid repeated API calls
+  private getCachedStatus() {
+    const now = Date.now();
+    if (!this.cachedStatus || (now - this.cachedStatusTime) > this.cacheTimeout) {
+      try {
+        this.cachedStatus = this.qsysService.getCoreStatus();
+        this.cachedStatusTime = now;
+      } catch (error) {
+        return null;
+      }
+    }
+    return this.cachedStatus;
+  }
 
   // Get design name from QSysService status
   getDesignNameDisplay(): string {
-    try {
-      const status = this.qsysService.getCoreStatus();
-      return status?.designName || '';
-    } catch {
-      return '';
-    }
+    const status = this.getCachedStatus();
+    return status?.designName || '';
   }
 
   // Get core type from QSysService status
   getCoreType(): string {
-    try {
-      const status = this.qsysService.getCoreStatus();
-      return status?.platform || 'Unknown';
-    } catch {
-      return 'Unknown';
-    }
+    const status = this.getCachedStatus();
+    return status?.platform || 'Unknown';
   }
 
   // Core address without port

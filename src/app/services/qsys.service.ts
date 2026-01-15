@@ -1321,8 +1321,6 @@ export class QSysService {
       // Access engineStatus property
       const status = this.qrwc.engineStatus;
 
-      console.log('Core Engine Status:', status);
-
       return {
         designName: status?.DesignName || 'Unknown',
         platform: status?.Platform || 'Unknown',
