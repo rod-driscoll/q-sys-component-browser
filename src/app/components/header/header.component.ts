@@ -176,6 +176,11 @@ import { environment } from '../../../environments/environment';
 
     .ws-status-button:hover {
       background: rgba(255, 255, 255, 0.25);
+      transform: scale(1.05);
+    }
+
+    .ws-status-button:active {
+      transform: scale(0.98);
     }
 
     .ws-status-button.secure {
@@ -185,6 +190,7 @@ import { environment } from '../../../environments/environment';
 
     .ws-status-button.secure:hover {
       background: rgba(76, 175, 80, 0.4);
+      box-shadow: 0 0 8px rgba(76, 175, 80, 0.4);
     }
 
     .ws-status-button.fallback {
@@ -194,6 +200,7 @@ import { environment } from '../../../environments/environment';
 
     .ws-status-button.fallback:hover {
       background: rgba(255, 152, 0, 0.4);
+      box-shadow: 0 0 8px rgba(255, 152, 0, 0.4);
     }
 
     .ws-status-button.disconnected {
@@ -203,6 +210,7 @@ import { environment } from '../../../environments/environment';
 
     .ws-status-button.disconnected:hover {
       background: rgba(244, 67, 54, 0.4);
+      box-shadow: 0 0 8px rgba(244, 67, 54, 0.4);
     }
 
     .ws-icon {
