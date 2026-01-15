@@ -1791,7 +1791,42 @@ end
 UpdateDirectory()
 Controls['root-directory'].EventHandler = UpdateDirectory
 
--- WebSocket endpoint for component discovery
+-- ========== Control Handler Re-initialization ==========
+-- Function to safely re-establish control handlers after QRWC reconnection
+local function ReinitializeControlHandlers()
+  print("Re-initializing control handlers after QRWC reconnection...")
+  
+  -- Re-establish root-directory handler
+  if Controls['root-directory'] then
+    Controls['root-directory'].EventHandler = UpdateDirectory
+    print("✓ Re-established root-directory EventHandler")
+  end
+  
+  -- Re-establish port handler
+  if Controls.port then
+    Controls.port.EventHandler = Listen
+    print("✓ Re-established port EventHandler")
+  end
+  
+  -- Re-establish trigger handler
+  if Controls.trigger_update then
+    Controls.trigger_update.EventHandler = function()
+      local jsonStr = GenerateSecureDiscoveryJson()
+      WriteJsonToControl(jsonStr)
+    end
+    print("✓ Re-established trigger_update EventHandler")
+  end
+end
+
+-- ========== Module-level Timer Management ==========
+-- Create timers at module scope to avoid lifecycle issues
+-- These will be reused for different discovery and subscription operations
+local discoveryTimer = nil
+local subscriptionThrottleTimers = {}  -- Per-subscription throttle timers
+local reconnectionCheckTimer = nil
+local lastQRWCConnectionState = nil  -- Track QRWC connection state to detect transitions
+
+-- ========== WebSocket endpoint for component discovery ==========
 server:ws('/ws/discovery', function(ws)
   print('WebSocket client connected to /ws/discovery')
 
@@ -1810,8 +1845,11 @@ server:ws('/ws/discovery', function(ws)
     local currentIndex = 1
     local batchSize = 5  -- Process 5 components at a time to avoid timeout
 
-    -- Process components in batches using a timer
-    local discoveryTimer = Timer.New()
+    -- Process components in batches using the module-level timer
+    if discoveryTimer then
+      discoveryTimer:Stop()
+    end
+    discoveryTimer = Timer.New()
     discoveryTimer.EventHandler = function()
       local batchEnd = math.min(currentIndex + batchSize - 1, #components)
 
@@ -1960,8 +1998,10 @@ local function subscribeToComponent(componentName)
   -- Get all control metadata to set up individual EventHandlers
   local controlMetadata = Component.GetControls(componentName)
 
-  -- Throttle state for this component
-  local throttleTimer = nil
+  -- Throttle state for this component - use module-level timer storage
+  if not subscriptionThrottleTimers[componentName] then
+    subscriptionThrottleTimers[componentName] = nil
+  end
   local pendingUpdate = false
 
   -- Function to broadcast all control updates
@@ -2058,18 +2098,20 @@ local function subscribeToComponent(componentName)
     if not pendingUpdate then
       pendingUpdate = true
 
-      if throttleTimer then
-        throttleTimer:Stop()
+      -- Stop existing timer for this subscription if it exists
+      if subscriptionThrottleTimers[componentName] then
+        subscriptionThrottleTimers[componentName]:Stop()
       end
 
-      throttleTimer = Timer.New()
-      throttleTimer.EventHandler = function(timer)
+      -- Create new timer for this subscription's throttle
+      subscriptionThrottleTimers[componentName] = Timer.New()
+      subscriptionThrottleTimers[componentName].EventHandler = function(timer)
         timer:Stop()
         if pendingUpdate then
           broadcastControlUpdates()
         end
       end
-      throttleTimer:Start(0.5) -- 500ms throttle
+      subscriptionThrottleTimers[componentName]:Start(0.5) -- 500ms throttle
     end
   end
 
@@ -2345,10 +2387,9 @@ server:post('/api/components/:componentName/controls/:controlName', function(req
   local setSuccess, setError = pcall(function()
     print('control.Type: '..control.Type..', control.Value.Type: '..type(control.Value))
     print('value.Type: '..type(value)..', value: '..tostring(value))
-    if control.Choices and #control.Choices>0 then -- Combo control
-      print('Combo control.Choices ['..table.concat(control.Choices, ',')..']')
-      control.String = tostring(value)
-    elseif control.Type=='Text' then -- String control
+    
+    -- Check control type first (most reliable way to determine how to set value)
+    if control.Type=='Text' then -- String control
       print('String control')
       control.String = tostring(value)
     elseif control.Type=='Trigger' then -- Trigger control
@@ -2356,7 +2397,7 @@ server:post('/api/components/:componentName/controls/:controlName', function(req
       control:Trigger()
     elseif control.Type=='Boolean' then --Momentary or Toggle
       print('Boolean control')
-      control.Boolean = value
+      control.Boolean = tonumber(value)>0
     elseif control.Type=='Knob' then -- Knob/Fader control (uses Position 0-1)
       print('Knob control - setting Position to '..tostring(value))
       control.Position = value
@@ -2394,6 +2435,9 @@ server:post('/api/components/:componentName/controls/:controlName', function(req
   -- Send success response
   local socket = rawget(res, 'socket')
   socket:Write('HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n{"success":true}')
+  
+  -- Subscribe to this component to broadcast the updated value to any connected clients
+  subscribeToComponent(componentName)
 end)
 
 -- ========== File Browser WebSocket Endpoint ==========
@@ -2621,10 +2665,13 @@ function GenerateSecureDiscoveryJson()
   for _, cmp in ipairs(components) do
     if cmp.Name and cmp.Name ~= "" then
       -- Get control count via GetControls
-      local controls = Component.GetControls(cmp.Name)
       local controlCount = 0
-      if controls and controls.Controls then
-        controlCount = #controls.Controls
+      local success, controls = pcall(function()
+        return Component.GetControls(cmp.Name)
+      end)
+      
+      if success and controls then
+        controlCount = #controls
       end
 
       table.insert(componentList, {
@@ -2652,6 +2699,11 @@ if Controls.json_output and Controls.trigger_update then
   
   -- Function to write JSON to output control with chunking
   local function WriteJsonToControl(jsonStr)
+    if not Controls.json_output then
+      print("Warning: json_output control not available, cannot write discovery data")
+      return
+    end
+    
     if #jsonStr <= CHUNK_SIZE then
       -- Fits in one chunk
       Controls.json_output.String = jsonStr
@@ -2689,4 +2741,30 @@ else
   print("Secure Discovery Controls NOT detected. Running in Legacy Mode only.")
 end
 
--- ========== END: WebSocket Component Discovery ==========
+-- ========== QRWC Connection State Monitor ==========
+-- Periodically check if QRWC connection state has changed and reinitialize handlers if reconnected
+local function CheckQRWCConnectionState()
+  -- Check if System is still connected to QRWC (safe check for control access)
+  local currentConnectionState = pcall(function() return Controls.port ~= nil end)
+  
+  if currentConnectionState and not lastQRWCConnectionState then
+    -- Transition: reconnected (was disconnected, now connected)
+    print(">>> QRWC RECONNECTION DETECTED - Re-establishing control handlers")
+    ReinitializeControlHandlers()
+    lastQRWCConnectionState = true
+  elseif not currentConnectionState then
+    -- State: disconnected
+    if lastQRWCConnectionState then
+      print(">>> QRWC DISCONNECTION DETECTED - Control handlers may be invalid")
+    end
+    lastQRWCConnectionState = false
+  end
+end
+
+-- Schedule periodic QRWC connection checks (every 2 seconds)
+if not reconnectionCheckTimer or not reconnectionCheckTimer:Running() then
+  reconnectionCheckTimer = Timer.New(CheckQRWCConnectionState, 2, true)
+  reconnectionCheckTimer:Start()
+  print("Started QRWC connection state monitor (checks every 2 seconds)")
+end
+

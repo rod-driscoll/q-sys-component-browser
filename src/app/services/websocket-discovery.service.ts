@@ -37,6 +37,7 @@ export class WebSocketDiscoveryService {
   // Direct Control Names (MUST match what is in the Lua script)
   private readonly TRIGGER_CONTROL = 'trigger_update';
   private readonly OUTPUT_CONTROL = 'json_output';
+  private readonly INPUT_CONTROL = 'json_input';
 
   // Script name to search for (Logic in LuaScriptService)
   private readonly SCRIPT_NAME_KEY = 'WebSocket Component Discovery';
@@ -46,6 +47,7 @@ export class WebSocketDiscoveryService {
 
   // Signals for reactive state
   public isConnected = signal<boolean>(false);
+  public useControlBasedCommunication = signal<boolean>(false);  // Use json_input/json_output controls instead of HTTP
   public discoveryData = signal<DiscoveryData | null>(null);
   public error = signal<string | null>(null);
   public componentUpdate = signal<ComponentUpdate | null>(null);
@@ -97,6 +99,9 @@ export class WebSocketDiscoveryService {
 
         // Step 2: Bind to its direct controls
         await this.setupSecureTunnel(this.boundComponentName);
+
+        // Step 3: Check if the component has json_input and json_output controls for control-based communication
+        await this.checkForControlBasedCommunication(this.boundComponentName);
       } else {
         throw new Error('Discovery Script not found on Core. Please ensure WebSocketComponentDiscovery.lua is running in a script component.');
       }
@@ -106,6 +111,35 @@ export class WebSocketDiscoveryService {
       this.error.set(err.message || 'Failed to connect');
       this.connectionFailed.set(true);
       this.loadingStage.set('Connection Failed');
+    }
+  }
+
+  /**
+   * Check if the component has json_input and json_output controls
+   */
+  private async checkForControlBasedCommunication(componentName: string): Promise<void> {
+    try {
+      const webSocketManager = (this.qsysService as any).qrwc?.webSocketManager;
+      if (!webSocketManager) return;
+
+      const res = await webSocketManager.sendRpc('Component.Get', {
+        Name: componentName,
+        Controls: [
+          { Name: this.INPUT_CONTROL },
+          { Name: this.OUTPUT_CONTROL }
+        ]
+      });
+
+      if (res && res.Controls && res.Controls.length === 2) {
+        this.useControlBasedCommunication.set(true);
+        console.log('✓ Using control-based communication (json_input/json_output)');
+        this.loadingStage.set('Using Control-Based Communication');
+      } else {
+        console.log('Falling back to HTTP/WebSocket communication');
+        this.loadingStage.set('Using HTTP/WebSocket Fallback');
+      }
+    } catch (err) {
+      console.warn('Could not verify control-based communication, will use HTTP fallback:', err);
     }
   }
 
@@ -250,7 +284,68 @@ export class WebSocketDiscoveryService {
   }
 
   // Legacy stubs
-  connectUpdates(): void { }
+  connectUpdates(): void {
+    try {
+      // Extract Q-SYS Core IP from the already-connected QRWC WebSocket URL
+      // The QSysService has a connected QRWC instance we can inspect
+      let coreIp = '192.168.6.21'; // default fallback
+      
+      try {
+        const qrwc = (this.qsysService as any).qrwc;
+        if (qrwc && qrwc.webSocketManager) {
+          // Get the URL from the WebSocket manager
+          const ws = qrwc.webSocketManager.socket;
+          if (ws && ws.url) {
+            // Extract IP from URL like "wss://192.168.104.220/qrc"
+            const match = ws.url.match(/wss?:\/\/([^/:]+)/);
+            if (match && match[1]) {
+              coreIp = match[1];
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Could not extract Core IP from QRWC, using default');
+      }
+      
+      const corePort = 9091;
+      const updateUrl = `ws://${coreIp}:${corePort}/ws/updates`;
+      
+      console.log(`Connecting to component updates WebSocket: ${updateUrl}`);
+      
+      const updateWs = new WebSocket(updateUrl);
+      
+      updateWs.onopen = () => {
+        console.log('Connected to /ws/updates WebSocket endpoint on Q-SYS Core');
+      };
+      
+      updateWs.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          
+          if (message.type === 'componentUpdate') {
+            console.log('Received component update:', message.componentName);
+            this.componentUpdate.set(message);
+          } else if (message.type === 'connected') {
+            console.log('Updates endpoint ready');
+          }
+        } catch (err) {
+          console.error('Error parsing update message:', err);
+        }
+      };
+      
+      updateWs.onerror = (error) => {
+        console.error('WebSocket error on /ws/updates:', error);
+      };
+      
+      updateWs.onclose = () => {
+        console.log('Disconnected from /ws/updates endpoint');
+        // Reconnect after 5 seconds
+        setTimeout(() => this.connectUpdates(), 5000);
+      };
+    } catch (err) {
+      console.error('Failed to connect to updates WebSocket:', err);
+    }
+  }
   disconnect(): void { this.isConnected.set(false); }
   reconnect(): void { this.connect(); }
   getDiscoveryData(): DiscoveryData | null { return this.discoveryData(); }

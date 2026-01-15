@@ -407,10 +407,11 @@ export class QsysBrowser implements OnInit, OnDestroy {
 
       this.loadingSubStage.set(`✓ Loaded ${componentList.length} components`);
 
-      console.log('DEBUG: loadComponents - calling loadComponentsViaWebSocket');
-      // Auto-start Secure Discovery to find script-based components
-      this.loadComponentsViaWebSocket();
-      console.log('DEBUG: loadComponents - called loadComponentsViaWebSocket');
+      // Log current QRWC components before attempting Lua WebSocket
+      console.log(`[DISCOVERY] Current QRWC components (${componentList.length}):`, componentList.map(c => c.name));
+
+      // Check if webserver component with discovery script exists before attempting Lua connection
+      this.checkForDiscoveryScriptAndConnect(componentList);
 
       setTimeout(() => {
         this.loadingStage.set('');
@@ -435,6 +436,50 @@ export class QsysBrowser implements OnInit, OnDestroy {
   }
 
   // Load components via WebSocket discovery endpoint
+  /**
+   * Check if the discovery script component exists and how we should access it
+   * Prioritizes secure control-based communication (json_input/json_output) over insecure Lua WebSocket
+   * Also restores cached script-only components on fast reconnection (< 60 seconds)
+   * This is critical for secure deployments (HTTPS apps cannot access insecure HTTP/WS endpoints)
+   */
+  private checkForDiscoveryScriptAndConnect(components: ComponentInfo[]): void {
+    // Check if webserver component exists
+    const webserverComponent = components.find(c => c.name === 'webserver');
+    
+    if (!webserverComponent) {
+      console.log('[DISCOVERY] No webserver component found - no script-based components available');
+      return;
+    }
+
+    // Try to restore cached script-only components on fast reconnection
+    const cachedScriptComponents = this.qsysService.getCachedScriptOnlyComponents();
+    if (cachedScriptComponents && cachedScriptComponents.length > 0) {
+      console.log(`[DISCOVERY] Restoring ${cachedScriptComponents.length} cached script-only components`);
+      // Merge QRWC components with cached script components
+      const mergedComponents = [...components, ...cachedScriptComponents.map((comp: any) => ({
+        name: comp.name,
+        type: comp.type,
+        controlCount: comp.controlCount || 0,
+        discoveryMethod: 'websocket' as const,
+      }))];
+      this.browserService.setComponents(mergedComponents);
+      console.log(`✓ Total components: ${mergedComponents.length} (${components.length} QRWC + ${cachedScriptComponents.length} cached WebSocket)`);
+      return;
+    }
+
+    // Check if we can use secure control-based communication
+    if (this.wsDiscoveryService.useControlBasedCommunication()) {
+      console.log('[DISCOVERY] Using secure control-based communication (json_input/json_output) - skipping insecure Lua WebSocket');
+      // Control-based communication is already established and cached
+      // The discovery service will use it to fetch script-based components
+      return;
+    }
+
+    // Fallback: Only attempt insecure Lua WebSocket if control-based communication is not available
+    console.log('[DISCOVERY] Control-based communication not available - attempting Lua WebSocket fallback');
+    this.loadComponentsViaWebSocket();
+  }
+
   loadComponentsViaWebSocket(): void {
     console.log('DEBUG: loadComponentsViaWebSocket - ENTERED');
     console.log('Requesting component discovery via WebSocket...');
@@ -467,6 +512,11 @@ export class QsysBrowser implements OnInit, OnDestroy {
         }));
 
       console.log(`Found ${discoveryData.components.length} components via WebSocket, ${wsComponents.length} are new (not in QRWC)`);
+
+      // Cache script-only components for fast reconnection
+      if (wsComponents.length > 0) {
+        this.qsysService.cacheScriptOnlyComponents(wsComponents);
+      }
 
       this.loadingSubStage.set(`Merging ${wsComponents.length} new components...`);
 

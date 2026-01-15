@@ -24,12 +24,12 @@ export const environment = {
   },
 
   get RUNTIME_CORE_PORT(): number {
-    return 80; // Standard HTTP port (or 443 for HTTPS), secure tunnel uses QRC port 443
+    return 9091; // Q-SYS QRWC port (used for WebSocket connections)
   },
 
   // Derived URLs (use runtime values which can be overridden via URL params)
   get QSYS_HTTP_API_URL(): string {
-    return `http://${runtimeCoreIp}/api`;
+    return `http://${runtimeCoreIp}:${this.RUNTIME_CORE_PORT}/api`;
   },
 
   // Method to set connection parameters at runtime (e.g., from URL params)

@@ -22,6 +22,9 @@ export class QSysService {
   private componentsCache: ComponentWithControls[] | null = null;
   private componentsLoaded$ = new BehaviorSubject<ComponentWithControls[]>([]);
 
+  // Script-only components cache (from Lua WebSocket discovery)
+  private scriptOnlyComponentsCache: any[] | null = null;
+
   // Keepalive timer to prevent connection timeout
   private keepaliveTimer: any = null;
 
@@ -30,6 +33,10 @@ export class QSysService {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private isReconnecting = false;
+
+  // Disconnection tracking for smart cache management
+  private lastDisconnectionTime: number | null = null;
+  private disconnectionDurationThreshold = 60000; // 60 seconds in ms
 
   // Connection state
   public isConnected = signal(false);
@@ -161,6 +168,9 @@ export class QSysService {
       // Listen for disconnection events
       this.qrwc.on('disconnected', (reason: string) => {
         console.warn('QRWC Disconnected:', reason);
+        // Record disconnection time for smart cache management
+        this.lastDisconnectionTime = Date.now();
+        console.log('[RECONNECT] Disconnection recorded at', new Date(this.lastDisconnectionTime).toISOString());
         this.isConnected.set(false);
         this.connectionStatus$.next(false);
 
@@ -206,6 +216,9 @@ export class QSysService {
         this.currentChangeGroupId = newChangeGroupId;
         this.reconnectionCount.update(count => count + 1);
         console.log(`ChangeGroup changed - reconnection #${this.reconnectionCount()}`);
+
+        // Reset poll interceptor flag so it gets set up again on the new ChangeGroup
+        this.pollInterceptorSetup = false;
 
         // Invoke callback to re-register components with new ChangeGroup
         // This will add controls to the new ChangeGroup and restart polling
@@ -285,6 +298,10 @@ export class QSysService {
 
     this.isConnected.set(false);
     this.connectionStatus$.next(false);
+    
+    // Clear disconnection tracking on manual disconnect
+    this.lastDisconnectionTime = null;
+    this.clearScriptOnlyComponentsCache();
 
     // Stop any reconnection attempts when manually disconnecting
     if (this.reconnectTimer) {
@@ -377,6 +394,44 @@ export class QSysService {
   }
 
   /**
+   * Cache script-only components discovered via Lua WebSocket
+   * These are cached separately so they persist across QRWC reconnections
+   */
+  cacheScriptOnlyComponents(components: any[]): void {
+    if (components && components.length > 0) {
+      this.scriptOnlyComponentsCache = components;
+      console.log(`[CACHE] Cached ${components.length} script-only components for fast reconnection`);
+    }
+  }
+
+  /**
+   * Get cached script-only components if fast reconnection (< 60s)
+   */
+  getCachedScriptOnlyComponents(): any[] | null {
+    if (!this.lastDisconnectionTime || !this.scriptOnlyComponentsCache) {
+      return null;
+    }
+
+    const timeSinceDisconnect = Date.now() - this.lastDisconnectionTime;
+    if (timeSinceDisconnect < this.disconnectionDurationThreshold) {
+      console.log(`[CACHE] Returning ${this.scriptOnlyComponentsCache.length} cached script-only components (fast reconnection)`);
+      return this.scriptOnlyComponentsCache;
+    }
+
+    // Slow reconnection - clear script cache
+    console.log(`[CACHE] Clearing script-only component cache (slow reconnection: ${timeSinceDisconnect}ms >= 60s)`);
+    this.scriptOnlyComponentsCache = null;
+    return null;
+  }
+
+  /**
+   * Clear script-only components cache on manual disconnect
+   */
+  clearScriptOnlyComponentsCache(): void {
+    this.scriptOnlyComponentsCache = null;
+  }
+
+  /**
    * Refresh component control counts after QRWC has had more time to load
    * Note: With the new on-demand loading approach, this just re-fetches the component list
    */
@@ -396,14 +451,34 @@ export class QSysService {
    * This avoids the timeout issues from QRWC's automatic control loading
    * Returns a promise that resolves with the component list with control counts
    * Uses cache if available to avoid redundant fetches
+   * 
+   * Smart caching: If reconnection occurs within 60 seconds, reuses cached components
+   * since the Q-SYS design hasn't changed. For reconnections > 60 seconds, reloads all data.
    */
   async getComponents(forceRefresh: boolean = false): Promise<ComponentWithControls[]> {
     if (!this.qrwc) {
       throw new Error('Not connected to Q-SYS Core');
     }
 
-    // Return cached components if available and not forcing refresh
-    if (!forceRefresh && this.componentsCache) {
+    // Check if we should use cached components (fast reconnection)
+    if (!forceRefresh && this.componentsCache && this.lastDisconnectionTime) {
+      const timeSinceDisconnect = Date.now() - this.lastDisconnectionTime;
+      const reconnected = this.isConnected();
+      
+      if (reconnected && timeSinceDisconnect < this.disconnectionDurationThreshold) {
+        // Fast reconnection (< 60 seconds) - design hasn't changed
+        console.log(`[RECONNECT] Fast reconnection detected (${timeSinceDisconnect}ms < 60s) - reusing cached components`);
+        console.log(`Returning ${this.componentsCache.length} cached components (no design changes expected)`);
+        // Notify subscribers that components are loaded (for UI re-initialization)
+        this.componentsLoaded$.next(this.componentsCache);
+        return this.componentsCache;
+      } else if (reconnected && timeSinceDisconnect >= this.disconnectionDurationThreshold) {
+        // Slow reconnection (>= 60 seconds) - design might have changed
+        console.log(`[RECONNECT] Slow reconnection detected (${timeSinceDisconnect}ms >= 60s) - clearing cache and reloading`);
+        this.componentsCache = null;
+        this.lastDisconnectionTime = null;
+      }
+    } else if (!forceRefresh && this.componentsCache) {
       console.log(`Returning ${this.componentsCache.length} cached components`);
       return this.componentsCache;
     }
@@ -454,6 +529,10 @@ export class QSysService {
       // Cache the components and notify subscribers
       this.componentsCache = componentsWithCounts;
       this.componentsLoaded$.next(componentsWithCounts);
+      
+      // Clear disconnection tracking after successful reload
+      this.lastDisconnectionTime = null;
+      console.log('[RECONNECT] Component reload complete - disconnection tracking cleared');
 
       // Keepalive is already started in connect() method
 
@@ -466,27 +545,36 @@ export class QSysService {
 
   /**
    * Start keepalive timer to prevent WebSocket connection timeout
-   * Sends StatusGet RPC every 30 seconds to keep connection alive
+   * Sends StatusGet RPC every 15 seconds to keep connection alive
    */
   private startKeepalive(webSocketManager: any): void {
     // Clear any existing timer
     if (this.keepaliveTimer) {
       clearInterval(this.keepaliveTimer);
+      console.log('Cleared previous keepalive timer');
     }
 
-    console.log('Starting keepalive timer (StatusGet every 30s)...');
+    console.log('Starting keepalive timer (StatusGet every 15s)...');
 
-    // Send StatusGet RPC every 30 seconds to keep connection alive
+    let keepaliveCount = 0;
+    // Send StatusGet RPC every 15 seconds to keep connection alive
     this.keepaliveTimer = setInterval(async () => {
+      keepaliveCount++;
       try {
-        await webSocketManager.sendRpc('StatusGet', undefined);
-        // Successful keepalive - no need to log
+        console.log(`[KEEPALIVE] Sending StatusGet (attempt ${keepaliveCount})...`);
+        const result = await Promise.race([
+          webSocketManager.sendRpc('StatusGet', undefined),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Keepalive timeout after 5s')), 5000)
+          )
+        ]);
+        console.log(`[KEEPALIVE] StatusGet succeeded (attempt ${keepaliveCount}):`, result);
       } catch (error) {
-        console.warn('Keepalive StatusGet failed:', error);
+        console.warn(`[KEEPALIVE] StatusGet failed (attempt ${keepaliveCount}):`, error);
       }
-    }, 30000); // 30 seconds
+    }, 15000); // 15 seconds
 
-    console.log('Keepalive timer started');
+    console.log('Keepalive timer started (15s interval)');
   }
 
   /**
@@ -494,9 +582,9 @@ export class QSysService {
    */
   private stopKeepalive(): void {
     if (this.keepaliveTimer) {
+      console.log('[KEEPALIVE] Stopping keepalive timer');
       clearInterval(this.keepaliveTimer);
       this.keepaliveTimer = null;
-      console.log('Keepalive timer stopped');
     }
   }
 
@@ -1029,6 +1117,20 @@ export class QSysService {
           });
         } catch (error) {
           const message = 'QRWC: RPC Error: ChangeGroup.Poll failed to poll for changes.';
+          
+          // Check if this is a "Change group does not exist" error
+          // This happens during reconnection when polling continues with old ChangeGroup ID
+          // before re-registration completes
+          if (error instanceof Error && error.message.includes("does not exist")) {
+            // Silently stop polling - re-registration will restart it
+            if ((changeGroup as any).intervalRef) {
+              clearInterval((changeGroup as any).intervalRef);
+              (changeGroup as any).intervalRef = null;
+            }
+            return;  // Don't log error for expected reconnection case
+          }
+          
+          // For other errors, log normally
           if (error instanceof Error) {
             error.message = `${message}\n${error.message}`;
             (this.qrwc as any).logger.error(error);

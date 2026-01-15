@@ -1,8 +1,9 @@
-import { Component, OnInit, OnDestroy, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NavigationHeaderComponent } from '../../components/custom-views/shared/navigation-header/navigation-header.component';
 import { FILE_BROWSER_METADATA } from './file-browser.metadata';
 import { FileSystemService, FileEntry } from '../../services/file-system.service';
+import { LuaScriptService } from '../../services/lua-script.service';
 
 @Component({
   selector: 'app-file-browser',
@@ -15,7 +16,10 @@ export class FileBrowserComponent implements OnInit, OnDestroy {
   /** View title from metadata */
   readonly title = FILE_BROWSER_METADATA.title;
 
-  constructor(private fileSystemService: FileSystemService) {}
+  private fileSystemService = inject(FileSystemService);
+  private luaScriptService = inject(LuaScriptService);
+
+  constructor() {}
 
   // Use service signals via getters
   get currentPath() { return this.fileSystemService.currentPath; }
@@ -35,6 +39,9 @@ export class FileBrowserComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
+    // Load Lua scripts first (required for WebSocket file system endpoint)
+    this.loadLuaScripts();
+    // Then connect to the file system
     this.fileSystemService.connect();
   }
 
@@ -192,5 +199,19 @@ export class FileBrowserComponent implements OnInit, OnDestroy {
    */
   refresh(): void {
     this.fileSystemService.listDirectory(this.currentPath());
+  }
+
+  /**
+   * Load Lua scripts asynchronously
+   * Required for WebSocket file system endpoint functionality
+   */
+  private async loadLuaScripts(): Promise<void> {
+    try {
+      await this.luaScriptService.loadScripts();
+      console.log('✓ Lua scripts loaded for file-browser');
+    } catch (error) {
+      console.error('Failed to load Lua scripts:', error);
+      // Continue anyway - the error will be caught when connecting to file system
+    }
   }
 }

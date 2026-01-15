@@ -19,11 +19,13 @@
           {{ isConnected() ? 'Core Connected' : 'Core Disconnected' }}
         </div>
         @if (wsDiscoveryService.isConnected()) {
-          <div class="ws-connection-status connected" title="WebSocket Discovery Connected">
-            Script only WS
+          <div class="ws-connection-status connected" [title]="'Communication via ' + (wsDiscoveryService.useControlBasedCommunication() ? 'json_output Control' : 'Lua WebSocket Updates')">
+            {{ wsDiscoveryService.useControlBasedCommunication() ? 'Control-Based' : 'WebSocket' }}
           </div>
         }
-        <div class="core-ip">{{ coreIp }}:{{ corePort }}</div>
+        <div class="core-ip">
+          {{ coreIp }}@if (!wsDiscoveryService.useControlBasedCommunication()) { :{{ corePort }} }
+        </div>
         @if (corePlatform && coreState) {
           <div class="core-info">{{ corePlatform }} ({{ coreState }})</div>
         }
@@ -224,12 +226,7 @@
     <div class="view">
       <div class="view-header">
         <h2>Components ({{ filteredComponents.length }})</h2>
-        <button class="refresh-button" (click)="refreshComponents()" [disabled]="!isConnected()" title="Refresh component control counts (waits 3s for lazy loading)">
-          🔄 Refresh
-        </button>
-        <button class="refresh-button" (click)="loadComponentsViaWebSocket()" title="Discover components via WebSocket (bypasses log system)">
-          🔌 Discover "Script only"
-        </button>
+        <!-- Hidden: Refresh and Discover buttons - components are now cached and auto-discovered -->
         <select
           class="type-filter"
           [(ngModel)]="selectedTypeFilter"
