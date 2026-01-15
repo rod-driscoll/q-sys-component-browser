@@ -1,7 +1,8 @@
-import { Component, OnInit, signal, ViewChild } from '@angular/core';
+import { Component, OnInit, signal, ViewChild, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { QSysService } from '../../services/qsys.service';
+import { WebSocketDiscoveryService } from '../../services/websocket-discovery.service';
 import { CustomViewRegistryService } from '../../services/custom-view-registry.service';
 import { MenuCard } from '../../models/custom-view.model';
 import { environment } from '../../../environments/environment';
@@ -29,11 +30,24 @@ export class MenuComponent implements OnInit {
 
   @ViewChild(SettingsDialogComponent) settingsDialog!: SettingsDialogComponent;
 
+  private lastDiscoveryTimestamp = '';
+
   constructor(
     private router: Router,
     protected qsysService: QSysService,
+    private wsDiscoveryService: WebSocketDiscoveryService,
     private customViewRegistry: CustomViewRegistryService
-  ) {}
+  ) {
+    // Watch for WebSocket discovery data and rebuild menu when new components discovered
+    effect(() => {
+      const discoveryData = this.wsDiscoveryService.discoveryData();
+      if (discoveryData && discoveryData.timestamp && discoveryData.timestamp !== this.lastDiscoveryTimestamp) {
+        this.lastDiscoveryTimestamp = discoveryData.timestamp;
+        console.log(`Menu: WebSocket discovery data received (${discoveryData.components?.length} components), rebuilding menu...`);
+        this.buildMenuCardsFromDiscovery();
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.buildMenuCards();
@@ -140,6 +154,66 @@ export class MenuComponent implements OnInit {
       // Check if at least one required component exists
       const hasRequiredComponent = view.requiredComponents.some(reqComp =>
         componentNames.has(reqComp)
+      );
+
+      if (!hasRequiredComponent) {
+        console.log(`Menu: Hiding "${view.title}" - required components not found:`, view.requiredComponents);
+      }
+
+      return hasRequiredComponent;
+    });
+
+    const cards: MenuCard[] = [
+      // Hardcoded Component Browser card (always shown)
+      {
+        title: 'Component Browser',
+        description: 'Browse and control all Q-SYS components',
+        icon: '🔍',
+        route: 'browser'
+      },
+      // Filtered custom view cards
+      ...filteredViews.map(view => ({
+        title: view.title,
+        description: view.description,
+        icon: view.icon,
+        route: view.route,
+        badge: view.badge
+      }))
+    ];
+
+    this.menuCards.set(cards);
+    console.log(`Menu: Showing ${filteredViews.length} custom views (${this.customViewRegistry.registeredViews().length - filteredViews.length} hidden)`);
+  }
+
+  /**
+   * Build menu from WebSocket discovery data (includes script-only components)
+   */
+  private buildMenuCardsFromDiscovery(): void {
+    const discoveryData = this.wsDiscoveryService.discoveryData();
+    if (!discoveryData || !discoveryData.components) {
+      return;
+    }
+
+    // Merge QRWC cached components with discovery components
+    const qrwcComponents = this.qsysService.getCachedComponents();
+    const discoveryComponentNames = new Set(discoveryData.components.map((c: any) => c.Name || c.name));
+    const qrwcComponentNames = new Set(qrwcComponents.map(c => c.name));
+    
+    // Create a combined set of all component names
+    const allComponentNames = new Set([...qrwcComponentNames, ...discoveryComponentNames]);
+    
+    console.log(`Menu: Building menu from ${allComponentNames.size} merged components (${qrwcComponentNames.size} QRWC + ${discoveryComponentNames.size} discovery)`);
+
+    // Filter custom views based on required components
+    const filteredViews = this.customViewRegistry.registeredViews().filter(view => {
+      // If no required components specified, always show the view
+      if (!view.requiredComponents || view.requiredComponents.length === 0) {
+        return true;
+      }
+
+      // Check if at least one required component exists
+      const hasRequiredComponent = view.requiredComponents.some(reqComp =>
+        allComponentNames.has(reqComp)
       );
 
       if (!hasRequiredComponent) {
