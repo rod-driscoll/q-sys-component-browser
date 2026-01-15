@@ -2694,43 +2694,46 @@ end
 -- Chunking constants for Text Control output (limit is usually 64KB, but we stay safe)
 local CHUNK_SIZE = 40000 
 
-if Controls.json_output and Controls.trigger_update then
-  print("Secure Discovery Controls detected. Enabling QRC Tunnel.")
+-- ========== Module-level function to write JSON to output control ==========
+-- Must be defined at module scope (not inside conditionals) since it may be called
+-- from ReinitializeControlHandlers() during reconnection
+function WriteJsonToControl(jsonStr)
+  if not Controls.json_output then
+    print("Warning: json_output control not available, cannot write discovery data")
+    return
+  end
   
-  -- Function to write JSON to output control with chunking
-  local function WriteJsonToControl(jsonStr)
-    if not Controls.json_output then
-      print("Warning: json_output control not available, cannot write discovery data")
-      return
+  if #jsonStr <= CHUNK_SIZE then
+    -- Fits in one chunk
+    Controls.json_output.String = jsonStr
+  else
+    -- Needs chunking
+    -- Reset status
+    Controls.json_output.String = "START:" .. math.ceil(#jsonStr / CHUNK_SIZE)
+    
+    -- Helper to split string
+    local chunks = {}
+    for i = 1, #jsonStr, CHUNK_SIZE do
+      table.insert(chunks, string.sub(jsonStr, i, i + CHUNK_SIZE - 1))
     end
     
-    if #jsonStr <= CHUNK_SIZE then
-      -- Fits in one chunk
-      Controls.json_output.String = jsonStr
-    else
-      -- Needs chunking
-      -- Reset status
-      Controls.json_output.String = "START:" .. math.ceil(#jsonStr / CHUNK_SIZE)
-      
-      -- Helper to split string
-      local chunks = {}
-      for i = 1, #jsonStr, CHUNK_SIZE do
-        table.insert(chunks, string.sub(jsonStr, i, i + CHUNK_SIZE - 1))
-      end
-      
-      -- Write chunks sequentially
-      -- Note: In a real async environment, we might need delays, but Q-SYS Lua is single threaded events.
-      -- Writing to a control triggers an update. For the client to catch all, 
-      -- we might need a protocol. 
-      -- Simple Protocol: "CHUNK:index:total:data"
-      
-      for i, chunk in ipairs(chunks) do
-        Controls.json_output.String = string.format("CHUNK:%d:%d:%s", i, #chunks, chunk)
-      end
-      
-      Controls.json_output.String = "END"
+    -- Write chunks sequentially
+    -- Note: In a real async environment, we might need delays, but Q-SYS Lua is single threaded events.
+    -- Writing to a control triggers an update. For the client to catch all, 
+    -- we might need a protocol. 
+    -- Simple Protocol: "CHUNK:index:total:data"
+    
+    for i, chunk in ipairs(chunks) do
+      Controls.json_output.String = string.format("CHUNK:%d:%d:%s", i, #chunks, chunk)
     end
+    
+    Controls.json_output.String = "END"
   end
+end
+
+-- ========== Secure Discovery Control Handler Setup ==========
+if Controls.json_output and Controls.trigger_update then
+  print("Secure Discovery Controls detected. Enabling QRC Tunnel.")
 
   Controls.trigger_update.EventHandler = function()
     print("Received Secure Discovery Request via Trigger")
