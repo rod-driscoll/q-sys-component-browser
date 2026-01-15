@@ -68,6 +68,100 @@ end
 
 ---
 
+## Critical: Function Definition Order Matters
+
+### The Rule
+**All functions that are called during script execution MUST be defined BEFORE they are called.**
+
+Lua loads and executes code sequentially. If a function is defined inside a conditional block or after where it's called, it will be `nil` when referenced.
+
+### Why?
+In Q-SYS Lua, control event handlers and reconnection logic may call functions during runtime. If those functions aren't defined at module scope before execution, you get:
+```
+attempt to call a nil value (global 'FunctionName')
+```
+
+### Example - WRONG ❌
+```lua
+-- Control reconnection handler defined early
+function ReinitializeControlHandlers()
+  Controls.trigger.EventHandler = function()
+    WriteJsonToControl(jsonStr)  -- ERROR: nil value!
+  end
+end
+
+-- ... lots of other code ...
+
+-- Function defined AFTER it's referenced
+if someCondition then
+  local function WriteJsonToControl(jsonStr)
+    -- This function is only defined if someCondition is true
+    -- AND it's local, so invisible outside this block
+  end
+end
+```
+
+### Example - CORRECT ✅
+```lua
+-- Define function at module scope FIRST
+function WriteJsonToControl(jsonStr)
+  if not Controls.json_output then return end
+  Controls.json_output.String = jsonStr
+end
+
+-- Now it can be called from anywhere
+function ReinitializeControlHandlers()
+  Controls.trigger.EventHandler = function()
+    WriteJsonToControl(jsonStr)  -- CORRECT: function already defined
+  end
+end
+```
+
+### Real Example from Project
+**File:** `lua/WebSocketComponentDiscovery.lua`
+
+**WRONG (Initial Implementation):**
+```lua
+-- Line 1815: ReinitializeControlHandlers() calls WriteJsonToControl()
+function ReinitializeControlHandlers()
+  if Controls.trigger_update then
+    Controls.trigger_update.EventHandler = function()
+      WriteJsonToControl(jsonStr)  -- ERROR on line 1815
+    end
+  end
+end
+
+-- Line 2701: WriteJsonToControl defined AFTER it's called
+if Controls.json_output and Controls.trigger_update then
+  local function WriteJsonToControl(jsonStr)
+    -- ... implementation ...
+  end
+end
+```
+
+**CORRECT (Fixed Implementation):**
+```lua
+-- Line 2696: Define function at module scope, BEFORE it's called
+function WriteJsonToControl(jsonStr)
+  if not Controls.json_output then
+    print("Warning: json_output control not available")
+    return
+  end
+  Controls.json_output.String = jsonStr
+end
+
+-- Line 1815: Can now be called from anywhere
+function ReinitializeControlHandlers()
+  if Controls.trigger_update then
+    Controls.trigger_update.EventHandler = function()
+      WriteJsonToControl(jsonStr)  -- CORRECT: function defined at module scope
+    end
+  end
+end
+```
+
+---
+
 ## Related: Timer.New() API Patterns
 
 When using Q-SYS Timer objects, be aware of these patterns:
@@ -90,17 +184,32 @@ local myTimer = Timer.New(function, interval, recurring)
 
 ---
 
-## Checklist for Timer Implementation
+## Checklist for Lua Script Implementation
 
-When implementing timers in Q-SYS Lua:
+When writing Q-SYS Lua scripts:
 
-- [ ] Timer variable declared at **module/global scope** (not inside functions)
+### Scope & Definition
+- [ ] All timers declared at **module/global scope** (not inside functions)
+- [ ] All functions that will be called during runtime defined **at module scope**
+- [ ] Functions defined **BEFORE** any code that calls them
+- [ ] Functions defined **outside** conditional blocks if they might be called unconditionally
+
+### Timer Implementation
 - [ ] Timer created with `Timer.New()` with no arguments (for consistency)
 - [ ] EventHandler assigned before calling `:Start()`
 - [ ] `:Start(interval)` called with numeric interval as parameter
 - [ ] Check for existing timer before creating (`if not myTimer or not myTimer:Running()`)
 - [ ] Proper cleanup with `:Stop()` when needed
-- [ ] Test timer behavior across script reloads/reconnects
+
+### Event Handlers
+- [ ] Control event handlers stored in variables defined at module scope
+- [ ] Event handler functions can reference module-level functions
+- [ ] Reconnection handlers can safely call all module-level functions
+
+### Testing
+- [ ] Test timer behavior across script reloads
+- [ ] Test timer behavior across QRWC reconnects
+- [ ] Test that event handlers still work after reconnection
 
 ---
 
@@ -117,3 +226,4 @@ When implementing timers in Q-SYS Lua:
 | Date | Issue | Fix |
 |------|-------|-----|
 | 2026-01-15 | Timer initialization error in reconnectionCheckTimer | Changed to global scope + correct Start() pattern |
+| 2026-01-15 | WriteJsonToControl nil error during reconnect | Moved function to module scope for visibility |
