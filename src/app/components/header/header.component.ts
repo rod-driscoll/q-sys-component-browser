@@ -18,14 +18,14 @@ import { environment } from '../../../environments/environment';
           <div class="status-item" [class.connected]="qsysService.isConnected()" [class.disconnected]="!qsysService.isConnected()">
             <span class="status-indicator"></span>
             <span class="status-label">QRWC: {{ qsysService.isConnected() ? 'Connected' : 'Disconnected' }}</span>
-            <span class="status-detail" *ngIf="qsysService.isConnected()">{{ coreAddress }}</span>
+            <span class="status-detail" *ngIf="qsysService.isConnected()">{{ coreAddress() }}</span>
           </div>
 
           <!-- WebSocket Discovery Status -->
           <div class="status-item" [class.connected]="wsDiscoveryService.isConnected()" [class.disconnected]="!wsDiscoveryService.isConnected()">
             <span class="status-indicator"></span>
-            <span class="status-label">{{ discoveryStatusLabel }}</span>
-            <span class="status-detail" *ngIf="discoveryStatusDetail">{{ discoveryStatusDetail }}</span>
+            <span class="status-label">{{ discoveryStatusLabel() }}</span>
+            <span class="status-detail" *ngIf="discoveryStatusDetail()">{{ discoveryStatusDetail() }}</span>
           </div>
 
           <!-- WebSocket Connection Status Button -->
@@ -34,9 +34,9 @@ import { environment } from '../../../environments/environment';
                   [class.fallback]="!wsDiscoveryService.useControlBasedCommunication() && wsDiscoveryService.isConnected()"
                   [class.disconnected]="!wsDiscoveryService.isConnected()"
                   (click)="toggleConnectionDetails()"
-                  title="{{ connectionStatusTooltip }}">
-            <span class="ws-icon">{{ connectionIcon }}</span>
-            <span class="ws-text">{{ connectionStatusText }}</span>
+                  [title]="connectionStatusTooltip()">
+            <span class="ws-icon">{{ connectionIcon() }}</span>
+            <span class="ws-text">{{ connectionStatusText() }}</span>
             {{ showConnectionDetails ? '▼' : '▶' }}
           </button>
         </div>
@@ -48,7 +48,7 @@ import { environment } from '../../../environments/environment';
           <h3>Connection Details</h3>
           <dl>
             <dt>Core Address:</dt>
-            <dd>{{ coreAddress }}</dd>
+            <dd>{{ coreAddress() }}</dd>
             
             <dt>QRWC Status:</dt>
             <dd [class.connected]="qsysService.isConnected()">{{ qsysService.isConnected() ? '✓ Connected' : '✗ Disconnected' }}</dd>
@@ -58,7 +58,7 @@ import { environment } from '../../../environments/environment';
             
             <dt>Communication Mode:</dt>
             <dd [class.secure]="wsDiscoveryService.useControlBasedCommunication()" [class.fallback]="!wsDiscoveryService.useControlBasedCommunication()">
-              {{ communicationMode }}
+              {{ communicationMode() }}
             </dd>
           </dl>
           <button class="close-btn" (click)="toggleConnectionDetails()">Close</button>

@@ -199,18 +199,4 @@ export class FileBrowserComponent implements OnInit, OnDestroy {
   refresh(): void {
     this.fileSystemService.listDirectory(this.currentPath());
   }
-
-  /**
-   * Load Lua scripts asynchronously
-   * Required for WebSocket file system endpoint functionality
-   */
-  private async loadLuaScripts(): Promise<void> {
-    try {
-      await this.luaScriptService.loadScripts();
-      console.log('✓ Lua scripts loaded for file-browser');
-    } catch (error) {
-      console.error('Failed to load Lua scripts:', error);
-      // Continue anyway - the error will be caught when connecting to file system
-    }
-  }
 }
