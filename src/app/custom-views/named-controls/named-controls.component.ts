@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { KnobControl } from '../../components/qsys-browser/controls/knob-control/knob-control';
 import { BooleanControl } from '../../components/qsys-browser/controls/boolean-control/boolean-control';
 // import { ButtonControl } from '../../components/qsys-browser/controls/button-control/button-control';
@@ -31,7 +32,10 @@ export class NamedControlsComponent implements OnInit, OnDestroy {
   /** View title from metadata */
   readonly title = NAMED_CONTROLS_METADATA.title;
 
-  constructor(private namedControlsService: NamedControlsService) {}
+  constructor(
+    private namedControlsService: NamedControlsService,
+    private router: Router
+  ) {}
 
   // Use service signals via getters
   get namedControls() { return this.namedControlsService.namedControls; }
@@ -49,6 +53,10 @@ export class NamedControlsComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     // No cleanup needed - using QRWC which is managed by QSysService
+  }
+
+  goBack(): void {
+    this.router.navigate(['/']);
   }
 
   /**
