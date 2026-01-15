@@ -72,6 +72,7 @@ import { environment } from '../../../environments/environment';
       top: 0;
       z-index: 100;
       position: relative;
+      overflow: visible;
     }
 
     .header-content {
@@ -218,16 +219,27 @@ import { environment } from '../../../environments/environment';
     }
 
     .connection-details {
-      position: absolute;
-      top: 100%;
+      position: fixed;
+      top: 45px;
       right: 20px;
       background: white;
       color: #333;
       border-radius: 6px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      z-index: 1000;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      z-index: 10000;
       min-width: 280px;
-      margin-top: 6px;
+      animation: slideDown 0.2s ease-out;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .details-content {
