@@ -2763,8 +2763,9 @@ end
 
 -- Schedule periodic QRWC connection checks (every 2 seconds)
 if not reconnectionCheckTimer or not reconnectionCheckTimer:Running() then
-  reconnectionCheckTimer = Timer.New(CheckQRWCConnectionState, 2, true)
-  reconnectionCheckTimer:Start()
+  reconnectionCheckTimer = Timer.New()
+  reconnectionCheckTimer.EventHandler = CheckQRWCConnectionState
+  reconnectionCheckTimer:Start(2)
   print("Started QRWC connection state monitor (checks every 2 seconds)")
 end
 
