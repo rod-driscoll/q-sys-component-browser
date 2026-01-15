@@ -263,63 +263,28 @@ export class QsysBrowser implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Show initial connecting state
-    this.loadingStage.set('Connecting to Q-SYS Core');
-    this.loadingSubStage.set(`Connecting to ${environment.RUNTIME_CORE_IP}...`);
+    // App-level initialization has already completed at this point
+    // QRWC is connected, discovery service is ready, Lua scripts are loaded
+    // Just load the components and set up the UI
 
-    // Load Lua scripts asynchronously
-    this.loadLuaScripts();
+    console.log('[QSYS-BROWSER] ngOnInit - app-level init complete, loading components');
+    
+    this.loadingStage.set('Loading Components');
+    this.loadingSubStage.set('Retrieving component list...');
 
-    // Connect to Q-SYS Core using runtime IP (can be overridden via URL params)
-    this.qsysService.connect({
-      coreIp: environment.RUNTIME_CORE_IP,
-      secure: true,
-      pollInterval: 35,
-    }).catch((error) => {
-      // Check if this is a certificate error
-      const isCertError = error?.message?.includes('certificate') ||
-        error?.type === 'error' ||
-        error?.toString().includes('ERR_CERT');
+    // Get core status
+    try {
+      const status = this.qsysService.getCoreStatus();
+      this.corePlatform = status.platform;
+      this.coreState = status.state;
+      this.designName = status.designName;
+      console.log(`Core: ${status.platform} (${status.state}) - Design: ${status.designName}`);
+    } catch (error) {
+      console.error('Failed to load Core status:', error);
+    }
 
-      if (isCertError) {
-        this.loadingStage.set('');
-        this.loadingSubStage.set('');
-        this.showCertificateError();
-      } else {
-        this.loadingStage.set('Error');
-        this.loadingSubStage.set('Failed to connect to Q-SYS Core');
-        setTimeout(() => {
-          this.loadingStage.set('');
-          this.loadingSubStage.set('');
-        }, 3000);
-      }
-    });
-
-    // Wait for connection before loading components
-    this.qsysService.getConnectionStatus().subscribe(async (connected) => {
-      if (connected) {
-        // Update loading state to show successful connection
-        this.loadingSubStage.set('✓ Connected to Q-SYS Core');
-
-        // Don't enable polling yet - ChangeGroup doesn't exist until controls are added
-        // Polling will be enabled when you select a component and add controls
-        console.log('Connected - loading components from Q-SYS Core...');
-
-        // Load Core status to get platform, state, and design name
-        try {
-          this.loadingSubStage.set('Loading Core status...');
-          const status = this.qsysService.getCoreStatus();
-          this.corePlatform = status.platform;
-          this.coreState = status.state;
-          this.designName = status.designName;
-          console.log(`Core: ${status.platform} (${status.state}) - Design: ${status.designName}`);
-        } catch (error) {
-          console.error('Failed to load Core status:', error);
-        }
-
-        this.loadComponents();
-      }
-    });
+    // Load components (QRWC is already connected)
+    this.loadComponents();
 
     // Subscribe to control updates to track log.history for the currently selected component
     this.controlUpdateSubscription = this.qsysService.getControlUpdates()
@@ -373,20 +338,28 @@ export class QsysBrowser implements OnInit, OnDestroy {
 
   // Load all components from Q-SYS Core via QRWC
   async loadComponents(refresh: boolean = false): Promise<void> {
+    if (!refresh) {
+      // Not a refresh - check if we already have components cached from discovery
+      const cachedScriptComponents = this.qsysService.getCachedScriptOnlyComponents();
+      const existingComponents = this.browserService.components();
+      
+      if (existingComponents.length > 0) {
+        // We already have components from a previous load
+        console.log('[QSYS-BROWSER] Components already loaded, checking for new WebSocket discovery data');
+        this.loadingStage.set('');
+        this.loadingSubStage.set('');
+        return;
+      }
+    }
+
     this.isLoadingComponents = true;
     this.loadingStage.set('Loading Components');
-    this.loadingSubStage.set('Connecting to Q-SYS Core via QRWC...');
+    this.loadingSubStage.set('Fetching component list...');
 
     try {
       console.log(refresh ? 'Refreshing component list from Q-SYS...' : 'Fetching component list from Q-SYS...');
 
-      if (refresh) {
-        this.loadingSubStage.set('Refreshing component list (waiting 3s for lazy loading)...');
-      } else {
-        this.loadingSubStage.set('Fetching component list from Q-SYS...');
-      }
-
-      // If refreshing, use the refreshComponentCounts method to give QRWC more time
+      // Get components from QRWC
       const components = refresh
         ? await this.qsysService.refreshComponentCounts()
         : await this.qsysService.getComponents();
@@ -394,7 +367,6 @@ export class QsysBrowser implements OnInit, OnDestroy {
       this.loadingSubStage.set('Processing component data...');
 
       // Transform QRWC response to our ComponentInfo format
-      // Now includes actual control counts from qrwc.components
       const componentList: ComponentInfo[] = components.map((comp: any) => ({
         name: comp.name,
         type: comp.type,
@@ -402,16 +374,35 @@ export class QsysBrowser implements OnInit, OnDestroy {
         discoveryMethod: 'qrwc' as const,
       }));
 
-      this.browserService.setComponents(componentList);
-      console.log(`✓ Loaded ${componentList.length} components`);
+      // Check for cached script-only components from previous discovery
+      const cachedScriptComponents = this.qsysService.getCachedScriptOnlyComponents();
+      let finalComponentList = componentList;
+      
+      if (cachedScriptComponents && cachedScriptComponents.length > 0) {
+        console.log(`[QSYS-BROWSER] Found ${cachedScriptComponents.length} cached script-only components`);
+        const existingNames = new Set(componentList.map(c => c.name));
+        const newScriptComponents = cachedScriptComponents.filter((comp: any) => !existingNames.has(comp.name));
+        
+        if (newScriptComponents.length > 0) {
+          finalComponentList = [
+            ...componentList,
+            ...newScriptComponents.map((comp: any) => ({
+              name: comp.name,
+              type: comp.type,
+              controlCount: comp.controlCount || 0,
+              discoveryMethod: 'websocket' as const,
+            }))
+          ];
+          console.log(`✓ Total components: ${finalComponentList.length} (${componentList.length} QRWC + ${newScriptComponents.length} cached WebSocket)`);
+        }
+      }
 
-      this.loadingSubStage.set(`✓ Loaded ${componentList.length} components`);
+      this.browserService.setComponents(finalComponentList);
+      console.log(`✓ Loaded ${finalComponentList.length} components`);
+      this.loadingSubStage.set(`✓ Loaded ${finalComponentList.length} components`);
 
-      // Log current QRWC components before attempting Lua WebSocket
-      console.log(`[DISCOVERY] Current QRWC components (${componentList.length}):`, componentList.map(c => c.name));
-
-      // Check if webserver component with discovery script exists before attempting Lua connection
-      this.checkForDiscoveryScriptAndConnect(componentList);
+      // Now check if WebSocket discovery should be initiated
+      this.checkForDiscoveryScriptAndConnect(finalComponentList);
 
       setTimeout(() => {
         this.loadingStage.set('');
