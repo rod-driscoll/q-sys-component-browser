@@ -1,6 +1,5 @@
 import { Component, OnInit, OnDestroy, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NavigationHeaderComponent } from '../../components/custom-views/shared/navigation-header/navigation-header.component';
 import { KnobControl } from '../../components/qsys-browser/controls/knob-control/knob-control';
 import { BooleanControl } from '../../components/qsys-browser/controls/boolean-control/boolean-control';
 // import { ButtonControl } from '../../components/qsys-browser/controls/button-control/button-control';
@@ -19,7 +18,6 @@ import { ControlInfo } from '../../services/qsys-browser.service';
   standalone: true,
   imports: [
     CommonModule,
-    NavigationHeaderComponent,
     KnobControl,
     BooleanControl,
     // ButtonControl,

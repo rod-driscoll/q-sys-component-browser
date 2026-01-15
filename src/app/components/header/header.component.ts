@@ -13,26 +13,21 @@ import { environment } from '../../../environments/environment';
       <div class="header-content">
         <div class="header-left">
           <h1 class="app-title">Q-SYS Component Browser</h1>
-          <div class="design-name" *ngIf="designName()">{{ designName() }}</div>
+          <div class="design-name">{{ getDesignNameDisplay() }}</div>
         </div>
         
         <div class="header-status">
-          <!-- QRWC Connection Status -->
-          <div class="status-item" [class.connected]="qsysService.isConnected()" [class.disconnected]="!qsysService.isConnected()">
-            <span class="status-indicator"></span>
-            <span class="status-label">{{ qsysService.isConnected() ? 'Connected' : 'Disconnected' }}</span>
-            <span class="status-detail" *ngIf="qsysService.isConnected()">{{ coreAddress() }}</span>
-          </div>
-
-          <!-- WebSocket Connection Status Button -->
+          <!-- Unified Connection Status Button -->
           <button class="ws-status-button" 
                   [class.secure]="wsDiscoveryService.useControlBasedCommunication()"
                   [class.fallback]="!wsDiscoveryService.useControlBasedCommunication() && wsDiscoveryService.isConnected()"
                   [class.disconnected]="!wsDiscoveryService.isConnected()"
                   (click)="toggleConnectionDetails()"
                   [title]="connectionStatusTooltip()">
+            <span class="status-indicator"></span>
             <span class="ws-icon">{{ connectionIcon() }}</span>
             <span class="ws-text">{{ connectionStatusText() }}</span>
+            <span class="status-detail">{{ coreAddress() }}</span>
             {{ showConnectionDetails ? '▼' : '▶' }}
           </button>
         </div>
@@ -45,6 +40,9 @@ import { environment } from '../../../environments/environment';
           <dl>
             <dt>Core Address:</dt>
             <dd>{{ coreAddress() }}</dd>
+            
+            <dt>Core Type:</dt>
+            <dd>{{ getCoreType() }}</dd>
             
             <dt>QRWC Status:</dt>
             <dd [class.connected]="qsysService.isConnected()">{{ qsysService.isConnected() ? '✓ Connected' : '✗ Disconnected' }}</dd>
@@ -163,7 +161,7 @@ import { environment } from '../../../environments/environment';
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 4px 10px;
+      padding: 6px 12px;
       background: rgba(255, 255, 255, 0.15);
       border: 1px solid rgba(255, 255, 255, 0.2);
       color: white;
@@ -172,7 +170,30 @@ import { environment } from '../../../environments/environment';
       font-size: 12px;
       font-weight: 500;
       transition: all 0.2s;
-      white-space: nowrap;
+    }
+
+    .ws-status-button .status-indicator {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: white;
+      flex: 0 0 6px;
+    }
+
+    .ws-status-button.secure .status-indicator {
+      background: #4caf50;
+      box-shadow: 0 0 4px rgba(76, 175, 80, 0.8);
+    }
+
+    .ws-status-button.fallback .status-indicator {
+      background: #ff9800;
+      box-shadow: 0 0 4px rgba(255, 152, 0, 0.8);
+    }
+
+    .ws-status-button.disconnected .status-indicator {
+      background: #f44336;
+      box-shadow: 0 0 4px rgba(244, 67, 54, 0.8);
     }
 
     .ws-status-button:hover {
@@ -338,10 +359,24 @@ export class HeaderComponent {
   showConnectionDetails = false;
 
   // Get design name from QSysService status
-  designName = computed(() => {
-    const status = (this.qsysService as any).status?.();
-    return status ? status.designName : null;
-  });
+  getDesignNameDisplay(): string {
+    try {
+      const status = this.qsysService.getCoreStatus();
+      return status?.designName || '';
+    } catch {
+      return '';
+    }
+  }
+
+  // Get core type from QSysService status
+  getCoreType(): string {
+    try {
+      const status = this.qsysService.getCoreStatus();
+      return status?.platform || 'Unknown';
+    } catch {
+      return 'Unknown';
+    }
+  }
 
   // Core address without port
   coreAddress = computed(() => environment.RUNTIME_CORE_IP);
