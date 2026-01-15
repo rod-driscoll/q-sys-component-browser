@@ -10,6 +10,8 @@ import { NAMED_CONTROLS_METADATA } from './named-controls.metadata';
 import { NamedControlsService, NamedControl } from '../../services/named-controls.service';
 import { ControlInfo } from '../../services/qsys-browser.service';
 import { LuaScriptService } from '../../services/lua-script.service';
+import { QSysService } from '../../services/qsys.service';
+import { WebSocketDiscoveryService } from '../../services/websocket-discovery.service';
 
 /**
  * Named Controls custom view
@@ -36,7 +38,9 @@ export class NamedControlsComponent implements OnInit, OnDestroy {
 
   constructor(
     private namedControlsService: NamedControlsService,
-    private luaScriptService: LuaScriptService
+    private luaScriptService: LuaScriptService,
+    private qsysService: QSysService,
+    private wsDiscoveryService: WebSocketDiscoveryService
   ) {}
 
   // Use service signals via getters
@@ -46,8 +50,8 @@ export class NamedControlsComponent implements OnInit, OnDestroy {
   get isConnected() { return this.namedControlsService.isConnected; }
 
   ngOnInit(): void {
-    // Load Lua scripts first (required for WebSocket file system endpoint)
-    this.loadLuaScriptsAndControls();
+    // Initialize named controls with proper dependency sequencing
+    this.initializeNamedControls();
   }
 
   ngOnDestroy(): void {
@@ -55,20 +59,125 @@ export class NamedControlsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Load Lua scripts asynchronously, then load named controls
-   * Required for WebSocket file system endpoint functionality
+   * Initialize named controls with proper sequencing:
+   * 1. Wait for QRWC connection
+   * 2. Wait for components to load
+   * 3. Ensure WebSocket discovery is complete
+   * 4. Load Lua scripts for file system access
+   * 5. Load named controls from ExternalControls.xml
    */
-  private async loadLuaScriptsAndControls(): Promise<void> {
+  private async initializeNamedControls(): Promise<void> {
+    try {
+      // Step 1: Wait for QRWC connection
+      await this.waitForQRWCConnection();
+      console.log('✓ QRWC connection established');
+
+      // Step 2: Wait for components to load
+      await this.waitForComponentsLoaded();
+      console.log('✓ Components loaded');
+
+      // Step 3: Ensure WebSocket discovery is complete
+      await this.ensureDiscoveryComplete();
+      console.log('✓ WebSocket discovery complete');
+
+      // Step 4: Load Lua scripts for file system access
+      await this.loadLuaScripts();
+      console.log('✓ Lua scripts loaded');
+
+      // Step 5: Now load named controls
+      await this.loadControls();
+      console.log('✓ Named controls loaded');
+    } catch (error) {
+      console.error('Failed to initialize named controls:', error);
+      this.namedControlsService.error.set(
+        error instanceof Error ? error.message : 'Failed to initialize named controls'
+      );
+    }
+  }
+
+  /**
+   * Wait for QRWC connection to be established
+   */
+  private waitForQRWCConnection(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      // Check if already connected
+      if (this.qsysService.isConnected()) {
+        resolve();
+        return;
+      }
+
+      // Wait for connection with timeout
+      const timeout = setTimeout(() => {
+        reject(new Error('Timeout waiting for QRWC connection'));
+      }, 10000); // 10 second timeout
+
+      const checkConnection = setInterval(() => {
+        if (this.qsysService.isConnected()) {
+          clearInterval(checkConnection);
+          clearTimeout(timeout);
+          resolve();
+        }
+      }, 100);
+    });
+  }
+
+  /**
+   * Wait for components to be loaded from QRWC
+   */
+  private async waitForComponentsLoaded(): Promise<void> {
+    // This will trigger component loading if not already done
+    const components = await this.qsysService.getComponents();
+    if (!components || components.length === 0) {
+      throw new Error('No components loaded from Q-SYS Core');
+    }
+  }
+
+  /**
+   * Ensure WebSocket discovery is complete before accessing file system
+   * The discovery process sets up the tunnel needed for file access
+   */
+  private async ensureDiscoveryComplete(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      // Check if already connected
+      if (this.wsDiscoveryService.isConnected()) {
+        resolve();
+        return;
+      }
+
+      // Start discovery and wait for completion
+      const timeout = setTimeout(() => {
+        reject(new Error('Timeout waiting for WebSocket discovery'));
+      }, 15000); // 15 second timeout
+
+      const checkConnection = setInterval(() => {
+        if (this.wsDiscoveryService.isConnected()) {
+          clearInterval(checkConnection);
+          clearTimeout(timeout);
+          resolve();
+        }
+      }, 100);
+
+      // Initiate discovery if not already started
+      if (!this.wsDiscoveryService.isConnected()) {
+        this.wsDiscoveryService.connect().catch(err => {
+          clearInterval(checkConnection);
+          clearTimeout(timeout);
+          reject(err);
+        });
+      }
+    });
+  }
+
+  /**
+   * Load Lua scripts for WebSocket file system endpoint
+   */
+  private async loadLuaScripts(): Promise<void> {
     try {
       await this.luaScriptService.loadScripts();
-      console.log('✓ Lua scripts loaded for named-controls');
     } catch (error) {
       console.warn('Failed to load Lua scripts:', error);
-      // Continue anyway - will try to load named controls
+      // Continue - file system might still be available
     }
-    
-    // Now load the controls
-    await this.loadControls();
   }
 
   /**
