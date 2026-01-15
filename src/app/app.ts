@@ -2,12 +2,15 @@ import { Component, signal, OnInit, ViewChild } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { environment } from '../environments/environment';
 import { QSysService } from './services/qsys.service';
+import { AppInitializationService } from './services/app-initialization.service';
 import { PwaInstallPromptComponent } from './components/pwa-install-prompt/pwa-install-prompt.component';
 import { SettingsDialogComponent } from './components/settings-dialog/settings-dialog.component';
+import { LoadingScreenComponent } from './components/loading-screen/loading-screen.component';
+import { HeaderComponent } from './components/header/header.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, PwaInstallPromptComponent, SettingsDialogComponent],
+  imports: [RouterOutlet, PwaInstallPromptComponent, SettingsDialogComponent, LoadingScreenComponent, HeaderComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -16,7 +19,7 @@ export class App implements OnInit {
 
   @ViewChild(SettingsDialogComponent) settingsDialog!: SettingsDialogComponent;
 
-  constructor(private qsysService: QSysService) { }
+  constructor(private qsysService: QSysService, private appInit: AppInitializationService) { }
 
   ngOnInit(): void {
     // Parse URL parameters for dynamic Q-SYS Core connection settings
@@ -24,6 +27,12 @@ export class App implements OnInit {
 
     // Connect to Q-SYS Core on app initialization
     this.connectToQSys();
+
+    // Initialize the app (discovery, Lua scripts, etc.)
+    // This MUST complete before custom view pages load
+    this.appInit.initializeApp().catch((error) => {
+      console.error('App initialization failed:', error);
+    });
   }
 
   /**

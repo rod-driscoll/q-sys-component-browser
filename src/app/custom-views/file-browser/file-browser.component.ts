@@ -3,9 +3,6 @@ import { CommonModule } from '@angular/common';
 import { NavigationHeaderComponent } from '../../components/custom-views/shared/navigation-header/navigation-header.component';
 import { FILE_BROWSER_METADATA } from './file-browser.metadata';
 import { FileSystemService, FileEntry } from '../../services/file-system.service';
-import { LuaScriptService } from '../../services/lua-script.service';
-import { QSysService } from '../../services/qsys.service';
-import { WebSocketDiscoveryService } from '../../services/websocket-discovery.service';
 
 @Component({
   selector: 'app-file-browser',
@@ -19,9 +16,6 @@ export class FileBrowserComponent implements OnInit, OnDestroy {
   readonly title = FILE_BROWSER_METADATA.title;
 
   private fileSystemService = inject(FileSystemService);
-  private luaScriptService = inject(LuaScriptService);
-  private qsysService = inject(QSysService);
-  private wsDiscoveryService = inject(WebSocketDiscoveryService);
 
   constructor() {}
 
@@ -43,95 +37,11 @@ export class FileBrowserComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
-    // Initialize file browser with proper dependency sequencing
-    this.initializeFileBrowser();
-  }
-
-  /**
-   * Initialize file browser with proper dependency sequencing
-   * Similar pattern to named-controls component
-   */
-  private async initializeFileBrowser(): Promise<void> {
-    try {
-      // 1. Ensure QRWC connection is ready
-      console.log('[FILE-BROWSER] Waiting for QRWC connection...');
-      await this.waitForQRWCConnection();
-
-      // 2. Ensure WebSocket discovery completes (establishes secure tunnel)
-      console.log('[FILE-BROWSER] Waiting for WebSocket discovery to complete...');
-      await this.ensureDiscoveryComplete();
-
-      // 3. Load Lua scripts (required for WebSocket file system endpoint)
-      console.log('[FILE-BROWSER] Loading Lua scripts...');
-      await this.loadLuaScripts();
-
-      // 4. Connect to file system
-      console.log('[FILE-BROWSER] Connecting to file system...');
-      this.fileSystemService.connect();
-    } catch (error) {
-      console.error('[FILE-BROWSER] Initialization failed:', error);
-    }
-  }
-
-  /**
-   * Wait for QRWC connection to be established
-   */
-  private waitForQRWCConnection(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error('QRWC connection timeout (10s)'));
-      }, 10000);
-
-      const checkConnection = setInterval(() => {
-        if (this.qsysService.status() === 'connected') {
-          clearInterval(checkConnection);
-          clearTimeout(timeout);
-          resolve();
-        }
-      }, 100);
-    });
-  }
-
-  /**
-   * Wait for WebSocket discovery to complete
-   */
-  private ensureDiscoveryComplete(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error('WebSocket discovery timeout (10s)'));
-      }, 10000);
-
-      const checkDiscovery = setInterval(() => {
-        if (this.wsDiscoveryService.isConnected()) {
-          clearInterval(checkDiscovery);
-          clearTimeout(timeout);
-          resolve();
-        }
-      }, 100);
-    });
-  }
-
-  /**
-   * Load Lua scripts required for file system access
-   */
-  private loadLuaScripts(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error('Lua script loading timeout (10s)'));
-      }, 10000);
-
-      try {
-        this.luaScriptService.loadScripts();
-        // Give Lua scripts time to load
-        setTimeout(() => {
-          clearTimeout(timeout);
-          resolve();
-        }, 500);
-      } catch (error) {
-        clearTimeout(timeout);
-        reject(error);
-      }
-    });
+    // App-level initialization has already completed at this point
+    // Discovery service is ready, Lua scripts are loaded
+    // Just connect to file system
+    console.log('[FILE-BROWSER] Connecting to file system (app init complete)');
+    this.fileSystemService.connect();
   }
 
   ngOnDestroy(): void {
