@@ -9,6 +9,7 @@ import { ComboControl } from '../../components/qsys-browser/controls/combo-contr
 import { NAMED_CONTROLS_METADATA } from './named-controls.metadata';
 import { NamedControlsService, NamedControl } from '../../services/named-controls.service';
 import { ControlInfo } from '../../services/qsys-browser.service';
+import { LuaScriptService } from '../../services/lua-script.service';
 
 /**
  * Named Controls custom view
@@ -34,7 +35,8 @@ export class NamedControlsComponent implements OnInit, OnDestroy {
   readonly title = NAMED_CONTROLS_METADATA.title;
 
   constructor(
-    private namedControlsService: NamedControlsService
+    private namedControlsService: NamedControlsService,
+    private luaScriptService: LuaScriptService
   ) {}
 
   // Use service signals via getters
@@ -44,12 +46,29 @@ export class NamedControlsComponent implements OnInit, OnDestroy {
   get isConnected() { return this.namedControlsService.isConnected; }
 
   ngOnInit(): void {
-    // Load named controls when component initializes
-    this.loadControls();
+    // Load Lua scripts first (required for WebSocket file system endpoint)
+    this.loadLuaScriptsAndControls();
   }
 
   ngOnDestroy(): void {
     // No cleanup needed - using QRWC which is managed by QSysService
+  }
+
+  /**
+   * Load Lua scripts asynchronously, then load named controls
+   * Required for WebSocket file system endpoint functionality
+   */
+  private async loadLuaScriptsAndControls(): Promise<void> {
+    try {
+      await this.luaScriptService.loadScripts();
+      console.log('✓ Lua scripts loaded for named-controls');
+    } catch (error) {
+      console.warn('Failed to load Lua scripts:', error);
+      // Continue anyway - will try to load named controls
+    }
+    
+    // Now load the controls
+    await this.loadControls();
   }
 
   /**
