@@ -1319,6 +1319,9 @@ HttpServer = (function()
         -- Read payload
         if socket.BufferLength < payloadLen then return nil end
         local payload = socket:Read(payloadLen)
+        
+        -- Ensure payload was read successfully
+        if not payload then return nil end
 
         -- Unmask payload if needed (XOR operation)
         if masked and maskKey then
