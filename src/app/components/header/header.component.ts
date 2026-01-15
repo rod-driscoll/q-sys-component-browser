@@ -11,21 +11,17 @@ import { environment } from '../../../environments/environment';
   template: `
     <header class="app-header">
       <div class="header-content">
-        <h1 class="app-title">Q-SYS Component Browser</h1>
+        <div class="header-left">
+          <h1 class="app-title">Q-SYS Component Browser</h1>
+          <div class="design-name" *ngIf="designName()">{{ designName() }}</div>
+        </div>
         
         <div class="header-status">
           <!-- QRWC Connection Status -->
           <div class="status-item" [class.connected]="qsysService.isConnected()" [class.disconnected]="!qsysService.isConnected()">
             <span class="status-indicator"></span>
-            <span class="status-label">QRWC: {{ qsysService.isConnected() ? 'Connected' : 'Disconnected' }}</span>
+            <span class="status-label">{{ qsysService.isConnected() ? 'Connected' : 'Disconnected' }}</span>
             <span class="status-detail" *ngIf="qsysService.isConnected()">{{ coreAddress() }}</span>
-          </div>
-
-          <!-- WebSocket Discovery Status -->
-          <div class="status-item" [class.connected]="wsDiscoveryService.isConnected()" [class.disconnected]="!wsDiscoveryService.isConnected()">
-            <span class="status-indicator"></span>
-            <span class="status-label">{{ discoveryStatusLabel() }}</span>
-            <span class="status-detail" *ngIf="discoveryStatusDetail()">{{ discoveryStatusDetail() }}</span>
           </div>
 
           <!-- WebSocket Connection Status Button -->
@@ -68,7 +64,7 @@ import { environment } from '../../../environments/environment';
   `,
   styles: [`
     .app-header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background-color: #2c3e50;
       color: white;
       padding: 0;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -81,23 +77,35 @@ import { environment } from '../../../environments/environment';
     .header-content {
       max-width: 1400px;
       margin: 0 auto;
-      padding: 12px 20px;
+      padding: 8px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 20px;
     }
 
+    .header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex: 0 0 auto;
+    }
+
     .app-title {
       margin: 0;
-      font-size: 20px;
+      font-size: 16px;
       font-weight: 600;
-      flex: 0 0 auto;
+    }
+
+    .design-name {
+      font-size: 12px;
+      opacity: 0.8;
+      font-family: 'Courier New', monospace;
     }
 
     .header-status {
       display: flex;
-      gap: 15px;
+      gap: 12px;
       align-items: center;
       flex-wrap: wrap;
     }
@@ -105,34 +113,34 @@ import { environment } from '../../../environments/environment';
     .status-item {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      padding: 6px 12px;
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 6px;
+      gap: 6px;
+      font-size: 12px;
+      padding: 4px 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
       transition: background 0.2s;
     }
 
     .status-item.connected {
-      background: rgba(76, 175, 80, 0.3);
+      background: rgba(76, 175, 80, 0.2);
     }
 
     .status-item.disconnected {
-      background: rgba(244, 67, 54, 0.3);
+      background: rgba(244, 67, 54, 0.2);
     }
 
     .status-indicator {
       display: inline-block;
-      width: 8px;
-      height: 8px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background: white;
-      flex: 0 0 8px;
+      flex: 0 0 6px;
     }
 
     .status-item.connected .status-indicator {
       background: #4caf50;
-      box-shadow: 0 0 6px rgba(76, 175, 80, 0.8);
+      box-shadow: 0 0 4px rgba(76, 175, 80, 0.8);
     }
 
     .status-item.disconnected .status-indicator {
@@ -145,59 +153,60 @@ import { environment } from '../../../environments/environment';
     }
 
     .status-detail {
-      font-size: 12px;
-      opacity: 0.9;
+      font-size: 11px;
+      opacity: 0.8;
+      font-family: 'Courier New', monospace;
     }
 
     .ws-status-button {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      background: rgba(255, 255, 255, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      gap: 6px;
+      padding: 4px 10px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       color: white;
-      border-radius: 6px;
+      border-radius: 4px;
       cursor: pointer;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 500;
       transition: all 0.2s;
       white-space: nowrap;
     }
 
     .ws-status-button:hover {
-      background: rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.25);
     }
 
     .ws-status-button.secure {
-      background: rgba(76, 175, 80, 0.4);
-      border-color: rgba(76, 175, 80, 0.6);
+      background: rgba(76, 175, 80, 0.3);
+      border-color: rgba(76, 175, 80, 0.5);
     }
 
     .ws-status-button.secure:hover {
-      background: rgba(76, 175, 80, 0.5);
+      background: rgba(76, 175, 80, 0.4);
     }
 
     .ws-status-button.fallback {
-      background: rgba(255, 152, 0, 0.4);
-      border-color: rgba(255, 152, 0, 0.6);
+      background: rgba(255, 152, 0, 0.3);
+      border-color: rgba(255, 152, 0, 0.5);
     }
 
     .ws-status-button.fallback:hover {
-      background: rgba(255, 152, 0, 0.5);
+      background: rgba(255, 152, 0, 0.4);
     }
 
     .ws-status-button.disconnected {
-      background: rgba(244, 67, 54, 0.4);
-      border-color: rgba(244, 67, 54, 0.6);
+      background: rgba(244, 67, 54, 0.3);
+      border-color: rgba(244, 67, 54, 0.5);
     }
 
     .ws-status-button.disconnected:hover {
-      background: rgba(244, 67, 54, 0.5);
+      background: rgba(244, 67, 54, 0.4);
     }
 
     .ws-icon {
-      font-size: 14px;
+      font-size: 12px;
     }
 
     .connection-details {
@@ -206,20 +215,20 @@ import { environment } from '../../../environments/environment';
       right: 20px;
       background: white;
       color: #333;
-      border-radius: 8px;
+      border-radius: 6px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
       z-index: 1000;
-      min-width: 300px;
-      margin-top: 8px;
+      min-width: 280px;
+      margin-top: 6px;
     }
 
     .details-content {
-      padding: 16px;
+      padding: 12px;
     }
 
     .connection-details h3 {
-      margin: 0 0 12px 0;
-      font-size: 16px;
+      margin: 0 0 10px 0;
+      font-size: 14px;
       font-weight: 600;
     }
 
@@ -227,18 +236,18 @@ import { environment } from '../../../environments/environment';
       margin: 0;
       display: grid;
       grid-template-columns: auto 1fr;
-      gap: 8px 12px;
+      gap: 6px 10px;
     }
 
     .connection-details dt {
       font-weight: 600;
-      font-size: 13px;
+      font-size: 12px;
       color: #666;
     }
 
     .connection-details dd {
       margin: 0;
-      font-size: 13px;
+      font-size: 12px;
       word-break: break-all;
     }
 
@@ -258,13 +267,13 @@ import { environment } from '../../../environments/environment';
     }
 
     .close-btn {
-      margin-top: 12px;
-      padding: 6px 12px;
+      margin-top: 10px;
+      padding: 4px 10px;
       background: #f5f5f5;
       border: 1px solid #ddd;
-      border-radius: 4px;
+      border-radius: 3px;
       cursor: pointer;
-      font-size: 13px;
+      font-size: 12px;
       width: 100%;
       transition: background 0.2s;
     }
@@ -276,10 +285,10 @@ import { environment } from '../../../environments/environment';
     @media (max-width: 768px) {
       .header-content {
         flex-direction: column;
-        gap: 12px;
+        gap: 8px;
       }
 
-      .app-title {
+      .header-left {
         width: 100%;
       }
 
@@ -308,18 +317,14 @@ export class HeaderComponent {
 
   showConnectionDetails = false;
 
-  coreAddress = computed(() => `${environment.RUNTIME_CORE_IP}:${environment.RUNTIME_CORE_PORT}`);
-
-  discoveryStatusLabel = computed(() => {
-    if (!this.wsDiscoveryService.isConnected()) {
-      return 'Discovery: Initializing...';
-    }
-    return 'Discovery: Connected';
+  // Get design name from QSysService status
+  designName = computed(() => {
+    const status = (this.qsysService as any).status?.();
+    return status ? status.designName : null;
   });
 
-  discoveryStatusDetail = computed(() => {
-    return this.wsDiscoveryService.useControlBasedCommunication() ? 'Secure' : 'HTTP Fallback';
-  });
+  // Core address without port
+  coreAddress = computed(() => environment.RUNTIME_CORE_IP);
 
   connectionStatusText = computed(() => {
     if (!this.wsDiscoveryService.isConnected()) {
@@ -362,3 +367,4 @@ export class HeaderComponent {
     this.showConnectionDetails = !this.showConnectionDetails;
   }
 }
+
