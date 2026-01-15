@@ -331,9 +331,8 @@ export class QsysBrowser implements OnInit, OnDestroy {
     if (this.controlUpdateSubscription) {
       this.controlUpdateSubscription.unsubscribe();
     }
-    // Don't disconnect from Q-SYS - connection should persist across all views
-    // this.qsysService.disconnect();
-    this.wsDiscoveryService.disconnect();
+    // Don't disconnect from Q-SYS or WebSocket Discovery
+    // Connections are managed at app level and should persist across all views
   }
 
   // Load all components from Q-SYS Core via QRWC
