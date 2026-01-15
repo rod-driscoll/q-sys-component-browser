@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
+import { WebSocketDiscoveryService } from './websocket-discovery.service';
 
 /**
  * File or Directory entry from Q-SYS Core
@@ -47,18 +48,44 @@ export class FileSystemService {
   public fileContentType = signal<string | null>(null);
   public viewingFile = signal<string | null>(null);
 
-  constructor() {}
+  constructor(private wsDiscoveryService: WebSocketDiscoveryService) {}
 
   /**
-   * Connect to the WebSocket file system endpoint
+   * Connect to the file system endpoint
+   * Attempts to use secure control-based communication if available,
+   * falls back to Lua WebSocket if not
    */
   connect(): void {
+    // Check if control-based communication is available (preferred, more secure)
+    if (this.wsDiscoveryService.useControlBasedCommunication()) {
+      console.log('[FILE-SYSTEM] Using secure control-based communication for file operations');
+      this.connectViaSecureTunnel();
+    } else {
+      console.log('[FILE-SYSTEM] Using Lua WebSocket fallback for file operations');
+      this.connectViaLuaWebSocket();
+    }
+  }
+
+  /**
+   * Connect via secure control-based communication tunnel
+   * TODO: Implement file system operations via json_input/json_output controls
+   */
+  private connectViaSecureTunnel(): void {
+    console.warn('[FILE-SYSTEM] Secure tunnel not yet implemented, falling back to Lua WebSocket');
+    this.connectViaLuaWebSocket();
+  }
+
+  /**
+   * Connect to the Lua WebSocket file system endpoint
+   * This is the fallback for environments without control-based communication
+   */
+  private connectViaLuaWebSocket(): void {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      console.log('File system WebSocket already connected');
+      console.log('[FILE-SYSTEM] Lua WebSocket already connected');
       return;
     }
 
-    console.log('Connecting to file system WebSocket:', this.wsUrl);
+    console.log('[FILE-SYSTEM] Connecting to file system WebSocket:', this.wsUrl);
     this.ws = new WebSocket(this.wsUrl);
 
     this.ws.onopen = () => {
