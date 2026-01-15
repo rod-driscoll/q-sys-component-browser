@@ -340,7 +340,6 @@ export class QsysBrowser implements OnInit, OnDestroy {
   async loadComponents(refresh: boolean = false): Promise<void> {
     if (!refresh) {
       // Not a refresh - check if we already have components cached from discovery
-      const cachedScriptComponents = this.qsysService.getCachedScriptOnlyComponents();
       const existingComponents = this.browserService.components();
       
       if (existingComponents.length > 0) {
@@ -374,14 +373,14 @@ export class QsysBrowser implements OnInit, OnDestroy {
         discoveryMethod: 'qrwc' as const,
       }));
 
-      // Check for cached script-only components from previous discovery
-      const cachedScriptComponents = this.qsysService.getCachedScriptOnlyComponents();
+      // Check if WebSocket discovery data is already available from app-level init
+      const discoveryData = this.wsDiscoveryService.discoveryData();
       let finalComponentList = componentList;
       
-      if (cachedScriptComponents && cachedScriptComponents.length > 0) {
-        console.log(`[QSYS-BROWSER] Found ${cachedScriptComponents.length} cached script-only components`);
+      if (discoveryData && discoveryData.components && discoveryData.components.length > 0) {
+        console.log(`[QSYS-BROWSER] WebSocket discovery data already available: ${discoveryData.components.length} components`);
         const existingNames = new Set(componentList.map(c => c.name));
-        const newScriptComponents = cachedScriptComponents.filter((comp: any) => !existingNames.has(comp.name));
+        const newScriptComponents = discoveryData.components.filter((comp: any) => !existingNames.has(comp.name));
         
         if (newScriptComponents.length > 0) {
           finalComponentList = [
@@ -393,7 +392,29 @@ export class QsysBrowser implements OnInit, OnDestroy {
               discoveryMethod: 'websocket' as const,
             }))
           ];
-          console.log(`✓ Total components: ${finalComponentList.length} (${componentList.length} QRWC + ${newScriptComponents.length} cached WebSocket)`);
+          console.log(`✓ Merged components: ${finalComponentList.length} total (${componentList.length} QRWC + ${newScriptComponents.length} WebSocket)`);
+        }
+      } else {
+        // Check for cached script-only components from previous discovery
+        const cachedScriptComponents = this.qsysService.getCachedScriptOnlyComponents();
+        
+        if (cachedScriptComponents && cachedScriptComponents.length > 0) {
+          console.log(`[QSYS-BROWSER] Found ${cachedScriptComponents.length} cached script-only components`);
+          const existingNames = new Set(componentList.map(c => c.name));
+          const newScriptComponents = cachedScriptComponents.filter((comp: any) => !existingNames.has(comp.name));
+          
+          if (newScriptComponents.length > 0) {
+            finalComponentList = [
+              ...componentList,
+              ...newScriptComponents.map((comp: any) => ({
+                name: comp.name,
+                type: comp.type,
+                controlCount: comp.controlCount || 0,
+                discoveryMethod: 'websocket' as const,
+              }))
+            ];
+            console.log(`✓ Total components: ${finalComponentList.length} (${componentList.length} QRWC + ${newScriptComponents.length} cached WebSocket)`);
+          }
         }
       }
 
