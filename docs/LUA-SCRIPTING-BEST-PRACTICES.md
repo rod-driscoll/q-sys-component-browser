@@ -184,7 +184,89 @@ local myTimer = Timer.New(function, interval, recurring)
 
 ---
 
-## Checklist for Lua Script Implementation
+## Critical: Check Return Values From Socket Operations
+
+### The Rule
+**Always check the return value of socket operations like `:Read()` for nil, even if you've checked buffer length.**
+
+### Why?
+Socket operations may return nil even when the buffer appears to have sufficient data. Attempting to use a nil value (e.g., getting its length with `#`) causes a runtime error:
+```
+attempt to get length of a nil value (local 'payload')
+```
+
+### Example - WRONG ❌
+```lua
+-- Bad: Only checks buffer length, not read result
+if socket.BufferLength < payloadLen then return nil end
+local payload = socket:Read(payloadLen)
+local dataLength = #payload  -- ERROR if payload is nil!
+```
+
+### Example - CORRECT ✅
+```lua
+-- Good: Checks both buffer length AND read result
+if socket.BufferLength < payloadLen then return nil end
+local payload = socket:Read(payloadLen)
+
+-- Explicit nil check before using
+if not payload then return nil end
+local dataLength = #payload  -- Safe: payload is guaranteed to be non-nil
+```
+
+### Real Example from Project
+**File:** `lua/WebSocketComponentDiscovery.lua` (line 1326)
+
+**WRONG (Initial Implementation):**
+```lua
+-- Line 1320: Only checks buffer length
+if socket.BufferLength < payloadLen then return nil end
+local payload = socket:Read(payloadLen)
+
+-- Line 1326: Tries to get length of possibly nil payload
+if masked and maskKey then
+  for i = 1, #payload do  -- ERROR: attempt to get length of a nil value
+    -- ... process payload ...
+  end
+end
+```
+
+**CORRECT (Fixed Implementation):**
+```lua
+-- Check buffer length
+if socket.BufferLength < payloadLen then return nil end
+local payload = socket:Read(payloadLen)
+
+-- ALWAYS verify the read succeeded
+if not payload then return nil end
+
+-- Now safe to use payload
+if masked and maskKey then
+  for i = 1, #payload do  -- Safe: payload is guaranteed non-nil
+    -- ... process payload ...
+  end
+end
+```
+
+### Defensive Programming Pattern
+When working with I/O operations in Q-SYS Lua:
+
+```lua
+-- Always check both preconditions AND results
+if socket.BufferLength < expectedSize then 
+  return nil  -- Not enough data yet
+end
+
+local data = socket:Read(expectedSize)
+if not data then 
+  return nil  -- Read failed (even though buffer suggested it would work)
+end
+
+-- Now safe to use data
+local length = #data
+```
+
+---
 
 When writing Q-SYS Lua scripts:
 
@@ -227,3 +309,4 @@ When writing Q-SYS Lua scripts:
 |------|-------|-----|
 | 2026-01-15 | Timer initialization error in reconnectionCheckTimer | Changed to global scope + correct Start() pattern |
 | 2026-01-15 | WriteJsonToControl nil error during reconnect | Moved function to module scope for visibility |
+| 2026-01-15 | Payload nil when parsing WebSocket frames | Added explicit nil check after socket:Read() |
