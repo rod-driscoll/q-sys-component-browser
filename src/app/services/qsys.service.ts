@@ -497,24 +497,49 @@ export class QSysService {
       const components = await webSocketManager.sendRpc('Component.GetComponents', 'test');
       console.log(`Found ${components.length} components via RPC`);
 
-      // Fetch control counts for each component (without ChangeGroup registration)
-      console.log('Fetching control counts for all components...');
-      const componentsWithCounts: ComponentWithControls[] = await Promise.all(
-        components.map(async (component: any) => {
-          // Try with retry logic for components that might timeout
-          const controlCount = await this.fetchControlCountWithRetry(
-            webSocketManager,
-            component.Name,
-            3  // Max 3 attempts
-          );
+      // Fetch control counts with limited concurrency to avoid overloading the Core
+      console.log('Fetching control counts for all components (limited concurrency)...');
 
-          return {
-            name: component.Name,
-            type: component.Type || 'Unknown',
-            controlCount: controlCount
-          };
-        })
-      );
+      const concurrencyLimit = 4; // limit parallel RPCs
+      const componentsWithCounts: ComponentWithControls[] = [];
+
+      let currentIndex = 0;
+      const workers = Array.from({ length: concurrencyLimit }, async () => {
+        while (true) {
+          const idx = currentIndex++;
+          if (idx >= components.length) break;
+          const component: any = components[idx];
+
+          // Reduce retries for script components which often time out
+          const maxAttempts = (component.Type === 'device_controller_script') ? 1 : 3;
+
+          try {
+            const controlCount = await this.fetchControlCountWithRetry(
+              webSocketManager,
+              component.Name,
+              maxAttempts
+            );
+
+            componentsWithCounts[idx] = {
+              name: component.Name,
+              type: component.Type || 'Unknown',
+              controlCount: controlCount
+            };
+          } catch (err) {
+            console.warn(`  ✗ ${component.Name}: failed to fetch controls - ${String(err)}`);
+            componentsWithCounts[idx] = {
+              name: component.Name,
+              type: component.Type || 'Unknown',
+              controlCount: 0
+            };
+          }
+
+          // Small delay to avoid hammering RPC endpoint
+          await new Promise(r => setTimeout(r, 25));
+        }
+      });
+
+      await Promise.all(workers);
 
       console.log(`Loaded ${componentsWithCounts.length} components with control counts`);
 
