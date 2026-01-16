@@ -106,7 +106,7 @@ export class SecureTunnelDiscoveryService {
       } else {
         console.warn('⚠ Discovery Script not found on Core.');
         console.warn('  Secure tunnel features (File Browser, etc.) will not be available.');
-        console.warn('  To enable: Load WebSocketComponentDiscovery.lua into a script component.');
+        console.warn('  To enable: Load TunnelDiscovery.lua into a script component.');
         this.loadingStage.set('No Secure Tunnel');
         // Set as "connected" but without tunnel - app can still function
         this.isConnected.set(true);

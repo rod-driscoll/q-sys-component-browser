@@ -112,7 +112,7 @@ export class FileSystemService {
 
     this.ws.onerror = (error) => {
       console.error('File system WebSocket error:', error);
-      this.error.set('Failed to connect to file system. Ensure WebSocketComponentDiscovery.lua is loaded.');
+      this.error.set('Failed to connect to file system. Ensure TunnelDiscovery.lua is loaded.');
       this.isConnected.set(false);
       this.isLoading.set(false);
     };

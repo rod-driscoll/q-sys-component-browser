@@ -1243,13 +1243,13 @@ export class QSysService {
 
         // Special handling for 404 - webserver not loaded
         if (response.status === 404) {
-          errorDetails = `HTTP API not available (404). Please load 'WebSocketComponentDiscovery.lua' onto a Script component's 'code' control in Q-SYS Designer first.`;
+          errorDetails = `HTTP API not available (404). Please load 'TunnelDiscovery.lua' onto a Script component's 'code' control in Q-SYS Designer first.`;
           console.error(errorDetails);
           console.error(`The HTTP API webserver must be running on the Q-SYS Core to access components with controls not loaded by QRWC.`);
           console.error(`Steps to fix:`);
           console.error(`  1. Open Q-SYS Designer and select a Script component`);
           console.error(`  2. Find the 'code' control in the component`);
-          console.error(`  3. Load 'WebSocketComponentDiscovery.lua' into the code control`);
+          console.error(`  3. Load 'TunnelDiscovery.lua' into the code control`);
           console.error(`  4. Save and deploy the design`);
         } else {
           try {

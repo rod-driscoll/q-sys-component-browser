@@ -298,7 +298,7 @@ The project includes a deployment script that uploads the built application to a
 
 **Important Limitations:**
 
-The Q-SYS Lua HTTP server (used by the included WebSocketComponentDiscovery.lua) has a TcpSocket buffer limitation that prevents reliable transfer of files larger than approximately 65KB.
+The Q-SYS Lua HTTP server (used by the included TunnelDiscovery.lua) has a TcpSocket buffer limitation that prevents reliable transfer of files larger than approximately 65KB.
 
 - ✅ **Initial page load**: Works reliably (main.js is 29KB with lazy loading)
 - ⚠️ **Large lazy-loaded chunks**: May fail to load (e.g., Angular Material vendor chunk at 273KB)

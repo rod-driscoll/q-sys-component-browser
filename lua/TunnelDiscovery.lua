@@ -1,6 +1,6 @@
--- ========== START: WebSocket Component Discovery ==========
+-- ========== START: Tunnel Discovery ==========
 --[[
-  WebSocketComponentDiscovery.lua
+  TunnelDiscovery.lua
   Discovers all components and their controls in the Q-SYS design
   Sends results via WebSocket to avoid overwhelming the log system
 

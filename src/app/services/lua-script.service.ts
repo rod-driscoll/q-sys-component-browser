@@ -27,7 +27,7 @@ export class LuaScriptService {
   private scriptMetadata: LuaScriptMetadata[] = [
     {
       name: 'WebSocket Component Discovery',
-      fileName: 'WebSocketComponentDiscovery.lua',
+      fileName: 'TunnelDiscovery.lua',
     },
     {
       name: 'Get System Information',
