@@ -203,10 +203,20 @@ export class MenuComponent implements OnInit {
     const allComponentNames = new Set([...qrwcComponentNames, ...discoveryComponentNames]);
     
     console.log(`Menu: Building menu from ${allComponentNames.size} merged components (${qrwcComponentNames.size} QRWC + ${discoveryComponentNames.size} discovery)`);
+    console.log('Menu: All component names:', Array.from(allComponentNames).sort());
 
-    // Filter custom views based on required components
+    // Filter custom views based on required components and secure tunnel
     const filteredViews = this.customViewRegistry.registeredViews().filter(view => {
-      // If no required components specified, always show the view
+      // Check if view requires secure tunnel
+      if (view.requiresSecureTunnel) {
+        const hasSecureTunnel = this.wsDiscoveryService.useControlBasedCommunication();
+        if (!hasSecureTunnel) {
+          console.log(`Menu: Hiding "${view.title}" - secure tunnel not available`);
+          return false;
+        }
+      }
+
+      // If no required components specified, show the view (secure tunnel check already passed if needed)
       if (!view.requiredComponents || view.requiredComponents.length === 0) {
         return true;
       }

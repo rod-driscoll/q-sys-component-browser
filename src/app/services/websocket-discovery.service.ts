@@ -206,17 +206,46 @@ export class WebSocketDiscoveryService {
    * Sets up the secure tunnel using Direct Component Controls
    */
   private async setupSecureTunnel(componentName: string): Promise<void> {
-    // Subscribe to Control Updates
+    // Subscribe to Control Updates for json_output (discovery data)
     this.qsysService.getControlUpdates().subscribe(update => {
       // Check if update is for OUR component and output control
-      // Note: Component.Get (triggered by 'trigger_update') might send updates with Name=json_output
       if (update.component === componentName && (update.control === this.OUTPUT_CONTROL || (update as any).name === this.OUTPUT_CONTROL || (update as any).Name === this.OUTPUT_CONTROL)) {
         const val = (update as any).String || (update as any).string || update.value;
         if (val !== undefined) {
           this.handleTunnelData(val);
         }
       }
+      
+      // Also check for json_input control (component updates)
+      if (update.component === componentName && (update.control === this.INPUT_CONTROL || (update as any).name === this.INPUT_CONTROL || (update as any).Name === this.INPUT_CONTROL)) {
+        const val = (update as any).String || (update as any).string || update.value;
+        if (val !== undefined) {
+          this.handleTunnelData(val);
+        }
+      }
     });
+
+    // Add both json_output and json_input controls to ChangeGroup to receive automatic updates
+    try {
+      const webSocketManager = (this.qsysService as any).qrwc?.webSocketManager;
+      const changeGroup = (this.qsysService as any).qrwc?.changeGroup;
+      
+      if (webSocketManager && changeGroup) {
+        await webSocketManager.sendRpc('ChangeGroup.AddComponentControl', {
+          Id: (changeGroup as any).id,
+          Component: {
+            Name: componentName,
+            Controls: [
+              { Name: this.OUTPUT_CONTROL },
+              { Name: this.INPUT_CONTROL }
+            ]
+          }
+        });
+        console.log(`✓ Added ${this.OUTPUT_CONTROL} and ${this.INPUT_CONTROL} controls to ChangeGroup for automatic updates`);
+      }
+    } catch (e) {
+      console.warn('Could not add controls to ChangeGroup:', e);
+    }
 
     // Send Trigger to start discovery
     // Using existing public accessor
@@ -240,9 +269,73 @@ export class WebSocketDiscoveryService {
       } catch (e) { console.warn('Poll failed', e); }
     }, 500);
 
+    // Connect to WebSocket updates endpoint for component updates
+    this.connectToUpdatesEndpoint(componentName);
+
     this.isConnected.set(true);
     this.error.set(null);
     this.loadingStage.set('Secure Tunnel Established');
+  }
+
+  /**
+   * Connect to the WebSocket updates endpoint for real-time component updates
+   */
+  private connectToUpdatesEndpoint(componentName: string): void {
+    try {
+      // Extract Q-SYS Core IP from the already-connected QRWC WebSocket URL
+      let coreIp = '192.168.6.21'; // default fallback
+      
+      try {
+        const qrwc = (this.qsysService as any).qrwc;
+        if (qrwc && qrwc.webSocketManager) {
+          const ws = qrwc.webSocketManager.socket;
+          if (ws && ws.url) {
+            const match = ws.url.match(/wss?:\/\/([^/:]+)/);
+            if (match && match[1]) {
+              coreIp = match[1];
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Could not extract Core IP from QRWC, using default');
+      }
+      
+      const corePort = 9091;
+      const updateUrl = `ws://${coreIp}:${corePort}/ws/updates`;
+      
+      console.log(`Connecting to component updates WebSocket: ${updateUrl}`);
+      
+      const updateWs = new WebSocket(updateUrl);
+      
+      updateWs.onopen = () => {
+        console.log('✓ Connected to /ws/updates endpoint for real-time component updates');
+      };
+      
+      updateWs.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          
+          if (message.type === 'componentUpdate') {
+            console.log('Received component update via WebSocket:', message.componentName);
+            this.componentUpdate.set(message);
+          }
+        } catch (err) {
+          console.error('Error parsing update message:', err);
+        }
+      };
+      
+      updateWs.onerror = (error) => {
+        console.error('WebSocket error on /ws/updates:', error);
+      };
+      
+      updateWs.onclose = () => {
+        console.log('Disconnected from /ws/updates endpoint');
+        // Reconnect after 5 seconds
+        setTimeout(() => this.connectToUpdatesEndpoint(componentName), 5000);
+      };
+    } catch (err) {
+      console.error('Failed to connect to updates WebSocket:', err);
+    }
   }
 
   /**
@@ -268,7 +361,22 @@ export class WebSocketDiscoveryService {
       this.processDiscoveryJson(this.jsonBuffer);
       this.jsonBuffer = '';
     } else if (data.trim().startsWith('{')) {
-      this.processDiscoveryJson(data);
+      // Try to parse as JSON to determine message type
+      try {
+        const message = JSON.parse(data);
+
+        // Check if it's a component update message
+        if (message.type === 'componentUpdate') {
+          console.log('Received component update via secure tunnel:', message.componentName);
+          this.componentUpdate.set(message);
+        } else {
+          // Otherwise process as discovery data
+          this.processDiscoveryJson(data);
+        }
+      } catch (e) {
+        // If parsing fails, try processing as discovery data
+        this.processDiscoveryJson(data);
+      }
     }
   }
 
@@ -276,6 +384,19 @@ export class WebSocketDiscoveryService {
     try {
       const data = JSON.parse(jsonStr);
       console.log(`Received secure discovery data: ${data.totalComponents} components`);
+      console.log('Discovery component names:', data.components?.map((c: any) => c.name || c.Name).join(', '));
+      
+      // Log webserver component details if found
+      const webserverComp = data.components?.find((c: any) => (c.name || c.Name) === 'webserver');
+      if (webserverComp) {
+        console.log('Found webserver component:', webserverComp);
+        if (Array.isArray(webserverComp.controls)) {
+          console.log('Webserver controls:', webserverComp.controls.map((ctrl: any) => ctrl.name || ctrl.Name));
+        } else {
+          console.log('Webserver controls property is not an array:', typeof webserverComp.controls);
+        }
+      }
+      
       this.discoveryData.set(data);
     } catch (e) {
       console.error('Failed to parse discovery JSON', e);

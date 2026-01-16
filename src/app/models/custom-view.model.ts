@@ -26,6 +26,9 @@ export interface CustomViewMetadata {
 
   /** Required Q-SYS component names - view only appears if at least one is found */
   requiredComponents?: string[];
+
+  /** If true, view only appears when secure tunnel (control-based communication) is active */
+  requiresSecureTunnel?: boolean;
 }
 
 /**

@@ -2,6 +2,7 @@ import { CustomViewMetadata } from '../../models/custom-view.model';
 
 /**
  * Metadata for File Browser custom view
+ * Requires secure tunnel (control-based communication) to be active
  */
 export const FILE_BROWSER_METADATA: CustomViewMetadata = {
   title: 'File Browser',
@@ -9,5 +10,5 @@ export const FILE_BROWSER_METADATA: CustomViewMetadata = {
   icon: '📁',
   route: 'file-browser',
   order: 7,
-  requiredComponents: ['WebSocketRelay']
+  requiresSecureTunnel: true
 };

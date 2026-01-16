@@ -2093,6 +2093,17 @@ local function subscribeToComponent(componentName)
       end
     end
 
+    -- Also send through secure tunnel (json_output control) if available
+    if Controls and Controls.json_output then
+      local updateMessage = json.encode({
+        type = "componentUpdate",
+        componentName = componentName,
+        controls = updatedControls
+      })
+      Controls.json_output.String = updateMessage
+      print("Sent component update for " .. componentName .. " through secure tunnel (" .. #updatedControls .. " controls)")
+    end
+
     pendingUpdate = false
   end
 
