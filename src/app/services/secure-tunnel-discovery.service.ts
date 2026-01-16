@@ -1,6 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { QSysService } from './qsys.service';
 import { LuaScriptService } from './lua-script.service';
+import { environment } from '../../environments/environment';
 
 export interface DiscoveryMessage {
   type: string;
@@ -30,7 +31,7 @@ export interface ComponentUpdate {
 @Injectable({
   providedIn: 'root'
 })
-export class WebSocketDiscoveryService {
+export class SecureTunnelDiscoveryService {
   private qsysService = inject(QSysService);
   private luaScriptService = inject(LuaScriptService);
 
@@ -94,7 +95,7 @@ export class WebSocketDiscoveryService {
       this.boundComponentName = await this.findDiscoveryComponent();
 
       if (this.boundComponentName) {
-        console.log(`Found Discovery Script in component: ${this.boundComponentName}`);
+        console.log(`✓ Found Discovery Script in component: ${this.boundComponentName}`);
         this.loadingStage.set(`Found script in '${this.boundComponentName}', establishing tunnel...`);
 
         // Step 2: Bind to its direct controls
@@ -103,7 +104,13 @@ export class WebSocketDiscoveryService {
         // Step 3: Check if the component has json_input and json_output controls for control-based communication
         await this.checkForControlBasedCommunication(this.boundComponentName);
       } else {
-        throw new Error('Discovery Script not found on Core. Please ensure WebSocketComponentDiscovery.lua is running in a script component.');
+        console.warn('⚠ Discovery Script not found on Core.');
+        console.warn('  Secure tunnel features (File Browser, etc.) will not be available.');
+        console.warn('  To enable: Load WebSocketComponentDiscovery.lua into a script component.');
+        this.loadingStage.set('No Secure Tunnel');
+        // Set as "connected" but without tunnel - app can still function
+        this.isConnected.set(true);
+        return;
       }
 
     } catch (err: any) {
@@ -151,6 +158,12 @@ export class WebSocketDiscoveryService {
       const components = await this.qsysService.getComponents(true);
       console.log(`Scanning ${components.length} components for Script signature...`);
 
+      // Log all component names for debugging
+      console.log('📋 All components found:');
+      components.forEach((c, idx) => {
+        console.log(`  [${idx}] "${c.name}" (type: ${c.type}, controls: ${c.controlCount})`);
+      });
+
       // Filter for potential scripts
       // Optimization: Prioritize components with "Script" in name or type, or specifically "webserver" as per user config
       const candidates = components.filter(c =>
@@ -195,6 +208,45 @@ export class WebSocketDiscoveryService {
           // console.debug(`Skipping scan of ${comp.name}`, scanErr);
         }
       }
+
+      // If script-based discovery not found, check script components for json_input and json_output controls
+      console.log('🔍 Script not found via code detection. Checking device_controller_script components for json_input/json_output controls...');
+      
+      // Filter to ONLY script components (since we're looking for the discovery script)
+      const scriptComponents = components.filter(c => c.type === 'device_controller_script');
+      console.log(`  Checking ${scriptComponents.length} script components...`);
+
+      for (const comp of scriptComponents) {
+        try {
+          const webSocketManager = (this.qsysService as any).qrwc?.webSocketManager;
+          if (!webSocketManager) {
+            continue;
+          }
+
+          // Query for the specific controls we need (bypass control count check)
+          const result = await webSocketManager.sendRpc('Component.Get', {
+            Name: comp.name,
+            Controls: [{ Name: 'json_input' }, { Name: 'json_output' }]
+          }).catch(() => null);
+
+          if (result && result.Controls) {
+            const controlNames = result.Controls.map((c: any) => c.Name);
+            const hasJsonInput = controlNames.includes('json_input');
+            const hasJsonOutput = controlNames.includes('json_output');
+            
+            console.log(`  Checked "${comp.name}": json_input=${hasJsonInput}, json_output=${hasJsonOutput}`);
+            
+            if (hasJsonInput && hasJsonOutput) {
+              console.log(`✅ Found secure tunnel component: "${comp.name}" with json_input & json_output controls!`);
+              return comp.name;
+            }
+          }
+        } catch (err) {
+          console.log(`  "${comp.name}": query failed (${err instanceof Error ? err.message : String(err)})`);
+        }
+      }
+
+      console.log('❌ No script component found with json_input and json_output controls');
       return null;
     } catch (e) {
       console.error('Scan failed', e);
@@ -282,8 +334,8 @@ export class WebSocketDiscoveryService {
    */
   private connectToUpdatesEndpoint(componentName: string): void {
     try {
-      // Extract Q-SYS Core IP from the already-connected QRWC WebSocket URL
-      let coreIp = '192.168.6.21'; // default fallback
+      // Extract Q-SYS Core IP from the already-connected QRWC WebSocket URL, with fallback to environment config
+      let coreIp = environment.RUNTIME_CORE_IP;
       
       try {
         const qrwc = (this.qsysService as any).qrwc;
@@ -293,17 +345,18 @@ export class WebSocketDiscoveryService {
             const match = ws.url.match(/wss?:\/\/([^/:]+)/);
             if (match && match[1]) {
               coreIp = match[1];
+              console.log(`✓ Extracted Core IP from QRWC: ${coreIp}`);
             }
           }
         }
       } catch (e) {
-        console.warn('Could not extract Core IP from QRWC, using default');
+        console.warn(`Could not extract Core IP from QRWC, using environment config: ${coreIp}`);
       }
       
-      const corePort = 9091;
+      const corePort = environment.RUNTIME_CORE_PORT;
       const updateUrl = `ws://${coreIp}:${corePort}/ws/updates`;
       
-      console.log(`Connecting to component updates WebSocket: ${updateUrl}`);
+      console.log(`🔗 Connecting to component updates WebSocket: ${updateUrl}`);
       
       const updateWs = new WebSocket(updateUrl);
       
@@ -409,7 +462,7 @@ export class WebSocketDiscoveryService {
     try {
       // Extract Q-SYS Core IP from the already-connected QRWC WebSocket URL
       // The QSysService has a connected QRWC instance we can inspect
-      let coreIp = '192.168.6.21'; // default fallback
+      let coreIp = environment.RUNTIME_CORE_IP;
       
       try {
         const qrwc = (this.qsysService as any).qrwc;

@@ -500,7 +500,7 @@ export class QSysService {
       // Fetch control counts with limited concurrency to avoid overloading the Core
       console.log('Fetching control counts for all components (limited concurrency)...');
 
-      const concurrencyLimit = 4; // limit parallel RPCs
+      const concurrencyLimit = 2; // further limit parallel RPCs to reduce Core load
       const componentsWithCounts: ComponentWithControls[] = [];
 
       let currentIndex = 0;
@@ -510,8 +510,21 @@ export class QSysService {
           if (idx >= components.length) break;
           const component: any = components[idx];
 
-          // Reduce retries for script components which often time out
-          const maxAttempts = (component.Type === 'device_controller_script') ? 1 : 3;
+          // Skip script components when counting controls to avoid overload
+          if (component.Type === 'device_controller_script') {
+            console.log(`  ↩ ${component.Name}: skipping control count (script component)`);
+            componentsWithCounts[idx] = {
+              name: component.Name,
+              type: component.Type || 'Unknown',
+              controlCount: 0
+            };
+            // Small delay to avoid hammering RPC endpoint even on skip
+            await new Promise(r => setTimeout(r, 25));
+            continue;
+          }
+
+          // Standard components: use retry logic (max 3 attempts)
+          const maxAttempts = 3;
 
           try {
             const controlCount = await this.fetchControlCountWithRetry(
@@ -627,9 +640,14 @@ export class QSysService {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         // Call Component.GetControls RPC to get control count
-        const controlsResult = await webSocketManager.sendRpc('Component.GetControls', {
-          Name: componentName
-        });
+        const controlsResult = await Promise.race([
+          webSocketManager.sendRpc('Component.GetControls', {
+            Name: componentName
+          }),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('RPC timeout after 3000ms')), 3000)
+          )
+        ]);
 
         // Success - return count
         if (attempt > 1) {
@@ -642,7 +660,7 @@ export class QSysService {
         const errorMessage = error instanceof Error ? error.message : String(error);
 
         // Check if it's a timeout error
-        const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('timed out');
+        const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('timed out') || errorMessage.includes('RPC timeout');
 
         if (isTimeout && attempt < maxAttempts) {
           // Calculate delay with exponential backoff: 1s, 2s, 4s
@@ -1016,9 +1034,19 @@ export class QSysService {
       console.log(`Registering ${controls.length} controls with ChangeGroup for ${componentName}`);
 
       // Build the controls array for ChangeGroup.AddComponentControl
-      const controlsToRegister = controls.map(control => ({
-        Name: control.Name
-      }));
+      // Exclude special tunnel controls to avoid feedback loops
+      const controlsToRegister = controls
+        .filter(control => {
+          const n = (control.Name || '').toLowerCase();
+          return n !== 'json_input' && n !== 'json_output' && n !== 'trigger_update';
+        })
+        .map(control => ({
+          Name: control.Name
+        }));
+
+      if (controlsToRegister.length !== controls.length) {
+        console.log(`Filtered out ${controls.length - controlsToRegister.length} special controls for ${componentName} (json_input/json_output/trigger_update)`);
+      }
 
       // Register all controls at once
       await webSocketManager.sendRpc('ChangeGroup.AddComponentControl', {

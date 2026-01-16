@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
-import { WebSocketDiscoveryService } from './websocket-discovery.service';
+import { SecureTunnelDiscoveryService } from './secure-tunnel-discovery.service';
 
 /**
  * File or Directory entry from Q-SYS Core
@@ -48,7 +48,7 @@ export class FileSystemService {
   public fileContentType = signal<string | null>(null);
   public viewingFile = signal<string | null>(null);
 
-  constructor(private wsDiscoveryService: WebSocketDiscoveryService) {}
+  constructor(private secureTunnelService: SecureTunnelDiscoveryService) {}
 
   /**
    * Connect to the file system endpoint
@@ -57,7 +57,7 @@ export class FileSystemService {
    */
   connect(): void {
     // Check if control-based communication is available (preferred, more secure)
-    if (this.wsDiscoveryService.useControlBasedCommunication()) {
+    if (this.secureTunnelService.useControlBasedCommunication()) {
       console.log('[FILE-SYSTEM] Using secure control-based communication for file operations');
       this.connectViaSecureTunnel();
     } else {

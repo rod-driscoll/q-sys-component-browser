@@ -1,7 +1,7 @@
 import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { QSysService } from '../../services/qsys.service';
-import { WebSocketDiscoveryService } from '../../services/websocket-discovery.service';
+import { SecureTunnelDiscoveryService } from '../../services/secure-tunnel-discovery.service';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -19,9 +19,9 @@ import { environment } from '../../../environments/environment';
         <div class="header-status">
           <!-- Unified Connection Status Button -->
           <button class="ws-status-button" 
-                  [class.secure]="wsDiscoveryService.useControlBasedCommunication()"
-                  [class.fallback]="!wsDiscoveryService.useControlBasedCommunication() && wsDiscoveryService.isConnected()"
-                  [class.disconnected]="!wsDiscoveryService.isConnected()"
+                  [class.secure]="secureTunnelService.useControlBasedCommunication()"
+                  [class.fallback]="!secureTunnelService.useControlBasedCommunication() && secureTunnelService.isConnected()"
+                  [class.disconnected]="!secureTunnelService.isConnected()"
                   (click)="toggleConnectionDetails()"
                   [title]="connectionStatusTooltip()">
             <span class="status-indicator"></span>
@@ -48,10 +48,10 @@ import { environment } from '../../../environments/environment';
             <dd [class.connected]="qsysService.isConnected()">{{ qsysService.isConnected() ? '✓ Connected' : '✗ Disconnected' }}</dd>
             
             <dt>Discovery Status:</dt>
-            <dd [class.connected]="wsDiscoveryService.isConnected()">{{ wsDiscoveryService.isConnected() ? '✓ Connected' : '✗ Disconnected' }}</dd>
+            <dd [class.connected]="secureTunnelService.isConnected()">{{ secureTunnelService.isConnected() ? '✓ Connected' : '✗ Disconnected' }}</dd>
             
             <dt>Communication Mode:</dt>
-            <dd [class.secure]="wsDiscoveryService.useControlBasedCommunication()" [class.fallback]="!wsDiscoveryService.useControlBasedCommunication()">
+            <dd [class.secure]="secureTunnelService.useControlBasedCommunication()" [class.fallback]="!secureTunnelService.useControlBasedCommunication()">
               {{ communicationMode() }}
             </dd>
           </dl>
@@ -354,7 +354,7 @@ import { environment } from '../../../environments/environment';
 })
 export class HeaderComponent {
   qsysService = inject(QSysService);
-  wsDiscoveryService = inject(WebSocketDiscoveryService);
+  secureTunnelService = inject(SecureTunnelDiscoveryService);
 
   showConnectionDetails = false;
   private cachedStatus: any = null;
@@ -391,37 +391,37 @@ export class HeaderComponent {
   coreAddress = computed(() => environment.RUNTIME_CORE_IP);
 
   connectionStatusText = computed(() => {
-    if (!this.wsDiscoveryService.isConnected()) {
+    if (!this.secureTunnelService.isConnected()) {
       return 'Initializing...';
     }
-    if (this.wsDiscoveryService.useControlBasedCommunication()) {
+    if (this.secureTunnelService.useControlBasedCommunication()) {
       return 'Secure Tunnel';
     }
     return 'HTTP Fallback';
   });
 
   connectionStatusTooltip = computed(() => {
-    if (!this.wsDiscoveryService.isConnected()) {
+    if (!this.secureTunnelService.isConnected()) {
       return 'Discovery service is initializing';
     }
-    if (this.wsDiscoveryService.useControlBasedCommunication()) {
+    if (this.secureTunnelService.useControlBasedCommunication()) {
       return 'Using secure control-based communication (json_input/json_output)';
     }
     return 'Using HTTP/WebSocket fallback';
   });
 
   connectionIcon = computed(() => {
-    if (!this.wsDiscoveryService.isConnected()) {
+    if (!this.secureTunnelService.isConnected()) {
       return '⏳';
     }
-    if (this.wsDiscoveryService.useControlBasedCommunication()) {
+    if (this.secureTunnelService.useControlBasedCommunication()) {
       return '🔒';
     }
     return '⚠️';
   });
 
   communicationMode = computed(() => {
-    if (this.wsDiscoveryService.useControlBasedCommunication()) {
+    if (this.secureTunnelService.useControlBasedCommunication()) {
       return 'Secure (Control-Based)';
     }
     return 'Fallback (HTTP/WebSocket)';

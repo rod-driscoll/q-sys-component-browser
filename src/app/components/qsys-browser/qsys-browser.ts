@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { QSysService } from '../../services/qsys.service';
 import { QSysBrowserService, ComponentInfo, ControlInfo } from '../../services/qsys-browser.service';
 import { LuaScriptService, LuaScript } from '../../services/lua-script.service';
-import { WebSocketDiscoveryService } from '../../services/websocket-discovery.service';
+import { SecureTunnelDiscoveryService } from '../../services/secure-tunnel-discovery.service';
 import { environment } from '../../../environments/environment';
 import { BooleanControl } from './controls/boolean-control/boolean-control';
 import { KnobControl } from './controls/knob-control/knob-control';
@@ -105,11 +105,11 @@ export class QsysBrowser implements OnInit, OnDestroy {
     protected qsysService: QSysService,
     protected browserService: QSysBrowserService,
     protected luaScriptService: LuaScriptService,
-    protected wsDiscoveryService: WebSocketDiscoveryService
+    protected secureTunnelService: SecureTunnelDiscoveryService
   ) {
-    // Watch for WebSocket discovery data and process it
+    // Watch for secure tunnel discovery data and process it
     effect(() => {
-      const discoveryData = this.wsDiscoveryService.discoveryData();
+      const discoveryData = this.secureTunnelService.discoveryData();
       if (discoveryData && discoveryData.timestamp !== this.lastProcessedDiscoveryTimestamp) {
         this.processWebSocketDiscoveryData(discoveryData);
         this.lastProcessedDiscoveryTimestamp = discoveryData.timestamp;
@@ -118,7 +118,7 @@ export class QsysBrowser implements OnInit, OnDestroy {
 
     // Watch for component updates and update controls
     effect(() => {
-      const update = this.wsDiscoveryService.componentUpdate();
+      const update = this.secureTunnelService.componentUpdate();
       if (update) {
         this.handleComponentUpdate(update);
       }
@@ -126,8 +126,8 @@ export class QsysBrowser implements OnInit, OnDestroy {
 
     // Watch for WebSocket connection failures
     effect(() => {
-      const failed = this.wsDiscoveryService.connectionFailed();
-      const error = this.wsDiscoveryService.error();
+      const failed = this.secureTunnelService.connectionFailed();
+      const error = this.secureTunnelService.error();
 
       if (failed && error) {
         this.isLoadingComponents = false;
@@ -137,7 +137,7 @@ export class QsysBrowser implements OnInit, OnDestroy {
 
     // Watch for WebSocket loading stage updates
     effect(() => {
-      const wsStage = this.wsDiscoveryService.loadingStage();
+      const wsStage = this.secureTunnelService.loadingStage();
       if (wsStage) {
         this.loadingSubStage.set(wsStage);
       }
@@ -372,12 +372,12 @@ export class QsysBrowser implements OnInit, OnDestroy {
         discoveryMethod: 'qrwc' as const,
       }));
 
-      // Check if WebSocket discovery data is already available from app-level init
-      const discoveryData = this.wsDiscoveryService.discoveryData();
+      // Check if secure tunnel discovery data is already available from app-level init
+      const discoveryData = this.secureTunnelService.discoveryData();
       let finalComponentList = componentList;
       
       if (discoveryData && discoveryData.components && discoveryData.components.length > 0) {
-        console.log(`[QSYS-BROWSER] WebSocket discovery data already available: ${discoveryData.components.length} components`);
+        console.log(`[QSYS-BROWSER] Secure tunnel discovery data already available: ${discoveryData.components.length} components`);
         const existingNames = new Set(componentList.map(c => c.name));
         const newScriptComponents = discoveryData.components.filter((comp: any) => !existingNames.has(comp.name));
         
@@ -479,7 +479,7 @@ export class QsysBrowser implements OnInit, OnDestroy {
     }
 
     // Check if we can use secure control-based communication
-    if (this.wsDiscoveryService.useControlBasedCommunication()) {
+    if (this.secureTunnelService.useControlBasedCommunication()) {
       console.log('[DISCOVERY] Using secure control-based communication (json_input/json_output) - skipping insecure Lua WebSocket');
       // Control-based communication is already established and cached
       // The discovery service will use it to fetch script-based components
@@ -493,16 +493,16 @@ export class QsysBrowser implements OnInit, OnDestroy {
 
   loadComponentsViaWebSocket(): void {
     console.log('DEBUG: loadComponentsViaWebSocket - ENTERED');
-    console.log('Requesting component discovery via WebSocket...');
+    console.log('Requesting component discovery via secure tunnel...');
     // Don't set global loading state to prevent UI flicker/blocking if just adding extra components
     this.loadingSubStage.set('Connecting to Secure Discovery...');
-    this.wsDiscoveryService.connect();
-    this.wsDiscoveryService.connectUpdates();
+    this.secureTunnelService.connect();
+    this.secureTunnelService.connectUpdates();
   }
 
-  // Process WebSocket discovery data
+  // Process secure tunnel discovery data
   private processWebSocketDiscoveryData(discoveryData: any): void {
-    console.log('Processing WebSocket discovery data...');
+    console.log('Processing secure tunnel discovery data...');
     this.loadingSubStage.set('Processing discovery data...');
 
     try {

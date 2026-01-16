@@ -2,7 +2,7 @@ import { Component, OnInit, signal, ViewChild, effect, inject } from '@angular/c
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { QSysService } from '../../services/qsys.service';
-import { WebSocketDiscoveryService } from '../../services/websocket-discovery.service';
+import { SecureTunnelDiscoveryService } from '../../services/secure-tunnel-discovery.service';
 import { CustomViewRegistryService } from '../../services/custom-view-registry.service';
 import { MenuCard } from '../../models/custom-view.model';
 import { environment } from '../../../environments/environment';
@@ -35,15 +35,15 @@ export class MenuComponent implements OnInit {
   constructor(
     private router: Router,
     protected qsysService: QSysService,
-    private wsDiscoveryService: WebSocketDiscoveryService,
+    private secureTunnelService: SecureTunnelDiscoveryService,
     private customViewRegistry: CustomViewRegistryService
   ) {
-    // Watch for WebSocket discovery data and rebuild menu when new components discovered
+    // Watch for secure tunnel discovery data and rebuild menu when new components discovered
     effect(() => {
-      const discoveryData = this.wsDiscoveryService.discoveryData();
+      const discoveryData = this.secureTunnelService.discoveryData();
       if (discoveryData && discoveryData.timestamp && discoveryData.timestamp !== this.lastDiscoveryTimestamp) {
         this.lastDiscoveryTimestamp = discoveryData.timestamp;
-        console.log(`Menu: WebSocket discovery data received (${discoveryData.components?.length} components), rebuilding menu...`);
+        console.log(`Menu: Secure tunnel discovery data received (${discoveryData.components?.length} components), rebuilding menu...`);
         this.buildMenuCardsFromDiscovery();
       }
     });
@@ -186,10 +186,10 @@ export class MenuComponent implements OnInit {
   }
 
   /**
-   * Build menu from WebSocket discovery data (includes script-only components)
+   * Build menu from secure tunnel discovery data (includes script-only components)
    */
   private buildMenuCardsFromDiscovery(): void {
-    const discoveryData = this.wsDiscoveryService.discoveryData();
+    const discoveryData = this.secureTunnelService.discoveryData();
     if (!discoveryData || !discoveryData.components) {
       return;
     }
@@ -209,7 +209,7 @@ export class MenuComponent implements OnInit {
     const filteredViews = this.customViewRegistry.registeredViews().filter(view => {
       // Check if view requires secure tunnel
       if (view.requiresSecureTunnel) {
-        const hasSecureTunnel = this.wsDiscoveryService.useControlBasedCommunication();
+        const hasSecureTunnel = this.secureTunnelService.useControlBasedCommunication();
         if (!hasSecureTunnel) {
           console.log(`Menu: Hiding "${view.title}" - secure tunnel not available`);
           return false;

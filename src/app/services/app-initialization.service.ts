@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { QSysService } from './qsys.service';
-import { WebSocketDiscoveryService } from './websocket-discovery.service';
+import { SecureTunnelDiscoveryService } from './secure-tunnel-discovery.service';
 import { LuaScriptService } from './lua-script.service';
 
 /**
@@ -18,7 +18,7 @@ import { LuaScriptService } from './lua-script.service';
 })
 export class AppInitializationService {
   private qsysService = inject(QSysService);
-  private wsDiscoveryService = inject(WebSocketDiscoveryService);
+  private secureTunnelService = inject(SecureTunnelDiscoveryService);
   private luaScriptService = inject(LuaScriptService);
 
   // Signals for app-level state
@@ -62,17 +62,27 @@ export class AppInitializationService {
       await this.waitForQRWCConnection();
       console.log('[APP-INIT] ✓ Q-SYS Core connected');
 
-      // Step 2: Complete WebSocket discovery (establishes secure tunnel)
-      console.log('[APP-INIT] Step 2: Initializing WebSocket discovery...');
+      // Step 2: Complete WebSocket discovery (establishes secure tunnel) - optional, gracefully degrades
+      console.log('[APP-INIT] Step 2: Initializing secure tunnel discovery...');
       this.loadingStage.set('Discovering secure tunnel...');
-      await this.initializeWebSocketDiscovery();
-      console.log('[APP-INIT] ✓ WebSocket discovery complete');
+      try {
+        await this.initializeWebSocketDiscovery();
+        console.log('[APP-INIT] ✓ Secure tunnel discovery complete');
+      } catch (err: any) {
+        console.warn('[APP-INIT] ⚠ Secure tunnel discovery failed (continuing without secure tunnel):', err.message);
+        // Continue without secure tunnel - app will still work
+      }
 
-      // Step 3: Load Lua scripts (enables file system, etc.)
+      // Step 3: Load Lua scripts (enables file system, etc.) - optional, gracefully degrades
       console.log('[APP-INIT] Step 3: Loading Lua scripts...');
       this.loadingStage.set('Loading Lua scripts...');
-      await this.loadLuaScripts();
-      console.log('[APP-INIT] ✓ Lua scripts loaded');
+      try {
+        await this.loadLuaScripts();
+        console.log('[APP-INIT] ✓ Lua scripts loaded');
+      } catch (err: any) {
+        console.warn('[APP-INIT] ⚠ Lua script loading failed (continuing without scripts):', err.message);
+        // Continue without Lua scripts - app will still work
+      }
 
       // All done!
       this.loadingStage.set('Ready');
@@ -119,23 +129,23 @@ export class AppInitializationService {
       try {
         // Watch for discovery completion
         const checkDiscovery = setInterval(() => {
-          if (this.wsDiscoveryService.isConnected()) {
+          if (this.secureTunnelService.isConnected()) {
             clearInterval(checkDiscovery);
             clearTimeout(timeout);
             resolve();
           }
 
           // Check for connection failure
-          if (this.wsDiscoveryService.connectionFailed()) {
+          if (this.secureTunnelService.connectionFailed()) {
             clearInterval(checkDiscovery);
             clearTimeout(timeout);
-            const error = this.wsDiscoveryService.error() || 'Discovery failed';
+            const error = this.secureTunnelService.error() || 'Discovery failed';
             reject(new Error(error));
           }
         }, 100);
 
         // Initiate discovery
-        this.wsDiscoveryService.connect().catch(err => {
+        this.secureTunnelService.connect().catch(err => {
           clearInterval(checkDiscovery);
           clearTimeout(timeout);
           reject(err);
