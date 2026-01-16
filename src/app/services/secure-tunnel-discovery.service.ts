@@ -208,45 +208,6 @@ export class SecureTunnelDiscoveryService {
           // console.debug(`Skipping scan of ${comp.name}`, scanErr);
         }
       }
-
-      // If script-based discovery not found, check script components for json_input and json_output controls
-      console.log('🔍 Script not found via code detection. Checking device_controller_script components for json_input/json_output controls...');
-      
-      // Filter to ONLY script components (since we're looking for the discovery script)
-      const scriptComponents = components.filter(c => c.type === 'device_controller_script');
-      console.log(`  Checking ${scriptComponents.length} script components...`);
-
-      for (const comp of scriptComponents) {
-        try {
-          const webSocketManager = (this.qsysService as any).qrwc?.webSocketManager;
-          if (!webSocketManager) {
-            continue;
-          }
-
-          // Query for the specific controls we need (bypass control count check)
-          const result = await webSocketManager.sendRpc('Component.Get', {
-            Name: comp.name,
-            Controls: [{ Name: 'json_input' }, { Name: 'json_output' }]
-          }).catch(() => null);
-
-          if (result && result.Controls) {
-            const controlNames = result.Controls.map((c: any) => c.Name);
-            const hasJsonInput = controlNames.includes('json_input');
-            const hasJsonOutput = controlNames.includes('json_output');
-            
-            console.log(`  Checked "${comp.name}": json_input=${hasJsonInput}, json_output=${hasJsonOutput}`);
-            
-            if (hasJsonInput && hasJsonOutput) {
-              console.log(`✅ Found secure tunnel component: "${comp.name}" with json_input & json_output controls!`);
-              return comp.name;
-            }
-          }
-        } catch (err) {
-          console.log(`  "${comp.name}": query failed (${err instanceof Error ? err.message : String(err)})`);
-        }
-      }
-
-      console.log('❌ No script component found with json_input and json_output controls');
       return null;
     } catch (e) {
       console.error('Scan failed', e);
