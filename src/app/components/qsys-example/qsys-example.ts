@@ -48,7 +48,7 @@ export class QsysExample implements OnInit, OnDestroy {
     this.qsysService.connect({
       coreIp: environment.RUNTIME_CORE_IP,
       secure: true, // Use wss:// for secure connections
-      pollInterval: 35
+      pollInterval: 350
     });
 
     // Wait for connection before setting up components

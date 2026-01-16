@@ -160,14 +160,17 @@ export class SecureTunnelDiscoveryService {
 
       // Log all component names for debugging
       console.log('📋 All components found:');
-      components.forEach((c, idx) => {
+      const controllerScripts = components.filter(c =>
+        (c.type && c.type === 'device_controller_script')
+      );
+      
+      controllerScripts.forEach((c, idx) => {
         console.log(`  [${idx}] "${c.name}" (type: ${c.type}, controls: ${c.controlCount})`);
-      });
+     });
 
       // Filter for potential scripts
       // Optimization: Prioritize components with "Script" in name or type, or specifically "webserver" as per user config
-      const candidates = components.filter(c =>
-        (c.type && c.type === 'device_controller_script') &&
+      const candidates = controllerScripts.filter(c =>
         (c.controlCount > 0) // Fallback: Check all components with controls if needed, but this is slow.
       );
 
@@ -203,6 +206,9 @@ export class SecureTunnelDiscoveryService {
               }
             }
           }
+
+          // Small delay between queries to prevent Core overload
+          await new Promise(resolve => setTimeout(resolve, 100));
         } catch (scanErr) {
           // Ignore individual component scan errors
           // console.debug(`Skipping scan of ${comp.name}`, scanErr);
@@ -344,8 +350,8 @@ export class SecureTunnelDiscoveryService {
       
       updateWs.onclose = () => {
         console.log('Disconnected from /ws/updates endpoint');
-        // Reconnect after 5 seconds
-        setTimeout(() => this.connectToUpdatesEndpoint(componentName), 5000);
+        // Do NOT auto-reconnect - the endpoint may not exist if Lua script is not running
+        // App will continue to function without real-time updates
       };
     } catch (err) {
       console.error('Failed to connect to updates WebSocket:', err);
@@ -474,8 +480,7 @@ export class SecureTunnelDiscoveryService {
       
       updateWs.onclose = () => {
         console.log('Disconnected from /ws/updates endpoint');
-        // Reconnect after 5 seconds
-        setTimeout(() => this.connectUpdates(), 5000);
+        // Do NOT auto-reconnect - the endpoint may not exist if Lua script is not running
       };
     } catch (err) {
       console.error('Failed to connect to updates WebSocket:', err);

@@ -86,7 +86,7 @@ export class QSysService {
       this.options = {
         coreIp: optionsOrIp,
         secure: true,
-        pollInterval: 35,
+        pollInterval: 350,
       };
     } else {
       this.options = optionsOrIp;

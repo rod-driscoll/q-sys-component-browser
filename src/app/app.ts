@@ -43,7 +43,7 @@ export class App implements OnInit {
     this.qsysService.connect({
       coreIp: environment.RUNTIME_CORE_IP,
       secure: true,
-      pollInterval: 35,
+      pollInterval: 350,
     }).catch((error) => {
       console.error('Failed to connect to Q-SYS Core:', error);
     });

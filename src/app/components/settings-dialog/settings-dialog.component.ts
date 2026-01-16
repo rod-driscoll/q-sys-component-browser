@@ -120,7 +120,7 @@ export class SettingsDialogComponent {
       await this.qsysService.connect({
         coreIp: environment.RUNTIME_CORE_IP,
         secure: true,
-        pollInterval: 35,
+        pollInterval: 350,
       });
 
       console.log('✓ Successfully reconnected to Q-SYS Core');

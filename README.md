@@ -151,7 +151,7 @@ export class MyComponent implements OnInit {
       coreIp: '192.168.1.100',
       redundantCoreIp: '192.168.1.101', // Optional
       secure: false, // true for wss://, false for ws://
-      pollInterval: 35 // Polling interval in ms
+      pollInterval: 350 // Polling interval in ms
     });
   }
 }
