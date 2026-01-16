@@ -169,12 +169,11 @@ export class SecureTunnelDiscoveryService {
      });
 
       // Filter for potential scripts
-      // Optimization: Prioritize components with "Script" in name or type, or specifically "webserver" as per user config
-      const candidates = controllerScripts.filter(c =>
-        (c.controlCount > 0) // Fallback: Check all components with controls if needed, but this is slow.
-      );
+      // Don't filter by controlCount since script components often report 0 controls via GetControls
+      // but have controls accessible via Component.Get RPC
+      const candidates = controllerScripts;
 
-      console.log(`Debug: Filtered ${candidates.length} candidates for deep scan from ${components.length} total.`);
+      console.log(`Debug: Checking ${candidates.length} script components for deep scan from ${components.length} total.`);
 
       for (const comp of candidates) {
         try {
@@ -186,12 +185,11 @@ export class SecureTunnelDiscoveryService {
           }
 
           console.log(`Debug: Scanning component "${comp.name}"...`);
-          // Fetch 'Code' control - Note: 'code' (lowercase) or 'Code' (Titlecase)
-          // The user said "code" control. Q-SYS RPC is case sensitive for Names? Usually TitleCase "Code".
-          // We will try both or just "Code" as standard. User said 'code'.
+          // Use Component.Get to fetch the Code control (capital C is the standard Q-SYS name)
+          // Component.GetControls may not return script controls, so we use Component.Get directly
           const result = await webSocketManager.sendRpc('Component.Get', {
             Name: comp.name,
-            Controls: [{ Name: 'code' }]
+            Controls: [{ Name: 'Code' }]
           }).catch(() => null);
           console.log(`Debug: Scan result for ${comp.name}:`, result);
 
