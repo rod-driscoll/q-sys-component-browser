@@ -185,11 +185,11 @@ export class SecureTunnelDiscoveryService {
           }
 
           console.log(`Debug: Scanning component "${comp.name}"...`);
-          // Use Component.Get to fetch the Code control (capital C is the standard Q-SYS name)
+          // Use Component.Get to fetch the code control
           // Component.GetControls may not return script controls, so we use Component.Get directly
           const result = await webSocketManager.sendRpc('Component.Get', {
             Name: comp.name,
-            Controls: [{ Name: 'Code' }]
+            Controls: [{ Name: 'code' }]
           }).catch(() => null);
           console.log(`Debug: Scan result for ${comp.name}:`, result);
 
