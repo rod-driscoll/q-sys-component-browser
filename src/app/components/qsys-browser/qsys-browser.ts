@@ -497,7 +497,6 @@ export class QsysBrowser implements OnInit, OnDestroy {
     // Don't set global loading state to prevent UI flicker/blocking if just adding extra components
     this.loadingSubStage.set('Connecting to Secure Discovery...');
     this.secureTunnelService.connect();
-    this.secureTunnelService.connectUpdates();
   }
 
   // Process secure tunnel discovery data
