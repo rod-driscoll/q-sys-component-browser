@@ -41,7 +41,7 @@ export class SecureTunnelDiscoveryService {
   private readonly INPUT_CONTROL = 'json_input';
 
   // Script name to search for (Logic in LuaScriptService)
-  private readonly SCRIPT_NAME_KEY = 'WebSocket Component Discovery';
+  private readonly SCRIPT_NAME_KEY = 'Tunnel Discovery';
 
   // State
   private boundComponentName: string | null = null;
