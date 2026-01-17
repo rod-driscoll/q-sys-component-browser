@@ -2094,6 +2094,12 @@ local function subscribeToComponent(componentName)
     end
 
     -- Also send through secure tunnel (json_output control) if available
+    print("DEBUG: Checking for Controls.json_output...")
+    print("DEBUG: Controls exists?", Controls ~= nil)
+    if Controls then
+      print("DEBUG: Controls.json_output exists?", Controls.json_output ~= nil)
+    end
+    
     if Controls and Controls.json_output then
       local updateMessage = json.encode({
         type = "componentUpdate",
@@ -2102,6 +2108,8 @@ local function subscribeToComponent(componentName)
       })
       Controls.json_output.String = updateMessage
       print("Sent component update for " .. componentName .. " through secure tunnel (" .. #updatedControls .. " controls)")
+    else
+      print("WARNING: Controls.json_output not available - cannot send update through secure tunnel")
     end
 
     pendingUpdate = false
