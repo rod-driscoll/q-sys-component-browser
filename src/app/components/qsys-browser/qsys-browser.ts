@@ -107,12 +107,19 @@ export class QsysBrowser implements OnInit, OnDestroy {
     protected luaScriptService: LuaScriptService,
     protected secureTunnelService: SecureTunnelDiscoveryService
   ) {
-    // Watch for secure tunnel discovery data and process it
+    // Watch for secure tunnel discovery data
+    // Note: Initial discovery data is handled by loadComponents()
+    // This effect only handles discovery data that arrives AFTER initial load
     effect(() => {
       const discoveryData = this.secureTunnelService.discoveryData();
       if (discoveryData && discoveryData.timestamp !== this.lastProcessedDiscoveryTimestamp) {
-        this.processWebSocketDiscoveryData(discoveryData);
-        this.lastProcessedDiscoveryTimestamp = discoveryData.timestamp;
+        // Only process if we've already done initial component load
+        const existingComponents = this.browserService.components();
+        if (existingComponents.length > 0) {
+          this.processWebSocketDiscoveryData(discoveryData);
+          this.lastProcessedDiscoveryTimestamp = discoveryData.timestamp;
+        }
+        // If no components yet, loadComponents() will handle the discovery data
       }
     });
 
@@ -412,7 +419,7 @@ export class QsysBrowser implements OnInit, OnDestroy {
                 discoveryMethod: 'websocket' as const,
               }))
             ];
-            console.log(`✓ Total components: ${finalComponentList.length} (${componentList.length} QRWC + ${newScriptComponents.length} cached WebSocket)`);
+            console.log(`✓ Total components: ${finalComponentList.length} (${componentList.length} QRWC + ${newScriptComponents.length} cached Tunnel)`);
           }
         }
       }
@@ -474,7 +481,7 @@ export class QsysBrowser implements OnInit, OnDestroy {
         discoveryMethod: 'websocket' as const,
       }))];
       this.browserService.setComponents(mergedComponents);
-      console.log(`✓ Total components: ${mergedComponents.length} (${components.length} QRWC + ${cachedScriptComponents.length} cached WebSocket)`);
+      console.log(`✓ Total components: ${mergedComponents.length} (${components.length} QRWC + ${cachedScriptComponents.length} cached Tunnel)`);
       return;
     }
 
@@ -502,14 +509,6 @@ export class QsysBrowser implements OnInit, OnDestroy {
   // Process secure tunnel discovery data
   private processWebSocketDiscoveryData(discoveryData: any): void {
     console.log('Processing secure tunnel discovery data...');
-    
-    // If components are still being loaded from QRWC, wait for that to complete first
-    if (this.isLoadingComponents) {
-      console.log('[QSYS-BROWSER] QRWC component loading in progress, deferring tunnel data processing...');
-      setTimeout(() => this.processWebSocketDiscoveryData(discoveryData), 100);
-      return;
-    }
-    
     this.loadingSubStage.set('Processing discovery data...');
 
     try {
@@ -517,11 +516,11 @@ export class QsysBrowser implements OnInit, OnDestroy {
       const existingComponents = this.browserService.components();
       const existingComponentNames = new Set(existingComponents.map(c => c.name));
 
-      console.log(`[QSYS-BROWSER] Current state: ${existingComponents.length} QRWC components already loaded`);
+      console.log(`[QSYS-BROWSER] Merging tunnel discovery: ${existingComponents.length} QRWC components + ${discoveryData.components.length} tunnel components`);
       this.loadingSubStage.set(`Analyzing ${discoveryData.components.length} discovered components...`);
 
-      // Convert WebSocket data to ComponentInfo format, but only for components not already in QRWC
-      const wsComponents: ComponentInfo[] = discoveryData.components
+      // Convert tunnel data to ComponentInfo format, but only for components not already in QRWC
+      const tunnelComponents: ComponentInfo[] = discoveryData.components
         .filter((comp: any) => !existingComponentNames.has(comp.name))
         .map((comp: any) => ({
           name: comp.name,
@@ -530,22 +529,22 @@ export class QsysBrowser implements OnInit, OnDestroy {
           discoveryMethod: 'websocket' as const,
         }));
 
-      console.log(`Found ${discoveryData.components.length} components via WebSocket, ${wsComponents.length} are new (not in QRWC)`);
+      console.log(`Found ${discoveryData.components.length} components via tunnel, ${tunnelComponents.length} are new (not in QRWC)`);
 
       // Cache script-only components for fast reconnection
-      if (wsComponents.length > 0) {
-        this.qsysService.cacheScriptOnlyComponents(wsComponents);
+      if (tunnelComponents.length > 0) {
+        this.qsysService.cacheScriptOnlyComponents(tunnelComponents);
       }
 
-      this.loadingSubStage.set(`Merging ${wsComponents.length} new components...`);
+      this.loadingSubStage.set(`Merging ${tunnelComponents.length} new components...`);
 
-      // Merge QRWC components (priority) with new WebSocket-only components
-      const mergedComponents = [...existingComponents, ...wsComponents];
+      // Merge QRWC components (priority) with new tunnel-only components
+      const mergedComponents = [...existingComponents, ...tunnelComponents];
 
       this.browserService.setComponents(mergedComponents);
-      console.log(`✓ Total components: ${mergedComponents.length} (${existingComponents.length} QRWC + ${wsComponents.length} WebSocket)`);
+      console.log(`✓ Total components: ${mergedComponents.length} (${existingComponents.length} QRWC + ${tunnelComponents.length} Tunnel)`);
 
-      this.loadingSubStage.set(`✓ Added ${wsComponents.length} new components via WebSocket`);
+      this.loadingSubStage.set(`✓ Added ${tunnelComponents.length} new components via tunnel`);
       setTimeout(() => {
         this.loadingStage.set('');
         this.loadingSubStage.set('');
