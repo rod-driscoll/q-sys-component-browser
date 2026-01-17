@@ -6,6 +6,7 @@ import { QSysService } from '../../services/qsys.service';
 import { QSysBrowserService, ComponentInfo, ControlInfo } from '../../services/qsys-browser.service';
 import { LuaScriptService, LuaScript } from '../../services/lua-script.service';
 import { SecureTunnelDiscoveryService } from '../../services/secure-tunnel-discovery.service';
+import { AppInitializationService } from '../../services/app-initialization.service';
 import { environment } from '../../../environments/environment';
 import { BooleanControl } from './controls/boolean-control/boolean-control';
 import { KnobControl } from './controls/knob-control/knob-control';
@@ -105,7 +106,8 @@ export class QsysBrowser implements OnInit, OnDestroy {
     protected qsysService: QSysService,
     protected browserService: QSysBrowserService,
     protected luaScriptService: LuaScriptService,
-    protected secureTunnelService: SecureTunnelDiscoveryService
+    protected secureTunnelService: SecureTunnelDiscoveryService,
+    private appInit: AppInitializationService
   ) {
     // Watch for secure tunnel discovery data
     // Note: Initial discovery data is handled by loadComponents()
@@ -270,68 +272,97 @@ export class QsysBrowser implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // App-level initialization has already completed at this point
-    // QRWC is connected, discovery service is ready, Lua scripts are loaded
-    // Just load the components and set up the UI
-
-    console.log('[QSYS-BROWSER] ngOnInit - app-level init complete, loading components');
+    // Wait for app-level initialization to complete
+    // QRWC connection, discovery service, and Lua scripts are loaded by AppInitializationService
+    console.log('[QSYS-BROWSER] ngOnInit - waiting for app initialization...');
     
-    this.loadingStage.set('Loading Components');
-    this.loadingSubStage.set('Retrieving component list...');
+    this.loadingStage.set('Initializing');
+    this.loadingSubStage.set('Waiting for app initialization...');
 
-    // Get core status
-    try {
-      const status = this.qsysService.getCoreStatus();
-      this.corePlatform = status.platform;
-      this.coreState = status.state;
-      this.designName = status.designName;
-      console.log(`Core: ${status.platform} (${status.state}) - Design: ${status.designName}`);
-    } catch (error) {
-      console.error('Failed to load Core status:', error);
-    }
+    // Wait for initialization to complete
+    this.waitForAppInit().then(() => {
+      console.log('[QSYS-BROWSER] App initialization complete, loading components');
+      
+      this.loadingStage.set('Loading Components');
+      this.loadingSubStage.set('Retrieving component list...');
 
-    // Load components (QRWC is already connected)
-    this.loadComponents();
+      // Get core status
+      try {
+        const status = this.qsysService.getCoreStatus();
+        this.corePlatform = status.platform;
+        this.coreState = status.state;
+        this.designName = status.designName;
+        console.log(`Core: ${status.platform} (${status.state}) - Design: ${status.designName}`);
+      } catch (error) {
+        console.error('Failed to load Core status:', error);
+      }
 
-    // Subscribe to control updates to track log.history for the currently selected component
-    this.controlUpdateSubscription = this.qsysService.getControlUpdates()
-      .subscribe((update) => {
-        const selectedComponent = this.browserService.selectedComponent();
-        const selectedControl = this.browserService.selectedControl();
+      // Load components (QRWC is now connected)
+      this.loadComponents();
 
-        // Only process updates for the currently selected component
-        if (selectedComponent && update.component === selectedComponent.name) {
-          // Handle log.history updates
-          if (update.control === 'log.history' && update.string) {
-            this.appendLogEntry(update.string);
+      // Subscribe to control updates to track log.history for the currently selected component
+      this.controlUpdateSubscription = this.qsysService.getControlUpdates()
+        .subscribe((update) => {
+          const selectedComponent = this.browserService.selectedComponent();
+          const selectedControl = this.browserService.selectedControl();
+
+          // Only process updates for the currently selected component
+          if (selectedComponent && update.component === selectedComponent.name) {
+            // Handle log.history updates
+            if (update.control === 'log.history' && update.string) {
+              this.appendLogEntry(update.string);
+            }
+
+            // Update the selected control's value in editor view
+            if (selectedControl && update.control === selectedControl.name) {
+              // Update the control object with new values
+              selectedControl.value = update.value;
+              selectedControl.position = update.position;
+              selectedControl.string = update.string;
+
+              // Trigger change detection by creating a new reference
+              this.browserService.selectedControl.set({ ...selectedControl });
+            }
+
+            // Also update the control in the controls list
+            const controls = this.browserService.controls();
+            const controlIndex = controls.findIndex(c => c.name === update.control);
+            if (controlIndex !== -1) {
+              const updatedControls = [...controls];
+              updatedControls[controlIndex] = {
+                ...updatedControls[controlIndex],
+                value: update.value,
+                position: update.position,
+                string: update.string
+              };
+              this.browserService.controls.set(updatedControls);
+            }
           }
+        });
+    }).catch((error) => {
+      console.error('[QSYS-BROWSER] App initialization failed:', error);
+      this.loadingStage.set('Error');
+      this.loadingSubStage.set(`Failed to initialize: ${error.message}`);
+    });
+  }
 
-          // Update the selected control's value in editor view
-          if (selectedControl && update.control === selectedControl.name) {
-            // Update the control object with new values
-            selectedControl.value = update.value;
-            selectedControl.position = update.position;
-            selectedControl.string = update.string;
+  /**
+   * Wait for app-level initialization to complete
+   */
+  private waitForAppInit(): Promise<void> {
+    return new Promise((resolve) => {
+      if (this.appInit.initializationComplete()) {
+        resolve();
+        return;
+      }
 
-            // Trigger change detection by creating a new reference
-            this.browserService.selectedControl.set({ ...selectedControl });
-          }
-
-          // Also update the control in the controls list
-          const controls = this.browserService.controls();
-          const controlIndex = controls.findIndex(c => c.name === update.control);
-          if (controlIndex !== -1) {
-            const updatedControls = [...controls];
-            updatedControls[controlIndex] = {
-              ...updatedControls[controlIndex],
-              value: update.value,
-              position: update.position,
-              string: update.string
-            };
-            this.browserService.controls.set(updatedControls);
-          }
+      const checkInterval = setInterval(() => {
+        if (this.appInit.initializationComplete()) {
+          clearInterval(checkInterval);
+          resolve();
         }
-      });
+      }, 100);
+    });
   }
 
   ngOnDestroy(): void {
