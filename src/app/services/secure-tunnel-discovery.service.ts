@@ -300,6 +300,8 @@ export class SecureTunnelDiscoveryService {
   private handleTunnelData(data: string): void {
     if (!data) return;
 
+    console.log('[TUNNEL-DATA] Received:', data.substring(0, 200)); // Log first 200 chars
+
     if (data.startsWith('START:')) {
       this.jsonBuffer = '';
       this.expectedChunks = parseInt(data.split(':')[1], 10);
@@ -320,6 +322,7 @@ export class SecureTunnelDiscoveryService {
       // Try to parse as JSON to determine message type
       try {
         const message = JSON.parse(data);
+        console.log('[TUNNEL-DATA] Parsed JSON message:', message);
 
         // Check if it's a component update message
         if (message.type === 'componentUpdate') {
@@ -327,12 +330,16 @@ export class SecureTunnelDiscoveryService {
           this.componentUpdate.set(message);
         } else {
           // Otherwise process as discovery data
+          console.log('[TUNNEL-DATA] Processing as discovery data');
           this.processDiscoveryJson(data);
         }
       } catch (e) {
         // If parsing fails, try processing as discovery data
+        console.warn('[TUNNEL-DATA] JSON parse failed, trying as discovery data:', e);
         this.processDiscoveryJson(data);
       }
+    } else {
+      console.log('[TUNNEL-DATA] Unhandled data format');
     }
   }
 
