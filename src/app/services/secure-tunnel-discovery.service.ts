@@ -436,15 +436,29 @@ export class SecureTunnelDiscoveryService {
   }
 
   /**
-   * Read a file from the Q-SYS Core via the secure tunnel (json_input/json_output)
+   * Read a file from the Q-SYS Core via the secure tunnel
+   * Priority: 1) json_input/json_output controls, 2) WebSocket fallback
    * @param path - File path on the Core (e.g., '/design/ExternalControls.xml')
    * @returns Promise with file content and content type
    */
   async readFile(path: string): Promise<{ content: string; contentType: string }> {
-    if (!this.boundComponentName || !this.useControlBasedCommunication()) {
-      throw new Error('Secure tunnel not available for file operations');
+    // Try control-based communication first (most secure)
+    if (this.boundComponentName && this.useControlBasedCommunication()) {
+      try {
+        return await this.readFileViaControls(path);
+      } catch (e: any) {
+        console.warn('[TUNNEL-FILE] Control-based file read failed, falling back to WebSocket:', e.message);
+      }
     }
 
+    // Fallback to WebSocket-based file read
+    return await this.readFileViaWebSocket(path);
+  }
+
+  /**
+   * Read a file via json_input/json_output controls
+   */
+  private async readFileViaControls(path: string): Promise<{ content: string; contentType: string }> {
     const webSocketManager = (this.qsysService as any).qrwc?.webSocketManager;
     if (!webSocketManager) {
       throw new Error('QRWC WebSocket manager not available');
@@ -515,6 +529,65 @@ export class SecureTunnelDiscoveryService {
         clearInterval(pollInterval);
         reject(new Error(`Failed to send file read request: ${e}`));
       });
+    });
+  }
+
+  /**
+   * Read a file via WebSocket connection to file-system endpoint
+   * This is the fallback when control-based communication isn't available
+   */
+  private async readFileViaWebSocket(path: string): Promise<{ content: string; contentType: string }> {
+    const coreIp = (this.qsysService as any).coreIp || 'localhost';
+    const port = (this.qsysService as any).corePort || 9091;
+    const wsUrl = `ws://${coreIp}:${port}/ws/file-system`;
+
+    return new Promise((resolve, reject) => {
+      console.log('[TUNNEL-FILE-WS] Connecting to file system WebSocket:', wsUrl);
+      
+      const ws = new WebSocket(wsUrl);
+      const timeout = setTimeout(() => {
+        ws.close();
+        reject(new Error('File read timeout (10s)'));
+      }, 10000);
+
+      ws.onopen = () => {
+        console.log('[TUNNEL-FILE-WS] Connected, requesting file:', path);
+        ws.send(JSON.stringify({
+          type: 'read',
+          path: path
+        }));
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const response = JSON.parse(event.data);
+          
+          if (response.type === 'read') {
+            clearTimeout(timeout);
+            ws.close();
+            console.log('[TUNNEL-FILE-WS] File read successful:', path);
+            resolve({
+              content: response.content,
+              contentType: response.contentType
+            });
+          } else if (response.type === 'error') {
+            clearTimeout(timeout);
+            ws.close();
+            reject(new Error(response.error || 'Failed to read file'));
+          }
+        } catch (e: any) {
+          console.error('[TUNNEL-FILE-WS] Failed to parse response:', e);
+        }
+      };
+
+      ws.onerror = (error) => {
+        clearTimeout(timeout);
+        reject(new Error('WebSocket connection failed'));
+      };
+
+      ws.onclose = () => {
+        clearTimeout(timeout);
+      };
     });
   }
 
