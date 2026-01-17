@@ -2766,7 +2766,9 @@ if Controls.json_output and Controls.trigger_update then
   -- Handle incoming commands from browser via json_input
   if Controls.json_input then
     Controls.json_input.EventHandler = function()
-      local commandStr = Controls.json_input.String
+      -- QRC only supports Value parameter (not String)
+      -- Read the JSON command from the Value property
+      local commandStr = Controls.json_input.Value
       if commandStr and commandStr ~= "" then
         print("Received command via json_input:", commandStr)
         local success, command = pcall(function() return json.decode(commandStr) end)

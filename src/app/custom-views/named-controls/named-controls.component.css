@@ -153,24 +153,27 @@
 .controls-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 1.5rem;
+  gap: 12px;
 }
 
 /* Control Card */
 .control-card {
-  background-color: var(--DarkGreyColor);
-  border-radius: var(--BorderRadius);
-  padding: 1.5rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 6px;
+  cursor: pointer;
 }
 
 .control-card:hover {
+  border-color: #2196f3;
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.1);
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
 }
 
 /* Control Header */
@@ -178,39 +181,39 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .control-title {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 6px;
   flex: 1;
   min-width: 0;
 }
 
 .control-icon {
-  font-size: 1.5rem;
+  font-size: 1.1rem;
   flex-shrink: 0;
 }
 
 .control-name {
-  color: var(--LightColor);
+  font-size: 14px;
   font-weight: 600;
-  font-size: 1.1rem;
+  color: #333;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .control-type-badge {
-  background-color: var(--PrimaryColorDark);
-  color: var(--LightColor);
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.85rem;
+  background-color: #2196f3;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
   font-weight: 500;
   white-space: nowrap;
 }
@@ -219,24 +222,24 @@
 .control-info {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 3px;
+  font-size: 12px;
 }
 
 .info-row {
   display: flex;
   justify-content: space-between;
-  gap: 1rem;
-  font-size: 0.9rem;
+  gap: 8px;
 }
 
 .info-label {
-  color: var(--MediumGreyColor);
+  color: #666;
   font-weight: 500;
   flex-shrink: 0;
 }
 
 .info-value {
-  color: var(--LightColor);
+  color: #333;
   text-align: right;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -248,8 +251,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 1rem 0;
-  min-height: 80px;
+  padding: 4px 0;
+  min-height: 40px;
 }
 
 /* Readonly Value Display */
@@ -257,41 +260,41 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: 2px;
 }
 
 .value-display {
-  color: var(--LightColor);
-  font-size: 1.5rem;
+  color: #333;
+  font-size: 16px;
   font-weight: 600;
 }
 
 .value-range {
-  color: var(--MediumGreyColor);
-  font-size: 0.85rem;
+  color: #666;
+  font-size: 11px;
 }
 
 /* Trigger Button */
 .btn-trigger {
-  background-color: var(--PrimaryColor);
+  background-color: #2196f3;
   border: none;
-  color: var(--LightColor);
+  color: white;
   cursor: pointer;
-  padding: 0.75rem 2rem;
-  border-radius: var(--BorderRadius);
-  font-size: 1rem;
+  padding: 6px 20px;
+  border-radius: 6px;
+  font-size: 13px;
   font-weight: 600;
   transition: all 0.2s;
   text-transform: uppercase;
 }
 
 .btn-trigger:hover:not(:disabled) {
-  background-color: var(--PrimaryColorDark);
+  background-color: #1976d2;
   transform: scale(1.05);
 }
 
 .btn-trigger:disabled {
-  background-color: var(--DarkGreyColor);
+  background-color: #ccc;
   opacity: 0.5;
   cursor: not-allowed;
 }

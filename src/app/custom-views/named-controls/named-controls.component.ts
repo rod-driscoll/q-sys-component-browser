@@ -159,6 +159,27 @@ export class NamedControlsComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Handle control position change (for knob controls)
+   * Position is 0-1, need to convert to actual value range
+   */
+  async onControlPositionChange(control: NamedControl, position: number): Promise<void> {
+    console.log('Named control position changed:', control.id, 'position:', position);
+    
+    // Convert position (0-1) to actual value using min/max
+    const min = control.minimumValue ?? 0;
+    const max = control.maximumValue ?? 1;
+    const value = min + (position * (max - min));
+    
+    console.log('Converted to value:', value, `(range: ${min} - ${max})`);
+    
+    try {
+      await this.namedControlsService.setControlValue(control.id, value);
+    } catch (error) {
+      console.error('Failed to set control value:', error);
+    }
+  }
+
+  /**
    * Handle trigger control click
    */
   async onTriggerClick(control: NamedControl): Promise<void> {
@@ -187,6 +208,8 @@ export class NamedControlsComponent implements OnInit, OnDestroy {
       string: control.stringValue || '',
       value: typeof control.value === 'number' ? control.value : 0,
       position: control.position || 0,
+      valueMin: control.minimumValue,
+      valueMax: control.maximumValue,
       type: this.mapControlType(control.type),
       direction: control.mode === 'R' ? 'output' : 'input',
       componentId: control.componentId,

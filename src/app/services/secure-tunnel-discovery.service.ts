@@ -60,6 +60,7 @@ export class SecureTunnelDiscoveryService {
   private expectedChunks = 0;
   private receivedChunks = 0;
   private lastPolledValue = '';
+  private jsonInputCounter = 0;  // Counter to ensure json_input EventHandler triggers on each call
 
   constructor() { }
 
@@ -140,7 +141,7 @@ export class SecureTunnelDiscoveryService {
 
       if (res && res.Controls && res.Controls.length === 2) {
         this.useControlBasedCommunication.set(true);
-        console.log('✓ Using control-based communication (json_input/json_output)');
+        console.log(`✓ Using control-based communication (${this.INPUT_CONTROL}/${this.OUTPUT_CONTROL})`);
         this.loadingStage.set('Using Control-Based Communication');
       } else {
         console.log('Falling back to HTTP/WebSocket communication');
@@ -350,10 +351,14 @@ export class SecureTunnelDiscoveryService {
         const message = JSON.parse(data);
         console.log('[TUNNEL-DATA] Parsed JSON message:', message);
 
-        // Check if it's a component update message
+        // Check message type to route correctly
         if (message.type === 'componentUpdate') {
           console.log('Received component update via secure tunnel:', message.componentName);
           this.componentUpdate.set(message);
+        } else if (message.type === 'fileReadResponse' || message.type === 'fileReadError') {
+          // File read responses are handled by the polling mechanism in readFileViaControls
+          // Don't process them here as discovery data
+          console.log('[TUNNEL-DATA] File operation response (handled by polling)');
         } else {
           // Otherwise process as discovery data
           console.log('[TUNNEL-DATA] Processing as discovery data');
@@ -394,48 +399,6 @@ export class SecureTunnelDiscoveryService {
   }
 
   /**
-   * Send a control set command through the secure tunnel (json_input)
-   * Returns true if sent through tunnel, false if tunnel not available
-   */
-  async sendControlCommand(componentName: string, controlName: string, value: any, position?: number): Promise<boolean> {
-    if (!this.boundComponentName || !this.useControlBasedCommunication()) {
-      return false;
-    }
-
-    try {
-      const webSocketManager = (this.qsysService as any).qrwc?.webSocketManager;
-      if (!webSocketManager) {
-        return false;
-      }
-
-      const command = {
-        type: 'setControl',
-        component: componentName,
-        control: controlName,
-        value: value,
-        position: position
-      };
-
-      const commandJson = JSON.stringify(command);
-      console.log('[TUNNEL-SEND] Sending control command via json_input:', command);
-
-      await webSocketManager.sendRpc('Component.Set', {
-        Name: this.boundComponentName,
-        Controls: [{
-          Name: this.INPUT_CONTROL,
-          Value: 0,  // Dummy value for RPC
-          String: commandJson
-        }]
-      });
-
-      return true;
-    } catch (e: any) {
-      console.error('[TUNNEL-SEND] Failed to send command via tunnel:', e);
-      return false;
-    }
-  }
-
-  /**
    * Read a file from the Q-SYS Core via the secure tunnel
    * Priority: 1) json_input/json_output controls, 2) WebSocket fallback
    * @param path - File path on the Core (e.g., '/design/ExternalControls.xml')
@@ -459,6 +422,10 @@ export class SecureTunnelDiscoveryService {
    * Read a file via json_input/json_output controls
    */
   private async readFileViaControls(path: string): Promise<{ content: string; contentType: string }> {
+    if (!this.boundComponentName) {
+      throw new Error('Secure tunnel not connected');
+    }
+
     const webSocketManager = (this.qsysService as any).qrwc?.webSocketManager;
     if (!webSocketManager) {
       throw new Error('QRWC WebSocket manager not available');
@@ -475,36 +442,48 @@ export class SecureTunnelDiscoveryService {
         reject(new Error('File read timeout (10s)'));
       }, 10000);
 
-      // Set up one-time listener for the response
-      const checkResponse = () => {
-        const outputValue = this.lastPolledValue;
-        if (!outputValue) return;
-
+      // Poll json_output directly for response (every 100ms)
+      // Don't rely on shared lastPolledValue which only updates every 500ms
+      const checkResponse = async () => {
         try {
-          const response = JSON.parse(outputValue);
+          const res = await webSocketManager.sendRpc('Component.Get', {
+            Name: this.boundComponentName,
+            Controls: [{ Name: this.OUTPUT_CONTROL }]
+          });
           
-          // Check if this is our response
-          if (response.requestId === requestId) {
-            clearTimeout(timeout);
-            clearInterval(pollInterval);
-            
-            if (response.type === 'fileReadResponse') {
-              console.log('[TUNNEL-FILE] Successfully read file:', path);
-              resolve({
-                content: response.content,
-                contentType: response.contentType
-              });
-            } else if (response.type === 'fileReadError') {
-              console.error('[TUNNEL-FILE] File read error:', response.error);
-              reject(new Error(response.error || 'Failed to read file'));
+          if (res && res.Controls && res.Controls.length > 0) {
+            const outputValue = res.Controls[0].String;
+            if (!outputValue) return;
+
+            try {
+              const response = JSON.parse(outputValue);
+              
+              // Check if this is our response
+              if (response.requestId === requestId) {
+                clearTimeout(timeout);
+                clearInterval(pollInterval);
+                
+                if (response.type === 'fileReadResponse') {
+                  console.log('[TUNNEL-FILE] Successfully read file via controls:', path);
+                  resolve({
+                    content: response.content,
+                    contentType: response.contentType
+                  });
+                } else if (response.type === 'fileReadError') {
+                  console.error('[TUNNEL-FILE] File read error:', response.error);
+                  reject(new Error(response.error || 'Failed to read file'));
+                }
+              }
+            } catch (e: any) {
+              // Not JSON or not our response, keep waiting
             }
           }
         } catch (e: any) {
-          // Not JSON or not our response, keep waiting
+          // Poll failed, keep trying
         }
       };
 
-      // Poll json_output for response (every 100ms)
+      // Start polling for response
       pollInterval = setInterval(() => {
         checkResponse();
       }, 100);
@@ -517,22 +496,23 @@ export class SecureTunnelDiscoveryService {
       };
 
       const commandJson = JSON.stringify(command);
-      console.log('[TUNNEL-FILE] Sending file read request via json_input:', command);
+      console.log(`[TUNNEL-FILE] Sending file read request via ${this.INPUT_CONTROL}: `, command);
 
-      webSocketManager.sendRpc('Component.Set', {
-        Name: this.boundComponentName,
-        Controls: [{
-          Name: this.INPUT_CONTROL,
-          Value: 0,
-          String: commandJson
-        }]
-      }).then(() => {
-        console.log('[TUNNEL-FILE] File read request sent, waiting for response...');
-      }).catch((e: any) => {
-        clearTimeout(timeout);
-        clearInterval(pollInterval);
-        reject(new Error(`Failed to send file read request: ${e}`));
-      });
+      // QRC only supports Value parameter (not String)
+      // Send the JSON command as the Value - Lua EventHandler will receive it in Controls.json_input.Value
+      this.qsysService.setControlJsonValue(
+        this.boundComponentName!,
+        this.INPUT_CONTROL,
+        commandJson  // Send JSON string as Value
+      )
+        .then(() => {
+          console.log('[TUNNEL-FILE] File read request sent, waiting for response...');
+        })
+        .catch((e: any) => {
+          clearTimeout(timeout);
+          clearInterval(pollInterval);
+          reject(new Error(`Failed to send file read request: ${e}`));
+        });
     });
   }
 

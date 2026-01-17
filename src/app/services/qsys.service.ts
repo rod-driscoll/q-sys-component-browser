@@ -235,7 +235,14 @@ export class QSysService {
         this.reconnectionCount.update(count => count + 1);
         console.log(`ChangeGroup changed - reconnection #${this.reconnectionCount()}`);
 
-        // Reset poll interceptor flag so it gets set up again on the new ChangeGroup
+        // Clear the old polling interval
+        const oldChangeGroup = (this.qrwc as any).changeGroup;
+        if (oldChangeGroup?.pollingInterval) {
+          clearInterval(oldChangeGroup.pollingInterval);
+          oldChangeGroup.pollingInterval = null;
+        }
+
+        // Reset poll callback flag so it gets set up again on the new ChangeGroup
         this.pollInterceptorSetup = false;
 
         // Invoke callback to re-register components with new ChangeGroup
@@ -724,25 +731,42 @@ export class QSysService {
       console.log(`Set ${componentName}:${controlName} = ${value} via RPC`);
       return;
     } catch (error: any) {
-      // If RPC fails (component not available via QRWC), try secure tunnel
-      console.log(`[QSYS] RPC failed for ${componentName}:${controlName}, trying secure tunnel...`);
-      
-      // Priority 2: Try secure tunnel (json_input) for script-only components
-      const secureTunnelService = this.getSecureTunnelService();
-      if (secureTunnelService) {
-        try {
-          const sentViaTunnel = await secureTunnelService.sendControlCommand(componentName, controlName, value);
-          if (sentViaTunnel) {
-            console.log(`Set ${componentName}:${controlName} = ${value} via secure tunnel`);
-            return;
-          }
-        } catch (e) {
-          console.warn('[QSYS] Secure tunnel send failed:', e);
-        }
-      }
+      // If RPC fails, throw error to trigger HTTP fallback
+      // Control commands should NOT go through secure tunnel - only use RPC or HTTP
+      console.error(`Failed to set control via RPC:`, error);
+      throw error;
+    }
+  }
 
-      // Priority 3: HTTP fallback handled by calling code if both RPC and tunnel fail
-      console.error(`Failed to set control via RPC and tunnel:`, error);
+  /**
+   * Set control value to a JSON string via RPC (QRC only supports Value, not String)
+   * Used for json_input control where the command data must be sent as the Value
+   * QRC API: https://help.qsys.com/q-sys_9.13/#External_Control_APIs/QRC/QRC_Commands.htm
+   */
+  async setControlJsonValue(componentName: string, controlName: string, jsonValue: string): Promise<void> {
+    if (!this.qrwc) {
+      throw new Error('Not connected to Q-SYS Core');
+    }
+
+    try {
+      const webSocketManager = (this.qrwc as any).webSocketManager;
+
+      // QRC Component.Set only supports Value parameter (not String)
+      // Send the JSON command string as the Value
+      await webSocketManager.sendRpc('Component.Set', {
+        Name: componentName,
+        Controls: [
+          {
+            Name: controlName,
+            Value: jsonValue  // Send JSON string as Value
+          }
+        ]
+      });
+
+      console.log(`Set ${componentName}:${controlName} with JSON value (${jsonValue.substring(0, 100)}...) via RPC`);
+      return;
+    } catch (error: any) {
+      console.error(`Failed to set control JSON value via RPC:`, error);
       throw error;
     }
   }
@@ -773,25 +797,9 @@ export class QSysService {
       console.log(`Set ${componentName}:${controlName} position = ${position} via RPC`);
       return;
     } catch (error: any) {
-      // If RPC fails (component not available via QRWC), try secure tunnel
-      console.log(`[QSYS] RPC failed for ${componentName}:${controlName}, trying secure tunnel...`);
-      
-      // Priority 2: Try secure tunnel (json_input) for script-only components
-      const secureTunnelService = this.getSecureTunnelService();
-      if (secureTunnelService) {
-        try {
-          const sentViaTunnel = await secureTunnelService.sendControlCommand(componentName, controlName, undefined, position);
-          if (sentViaTunnel) {
-            console.log(`Set ${componentName}:${controlName} position = ${position} via secure tunnel`);
-            return;
-          }
-        } catch (e) {
-          console.warn('[QSYS] Secure tunnel send failed:', e);
-        }
-      }
-
-      // Priority 3: HTTP fallback handled by calling code if both RPC and tunnel fail
-      console.error(`Failed to set control position via RPC and tunnel:`, error);
+      // If RPC fails, throw error to trigger HTTP fallback
+      // Control commands should NOT go through secure tunnel - only use RPC or HTTP
+      console.error(`Failed to set control position via RPC:`, error);
       throw error;
     }
   }
@@ -1118,13 +1126,11 @@ export class QSysService {
 
       console.log(`✓ Subscribed to ${componentName} with ${controls.length} controls via ChangeGroup`);
 
-      // IMPORTANT: Set up poll interception BEFORE starting polling
-      // This ensures the interval captures our intercepted poll method
-      this.listenToChangeGroupUpdates(componentName);
+      // Set up callback to receive updates
+      this.setupChangeGroupCallback();
 
-      // Start ChangeGroup polling if not already started
-      // Since we used componentFilter: () => false, QRWC didn't start polling automatically
-      await this.ensureChangeGroupPollingStarted();
+      // Start manual polling if not already started
+      await this.startChangeGroupPolling();
 
     } catch (error) {
       console.error(`Failed to subscribe to component ${componentName}:`, error);
@@ -1133,123 +1139,109 @@ export class QSysService {
   }
 
   /**
-   * Ensure ChangeGroup polling is started
-   * QRWC only starts polling if components were loaded during init,
-   * but we filtered them all out, so we need to start it manually
+   * Start manual ChangeGroup polling if not already started
+   * Uses setInterval to call ChangeGroup.Poll RPC every 50ms
    */
-  private async ensureChangeGroupPollingStarted(): Promise<void> {
+  private async startChangeGroupPolling(): Promise<void> {
     const changeGroup = (this.qrwc as any).changeGroup;
 
-    // Check if polling is already started by checking for intervalRef
-    if ((changeGroup as any).intervalRef) {
+    // Check if polling is already started
+    if ((changeGroup as any).pollingInterval) {
       console.log('ChangeGroup polling already started');
       return;
     }
 
-    console.log('Starting ChangeGroup polling...');
+    console.log('Starting ChangeGroup polling (50ms interval)...');
 
-    // Start polling - this calls the internal startPolling method
-    await (changeGroup as any).startPolling();
+    // Start polling with setInterval
+    (changeGroup as any).pollingInterval = setInterval(async () => {
+      try {
+        const webSocketManager = (this.qrwc as any).webSocketManager;
+        const changeGroupId = (changeGroup as any).id;
 
-    console.log('✓ ChangeGroup polling started');
+        const result = await webSocketManager.sendRpc('ChangeGroup.Poll', {
+          Id: changeGroupId
+        });
+
+        // If there are changes, call the onPoll callback
+        if (result.Changes && result.Changes.length > 0 && this.qrwc.onPoll) {
+          this.qrwc.onPoll(result.Changes);
+        }
+      } catch (error: any) {
+        // Silently handle "does not exist" errors during reconnection
+        if (error?.message?.includes('does not exist')) {
+          return;
+        }
+        console.error('ChangeGroup.Poll error:', error);
+      }
+    }, 50); // 50ms = 20 polls per second
+
+    console.log('✓ ChangeGroup polling started (50ms interval)');
   }
 
   /**
-   * Public method to ensure ChangeGroup polling and interception are set up
-   * Used by room controls adapter to ensure updates are received
+   * Public method to ensure ChangeGroup polling is started and callback is set up
+   * Used by room controls adapter and named controls to ensure updates are received
    */
   async ensureChangeGroupPollingAndInterception(): Promise<void> {
-    // IMPORTANT: Set up interception BEFORE starting polling
-    // This ensures the interval uses our intercepted poll method
-    this.listenToChangeGroupUpdates(null as any);
-    await this.ensureChangeGroupPollingStarted();
+    // Set up callback to receive updates
+    this.setupChangeGroupCallback();
+    // Start manual polling
+    await this.startChangeGroupPolling();
   }
 
   /**
-   * Listen to ChangeGroup poll results and emit control updates
+   * Set up ChangeGroup onPoll callback to receive updates
+   * Called by manual polling when ChangeGroup.Poll returns changes
    */
-  private listenToChangeGroupUpdates(componentName: string): void {
-    // Access QRWC's internal ChangeGroup
-    const changeGroup = (this.qrwc as any).changeGroup;
-
-    // Override the ChangeGroup's poll method to intercept results
-    // Store original poll method
-    // IMPORTANT: Check both _originalPoll AND pollInterceptorSetup flag
-    // After reconnection, QRWC creates a new ChangeGroup instance without _originalPoll,
-    // but our service-level flag might still be true from the old instance
-    if (!(changeGroup as any)._originalPoll && !this.pollInterceptorSetup) {
-      (changeGroup as any)._originalPoll = (changeGroup as any).poll.bind(changeGroup);
-
-      // Mark that we've set up the interceptor (for reconnection handling)
-      this.pollInterceptorSetup = true;
-
-      console.log('✓ Poll interceptor set up for ChangeGroup:', (changeGroup as any).id);
-
-      // Replace with our interceptor
-      (changeGroup as any).poll = async () => {
-        // Call original poll
-        const webSocketManager = (this.qrwc as any).webSocketManager;
-        try {
-          // Get the current ChangeGroup ID dynamically (important for reconnections)
-          const currentChangeGroup = (this.qrwc as any).changeGroup;
-          const changeGroupId = (currentChangeGroup as any).id;
-
-          console.log('[Poll Interceptor] Polling with ChangeGroup ID:', changeGroupId);
-
-          const pollResult = await webSocketManager.sendRpc('ChangeGroup.Poll', {
-            Id: changeGroupId
-          });
-
-          // Process changes for ALL components in ChangeGroup
-          // Emit updates for any control changes, subscribers will filter for what they need
-          if (pollResult.Changes) {
-            pollResult.Changes.forEach((change: any) => {
-              // Emit control update for all components (not just currentComponentListener)
-              this.controlUpdates$.next({
-                component: change.Component,
-                control: change.Name,
-                value: change.Value,
-                position: change.Position,
-                string: change.String,
-                Bool: change.Bool
-              });
-            });
-          }
-
-          // Also call original register callbacks
-          pollResult.Changes.forEach((change: any) => {
-            const key = `${change.Component}:${change.Name}`;
-            if ((changeGroup as any).register.has(key)) {
-              const callback = (changeGroup as any).register.get(key);
-              callback(change);
-            }
-          });
-        } catch (error) {
-          const message = 'QRWC: RPC Error: ChangeGroup.Poll failed to poll for changes.';
-          
-          // Check if this is a "Change group does not exist" error
-          // This happens during reconnection when polling continues with old ChangeGroup ID
-          // before re-registration completes
-          if (error instanceof Error && error.message.includes("does not exist")) {
-            // Silently stop polling - re-registration will restart it
-            if ((changeGroup as any).intervalRef) {
-              clearInterval((changeGroup as any).intervalRef);
-              (changeGroup as any).intervalRef = null;
-            }
-            return;  // Don't log error for expected reconnection case
-          }
-          
-          // For other errors, log normally
-          if (error instanceof Error) {
-            error.message = `${message}\n${error.message}`;
-            (this.qrwc as any).logger.error(error);
-          } else {
-            const errorObj = new Error(`${message}\n${error}`);
-            (this.qrwc as any).logger.error(errorObj);
-          }
-        }
-      };
+  private setupChangeGroupCallback(): void {
+    // Only set up once per connection
+    if (this.pollInterceptorSetup) {
+      return;
     }
+
+    const changeGroup = (this.qrwc as any).changeGroup;
+    const qrwc = this.qrwc as any;
+
+    // Store original callback if it exists
+    const originalOnPoll = qrwc.onPoll;
+
+    // Mark that we've set up the callback
+    this.pollInterceptorSetup = true;
+
+    console.log('✓ ChangeGroup onPoll callback set up for ChangeGroup:', (changeGroup as any).id);
+
+    // Set up onPoll callback to receive updates from manual polling
+    qrwc.onPoll = (changes: any) => {
+      // Call original callback first if it exists
+      if (originalOnPoll) {
+        originalOnPoll.call(qrwc, changes);
+      }
+
+      // Process changes for ALL components and controls in ChangeGroup
+      if (changes && Array.isArray(changes)) {
+        changes.forEach((change: any) => {
+          // Emit control update for all components and named controls
+          this.controlUpdates$.next({
+            component: change.Component,
+            control: change.Name,
+            value: change.Value,
+            position: change.Position,
+            string: change.String,
+            Bool: change.Bool
+          });
+        });
+
+        // Also call registered callbacks for specific controls
+        changes.forEach((change: any) => {
+          const key = `${change.Component}:${change.Name}`;
+          if ((changeGroup as any).register?.has(key)) {
+            const callback = (changeGroup as any).register.get(key);
+            callback(change);
+          }
+        });
+      }
+    };
   }
 
   /**

@@ -6,8 +6,8 @@ import { SecureTunnelDiscoveryService } from './secure-tunnel-discovery.service'
  * Named control from ExternalControls.xml
  */
 export interface NamedControl {
-  id: string;
-  controlId: string;
+  id: string;                   // External control Id used by QRC (e.g., "Lev-PGM")
+  controlId: string;            // Internal control Id (e.g., "fader_1")
   controlName: string;
   componentId: string;
   componentName: string;
@@ -59,6 +59,9 @@ export class NamedControlsService {
       // Get current values for all controls using QRWC Control.Get
       await this.loadControlValues(controls);
 
+      // Add controls to ChangeGroup for automatic updates
+      await this.subscribeToControlUpdates(controls);
+
       this.namedControls.set(controls);
       console.log(`Loaded ${controls.length} named controls`);
     } catch (err: any) {
@@ -71,14 +74,16 @@ export class NamedControlsService {
 
   /**
    * Read ExternalControls.xml from the design directory on Q-SYS Core
-   * Uses the secure tunnel file operations to read from /design/ExternalControls.xml
+   * Uses the secure tunnel file operations to read from design/ExternalControls.xml
+   * Note: Lua io.open() requires relative paths without leading slash
    */
   private async readExternalControlsXml(): Promise<string> {
     try {
       console.log('[NAMED-CONTROLS] Reading ExternalControls.xml from design directory via secure tunnel');
       
       // Request file read via secure tunnel (json_input control)
-      const result = await this.secureTunnelService.readFile('/design/ExternalControls.xml');
+      // Use relative path without leading slash (Lua io.open requirement)
+      const result = await this.secureTunnelService.readFile('design/ExternalControls.xml');
       
       if (!result || !result.content) {
         throw new Error('ExternalControls.xml not found in design directory or file is empty');
@@ -147,10 +152,13 @@ export class NamedControlsService {
   private async loadControlValues(controls: NamedControl[]): Promise<void> {
     const promises = controls.map(async (control) => {
       try {
-        const value = await this.getControlValue(control.id);
-        control.value = value.Value;
-        control.stringValue = value.String;
-        control.position = value.Position;
+        // QRC Control.Get returns array with single element
+        const result = await this.getControlValue(control.id);
+        const controlData = Array.isArray(result) ? result[0] : result;
+        
+        control.value = controlData.Value;
+        control.stringValue = controlData.String;
+        control.position = controlData.Position;
       } catch (err) {
         console.warn(`Failed to get value for control ${control.id}:`, err);
         // Keep control even if we can't get its value
@@ -162,6 +170,7 @@ export class NamedControlsService {
 
   /**
    * Get control value using QRWC Control.Get RPC
+   * @param controlId The external control ID from ExternalControls.xml
    */
   private async getControlValue(controlId: string): Promise<any> {
     const qrwc = (this.qsysService as any).qrwc;
@@ -170,11 +179,71 @@ export class NamedControlsService {
     }
 
     const webSocketManager = qrwc.webSocketManager;
-    const result = await webSocketManager.sendRpc('Control.Get', {
-      Name: controlId
-    });
+    // QRC Control.Get accepts array params: ["control-id"]
+    const result = await webSocketManager.sendRpc('Control.Get', [controlId]);
 
     return result;
+  }
+
+  /**
+   * Subscribe to automatic updates for all named controls via ChangeGroup
+   */
+  private async subscribeToControlUpdates(controls: NamedControl[]): Promise<void> {
+    const qrwc = (this.qsysService as any).qrwc;
+    if (!qrwc) {
+      console.warn('Cannot subscribe to control updates - not connected to Q-SYS Core');
+      return;
+    }
+
+    try {
+      const webSocketManager = qrwc.webSocketManager;
+      const changeGroup = qrwc.changeGroup;
+
+      if (!changeGroup) {
+        console.warn('Cannot subscribe to control updates - no ChangeGroup');
+        return;
+      }
+
+      const changeGroupId = (changeGroup as any).id;
+      console.log(`[NAMED-CONTROLS] Adding ${controls.length} controls to ChangeGroup ${changeGroupId}`);
+
+      // Add all named controls to the existing ChangeGroup
+      const controlIds = controls.map(c => c.id);
+      
+      await webSocketManager.sendRpc('ChangeGroup.AddControl', {
+        Id: changeGroupId,
+        Controls: controlIds
+      });
+
+      console.log('[NAMED-CONTROLS] Successfully added controls to ChangeGroup');
+
+      // Start polling and set up callback to receive updates
+      await this.qsysService.ensureChangeGroupPollingAndInterception();
+
+      // Subscribe to control updates from QSysService
+      // The qsys.service handles onPoll callback and emits updates via controlUpdates$
+      this.qsysService.getControlUpdates().subscribe(update => {
+        // Filter for our named controls
+        const controls = this.namedControls();
+        const controlIndex = controls.findIndex(c => c.id === update.control);
+        
+        if (controlIndex >= 0) {
+          console.log(`[NAMED-CONTROLS] Control ${update.control} updated:`, update.value);
+          
+          const updatedControls = [...controls];
+          updatedControls[controlIndex] = {
+            ...updatedControls[controlIndex],
+            value: update.value,
+            stringValue: update.string || update.value?.toString()
+          };
+          
+          this.namedControls.set(updatedControls);
+        }
+      });
+
+    } catch (error) {
+      console.error('[NAMED-CONTROLS] Failed to subscribe to control updates:', error);
+    }
   }
 
   /**
@@ -190,13 +259,15 @@ export class NamedControlsService {
       console.log(`Setting control ${controlId} to ${value}`);
 
       const webSocketManager = qrwc.webSocketManager;
+      // QRC Control.Set uses object params: { Name, Value }
       await webSocketManager.sendRpc('Control.Set', {
         Name: controlId,
         Value: value
       });
 
-      // Get updated value
-      const updatedValue = await this.getControlValue(controlId);
+      // Get updated value - returns array
+      const result = await this.getControlValue(controlId);
+      const updatedValue = Array.isArray(result) ? result[0] : result;
 
       // Update the control in our list
       const controls = this.namedControls();

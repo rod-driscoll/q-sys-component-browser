@@ -48,7 +48,7 @@
               <div class="control-header">
                 <div class="control-title">
                   <span class="control-icon">{{ getControlIcon(control.type) }}</span>
-                  <span class="control-name">{{ control.controlName }}</span>
+                  <span class="control-name">{{ control.id }}</span>
                 </div>
                 <span class="control-type-badge">{{ control.type }}</span>
               </div>
@@ -78,7 +78,7 @@
                   @if (control.mode === 'RW' || control.mode === 'W') {
                     <app-knob-control
                       [control]="toControlInfo(control)"
-                      (valueChange)="onControlValueChange(control, $event)"
+                      (positionChange)="onControlPositionChange(control, $event)"
                     />
                   } @else {
                     <div class="readonly-value">
