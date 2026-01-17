@@ -59,6 +59,7 @@ export class SecureTunnelDiscoveryService {
   private jsonBuffer = '';
   private expectedChunks = 0;
   private receivedChunks = 0;
+  private lastPolledValue = '';
 
   constructor() { }
 
@@ -269,7 +270,31 @@ export class SecureTunnelDiscoveryService {
     // Using existing public accessor
     await this.qsysService.setControlViaRpc(componentName, this.TRIGGER_CONTROL, 1);
 
-    // Also, we might want to manually Poll the output control once to be sure, 
+    // Set up manual polling for json_output since String controls may not trigger ChangeGroup updates
+    // Poll every 500ms to check for component updates
+    const pollInterval = setInterval(async () => {
+      try {
+        const webSocketManager = (this.qsysService as any).qrwc?.webSocketManager;
+        if (webSocketManager) {
+          const res = await webSocketManager.sendRpc('Component.Get', {
+            Name: componentName,
+            Controls: [{ Name: this.OUTPUT_CONTROL }]
+          });
+          if (res && res.Controls && res.Controls.length > 0) {
+            const currentValue = res.Controls[0].String;
+            if (currentValue && currentValue !== this.lastPolledValue) {
+              console.log('[TUNNEL-POLL] New value detected, length:', currentValue.length);
+              this.lastPolledValue = currentValue;
+              this.handleTunnelData(currentValue);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('[TUNNEL-POLL] Poll failed:', e);
+      }
+    }, 500);
+
+    // Also, manually Poll the output control once immediately to get initial data 
     // in case the Trigger doesn't cause an auto-push of the output control change if we aren't "subscribed/change-grouped".
     // A simple follow-up Get can help ensure we see the result.
     setTimeout(async () => {
