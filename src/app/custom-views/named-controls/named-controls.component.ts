@@ -9,6 +9,7 @@ import { ComboControl } from '../../components/qsys-browser/controls/combo-contr
 import { NAMED_CONTROLS_METADATA } from './named-controls.metadata';
 import { NamedControlsService, NamedControl } from '../../services/named-controls.service';
 import { ControlInfo } from '../../services/qsys-browser.service';
+import { AppInitializationService } from '../../services/app-initialization.service';
 
 /**
  * Named Controls custom view
@@ -34,7 +35,8 @@ export class NamedControlsComponent implements OnInit, OnDestroy {
 
   constructor(
     private namedControlsService: NamedControlsService,
-    private router: Router
+    private router: Router,
+    private appInit: AppInitializationService
   ) {}
 
   // Use service signals via getters
@@ -44,11 +46,36 @@ export class NamedControlsComponent implements OnInit, OnDestroy {
   get isConnected() { return this.namedControlsService.isConnected; }
 
   ngOnInit(): void {
-    // App-level initialization has already completed at this point
-    // Discovery service is ready, Lua scripts are loaded
-    // Just load named controls
-    console.log('[NAMED-CONTROLS] Loading controls (app init complete)');
-    this.loadControls();
+    // Wait for app-level initialization to complete
+    // QRWC connection, secure tunnel discovery, and Lua scripts must be ready
+    console.log('[NAMED-CONTROLS] Waiting for app initialization...');
+    
+    this.waitForAppInit().then(() => {
+      console.log('[NAMED-CONTROLS] App initialization complete, loading controls');
+      this.loadControls();
+    }).catch((error) => {
+      console.error('[NAMED-CONTROLS] App initialization failed:', error);
+      this.namedControlsService.error.set(`Initialization failed: ${error.message}`);
+    });
+  }
+
+  /**
+   * Wait for app-level initialization to complete
+   */
+  private waitForAppInit(): Promise<void> {
+    return new Promise((resolve) => {
+      if (this.appInit.initializationComplete()) {
+        resolve();
+        return;
+      }
+
+      const checkInterval = setInterval(() => {
+        if (this.appInit.initializationComplete()) {
+          clearInterval(checkInterval);
+          resolve();
+        }
+      }, 100);
+    });
   }
 
   ngOnDestroy(): void {
