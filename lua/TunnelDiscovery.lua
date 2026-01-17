@@ -2762,6 +2762,45 @@ if Controls.json_output and Controls.trigger_update then
     local jsonStr = GenerateSecureDiscoveryJson()
     WriteJsonToControl(jsonStr)
   end
+
+  -- Handle incoming commands from browser via json_input
+  if Controls.json_input then
+    Controls.json_input.EventHandler = function()
+      local commandStr = Controls.json_input.String
+      if commandStr and commandStr ~= "" then
+        print("Received command via json_input:", commandStr)
+        local success, command = pcall(function() return json.decode(commandStr) end)
+        
+        if success and command then
+          if command.type == "setControl" then
+            -- Handle control set command
+            local comp = Component.New(command.component)
+            if comp then
+              local control = comp[command.control]
+              if control then
+                if command.position then
+                  control.Position = command.position
+                  print(string.format("Set %s.%s position = %s via tunnel", command.component, command.control, command.position))
+                elseif command.value ~= nil then
+                  control.Value = command.value
+                  print(string.format("Set %s.%s value = %s via tunnel", command.component, command.control, command.value))
+                end
+              else
+                print(string.format("ERROR: Control %s.%s not found", command.component, command.control))
+              end
+            else
+              print(string.format("ERROR: Component %s not found", command.component))
+            end
+          else
+            print("ERROR: Unknown command type:", command.type)
+          end
+        else
+          print("ERROR: Failed to parse json_input command")
+        end
+      end
+    end
+    print("✓ json_input EventHandler registered for control commands")
+  end
 else
   print("Secure Discovery Controls NOT detected. Running in Legacy Mode only.")
 end

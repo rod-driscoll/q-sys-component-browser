@@ -1,8 +1,9 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject, Injector } from '@angular/core';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { QrwcConnectionOptions } from '../models/qsys-control.model';
 import { Qrwc } from '@q-sys/qrwc';
 import { environment } from '../../environments/environment';
+import type { SecureTunnelDiscoveryService } from './secure-tunnel-discovery.service';
 
 export interface ComponentWithControls {
   name: string;
@@ -66,7 +67,24 @@ export class QSysService {
   // Callback to notify when ChangeGroup changes (for component re-registration)
   private changeGroupChangedCallback: (() => Promise<void>) | null = null;
 
-  constructor() { }
+  // Lazy-loaded reference to SecureTunnelDiscoveryService to avoid circular dependency
+  private secureTunnelService?: any;
+
+  constructor(private injector: Injector) { }
+
+  /**
+   * Get secure tunnel service (lazy-loaded to avoid circular dependency)
+   */
+  private getSecureTunnelService(): any {
+    if (!this.secureTunnelService) {
+      try {
+        this.secureTunnelService = this.injector.get('SecureTunnelDiscoveryService' as any, null);
+      } catch (e) {
+        this.secureTunnelService = null;
+      }
+    }
+    return this.secureTunnelService;
+  }
 
   /**
    * Register a callback to be invoked when ChangeGroup ID changes
@@ -682,11 +700,26 @@ export class QSysService {
 
   /**
    * Set control value via RPC
-   * Uses Component.Set RPC directly
+   * Uses Component.Set RPC directly, or through secure tunnel if available
    */
   async setControlViaRpc(componentName: string, controlName: string, value: any): Promise<void> {
     if (!this.qrwc) {
       throw new Error('Not connected to Q-SYS Core');
+    }
+
+    // Try to use secure tunnel if available
+    const secureTunnelService = this.getSecureTunnelService();
+    if (secureTunnelService) {
+      try {
+        const sentViaTunnel = await secureTunnelService.sendControlCommand(componentName, controlName, value);
+        if (sentViaTunnel) {
+          console.log(`Set ${componentName}:${controlName} = ${value} via secure tunnel`);
+          return;
+        }
+      } catch (e) {
+        // Secure tunnel failed, fall through to direct RPC
+        console.warn('[QSYS] Secure tunnel send failed, using direct RPC:', e);
+      }
     }
 
     try {
@@ -712,11 +745,26 @@ export class QSysService {
 
   /**
    * Set control position via RPC
-   * Uses Component.Set RPC with Position parameter
+   * Uses Component.Set RPC with Position parameter, or through secure tunnel if available
    */
   private async setControlPositionViaRpc(componentName: string, controlName: string, position: number): Promise<void> {
     if (!this.qrwc) {
       throw new Error('Not connected to Q-SYS Core');
+    }
+
+    // Try to use secure tunnel if available
+    const secureTunnelService = this.getSecureTunnelService();
+    if (secureTunnelService) {
+      try {
+        const sentViaTunnel = await secureTunnelService.sendControlCommand(componentName, controlName, undefined, position);
+        if (sentViaTunnel) {
+          console.log(`Set ${componentName}:${controlName} position = ${position} via secure tunnel`);
+          return;
+        }
+      } catch (e) {
+        // Secure tunnel failed, fall through to direct RPC
+        console.warn('[QSYS] Secure tunnel send failed, using direct RPC:', e);
+      }
     }
 
     try {

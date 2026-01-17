@@ -393,6 +393,48 @@ export class SecureTunnelDiscoveryService {
     }
   }
 
+  /**
+   * Send a control set command through the secure tunnel (json_input)
+   * Returns true if sent through tunnel, false if tunnel not available
+   */
+  async sendControlCommand(componentName: string, controlName: string, value: any, position?: number): Promise<boolean> {
+    if (!this.boundComponentName || !this.useControlBasedCommunication()) {
+      return false;
+    }
+
+    try {
+      const webSocketManager = (this.qsysService as any).qrwc?.webSocketManager;
+      if (!webSocketManager) {
+        return false;
+      }
+
+      const command = {
+        type: 'setControl',
+        component: componentName,
+        control: controlName,
+        value: value,
+        position: position
+      };
+
+      const commandJson = JSON.stringify(command);
+      console.log('[TUNNEL-SEND] Sending control command via json_input:', command);
+
+      await webSocketManager.sendRpc('Component.Set', {
+        Name: this.boundComponentName,
+        Controls: [{
+          Name: this.INPUT_CONTROL,
+          Value: 0,  // Dummy value for RPC
+          String: commandJson
+        }]
+      });
+
+      return true;
+    } catch (e) {
+      console.error('[TUNNEL-SEND] Failed to send command via tunnel:', e);
+      return false;
+    }
+  }
+
   // Legacy stubs for backward compatibility
   disconnect(): void { this.isConnected.set(false); }
   reconnect(): void { this.connect(); }
