@@ -225,10 +225,13 @@ export class SecureTunnelDiscoveryService {
   private async setupSecureTunnel(componentName: string): Promise<void> {
     // Subscribe to Control Updates for json_output (Q-SYS → Browser)
     // json_output: Q-SYS sends discovery data and component updates to browser
+    console.log(`[TUNNEL-SETUP] Setting up subscription for ${componentName}.${this.OUTPUT_CONTROL}`);
     this.qsysService.getControlUpdates().subscribe(update => {
+      console.log('[TUNNEL-SETUP] Received control update:', update.component, update.control);
       // Only listen to json_output for data FROM Q-SYS
       if (update.component === componentName && (update.control === this.OUTPUT_CONTROL || (update as any).name === this.OUTPUT_CONTROL || (update as any).Name === this.OUTPUT_CONTROL)) {
         const val = (update as any).String || (update as any).string || update.value;
+        console.log(`[TUNNEL-SETUP] ✓ Matched ${componentName}.${this.OUTPUT_CONTROL}, value length:`, val?.length);
         if (val !== undefined) {
           this.handleTunnelData(val);
         }
@@ -244,6 +247,7 @@ export class SecureTunnelDiscoveryService {
       const changeGroup = (this.qsysService as any).qrwc?.changeGroup;
       
       if (webSocketManager && changeGroup) {
+        console.log(`[TUNNEL-SETUP] Adding ${componentName}.${this.OUTPUT_CONTROL} to ChangeGroup ${(changeGroup as any).id}`);
         await webSocketManager.sendRpc('ChangeGroup.AddComponentControl', {
           Id: (changeGroup as any).id,
           Component: {
@@ -254,9 +258,11 @@ export class SecureTunnelDiscoveryService {
           }
         });
         console.log(`✓ Added ${this.OUTPUT_CONTROL} control to ChangeGroup for automatic updates from Q-SYS`);
+      } else {
+        console.warn('[TUNNEL-SETUP] Missing webSocketManager or changeGroup');
       }
     } catch (e) {
-      console.warn('Could not add controls to ChangeGroup:', e);
+      console.error('[TUNNEL-SETUP] Failed to add control to ChangeGroup:', e);
     }
 
     // Send Trigger to start discovery
