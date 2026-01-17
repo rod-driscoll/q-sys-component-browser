@@ -8,7 +8,6 @@ import { TextControl } from '../../components/qsys-browser/controls/text-control
 import { ComboControl } from '../../components/qsys-browser/controls/combo-control/combo-control';
 import { NAMED_CONTROLS_METADATA } from './named-controls.metadata';
 import { NamedControlsService, NamedControl } from '../../services/named-controls.service';
-import { AppInitializationService } from '../../services/app-initialization.service';
 import { ControlInfo } from '../../services/qsys-browser.service';
 
 /**
@@ -35,8 +34,7 @@ export class NamedControlsComponent implements OnInit, OnDestroy {
 
   constructor(
     private namedControlsService: NamedControlsService,
-    private router: Router,
-    private appInit: AppInitializationService
+    private router: Router
   ) {}
 
   // Use service signals via getters
@@ -46,17 +44,11 @@ export class NamedControlsComponent implements OnInit, OnDestroy {
   get isConnected() { return this.namedControlsService.isConnected; }
 
   ngOnInit(): void {
-    // Wait for app-level initialization to complete
-    // ExternalControls.xml requires file system (Lua scripts) to be loaded
-    console.log('[NAMED-CONTROLS] Waiting for app initialization...');
-    
-    this.waitForAppInit().then(() => {
-      console.log('[NAMED-CONTROLS] App initialization complete, loading controls');
-      this.loadControls();
-    }).catch((error) => {
-      console.error('[NAMED-CONTROLS] App initialization failed:', error);
-      this.namedControlsService.error.set(`Failed to initialize: ${error.message}`);
-    });
+    // App-level initialization has already completed at this point
+    // Discovery service is ready, Lua scripts are loaded
+    // Just load named controls
+    console.log('[NAMED-CONTROLS] Loading controls (app init complete)');
+    this.loadControls();
   }
 
   ngOnDestroy(): void {
@@ -65,25 +57,6 @@ export class NamedControlsComponent implements OnInit, OnDestroy {
 
   goBack(): void {
     this.router.navigate(['/']);
-  }
-
-  /**
-   * Wait for app-level initialization to complete
-   */
-  private waitForAppInit(): Promise<void> {
-    return new Promise((resolve) => {
-      if (this.appInit.initializationComplete()) {
-        resolve();
-        return;
-      }
-
-      const checkInterval = setInterval(() => {
-        if (this.appInit.initializationComplete()) {
-          clearInterval(checkInterval);
-          resolve();
-        }
-      }, 100);
-    });
   }
 
   /**

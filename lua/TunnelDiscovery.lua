@@ -2791,6 +2791,75 @@ if Controls.json_output and Controls.trigger_update then
             else
               print(string.format("ERROR: Component %s not found", command.component))
             end
+          elseif command.type == "readFile" then
+            -- Handle file read command
+            local filePath = command.path
+            if not filePath then
+              local errorResponse = {
+                type = "fileReadError",
+                requestId = command.requestId,
+                error = "No file path provided"
+              }
+              Controls.json_output.String = json.encode(errorResponse)
+              return
+            end
+            
+            print("File read request via tunnel: " .. filePath)
+            
+            -- Detect content type based on file extension
+            local function getContentType(fileName)
+              local ext = fileName:match('%.([^%.]+)$')
+              if not ext then return 'application/octet-stream' end
+              ext = ext:lower()
+              
+              if ext == 'txt' then return 'text/plain' end
+              if ext == 'lua' then return 'text/plain' end
+              if ext == 'js' then return 'text/javascript' end
+              if ext == 'json' then return 'application/json' end
+              if ext == 'xml' then return 'application/xml' end
+              if ext == 'html' then return 'text/html' end
+              if ext == 'css' then return 'text/css' end
+              if ext == 'log' then return 'text/plain' end
+              
+              return 'application/octet-stream'
+            end
+            
+            local contentType = getContentType(filePath)
+            
+            -- Read file content
+            local readSuccess, content = pcall(function()
+              local file = io.open(filePath, 'rb')
+              if not file then
+                error('Failed to open file')
+              end
+              local data = file:read('*all')
+              file:close()
+              return data
+            end)
+            
+            if not readSuccess then
+              print('Failed to read file: ' .. tostring(content))
+              local errorResponse = {
+                type = "fileReadError",
+                requestId = command.requestId,
+                path = filePath,
+                error = 'Failed to read file: ' .. tostring(content)
+              }
+              Controls.json_output.String = json.encode(errorResponse)
+              return
+            end
+            
+            print('Successfully read file, size: ' .. #content .. ' bytes, type: ' .. contentType)
+            
+            -- Send file content via json_output
+            local response = {
+              type = "fileReadResponse",
+              requestId = command.requestId,
+              path = filePath,
+              content = content,
+              contentType = contentType
+            }
+            Controls.json_output.String = json.encode(response)
           else
             print("ERROR: Unknown command type:", command.type)
           end
@@ -2799,7 +2868,7 @@ if Controls.json_output and Controls.trigger_update then
         end
       end
     end
-    print("✓ json_input EventHandler registered for control commands")
+    print("✓ json_input EventHandler registered for control commands and file operations")
   end
 else
   print("Secure Discovery Controls NOT detected. Running in Legacy Mode only.")

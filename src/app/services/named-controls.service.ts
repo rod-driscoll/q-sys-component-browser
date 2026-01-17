@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { QSysService } from './qsys.service';
-import { FileSystemService } from './file-system.service';
+import { SecureTunnelDiscoveryService } from './secure-tunnel-discovery.service';
 
 /**
  * Named control from ExternalControls.xml
@@ -38,7 +38,7 @@ export class NamedControlsService {
 
   constructor(
     private qsysService: QSysService,
-    private fileSystemService: FileSystemService
+    private secureTunnelService: SecureTunnelDiscoveryService
   ) {}
 
   /**
@@ -70,54 +70,29 @@ export class NamedControlsService {
   }
 
   /**
-   * Read ExternalControls.xml using file-system service
+   * Read ExternalControls.xml from the design directory on Q-SYS Core
+   * Uses the secure tunnel file operations to read from /design/ExternalControls.xml
    */
   private async readExternalControlsXml(): Promise<string> {
-    return new Promise((resolve, reject) => {
-      // Ensure file-system service is connected
-      if (!this.fileSystemService.isConnected()) {
-        this.fileSystemService.connect();
+    try {
+      console.log('[NAMED-CONTROLS] Reading ExternalControls.xml from design directory via secure tunnel');
+      
+      // Request file read via secure tunnel (json_input control)
+      const result = await this.secureTunnelService.readFile('/design/ExternalControls.xml');
+      
+      if (!result || !result.content) {
+        throw new Error('ExternalControls.xml not found in design directory or file is empty');
       }
-
-      // Wait for connection
-      const checkConnection = setInterval(() => {
-        if (this.fileSystemService.isConnected()) {
-          clearInterval(checkConnection);
-
-          // Request the file
-          this.fileSystemService.readFile('ExternalControls.xml');
-
-          // Wait for file content
-          const checkContent = setInterval(() => {
-            const content = this.fileSystemService.fileContent();
-            const contentType = this.fileSystemService.fileContentType();
-            const error = this.fileSystemService.error();
-
-            if (error) {
-              clearInterval(checkContent);
-              reject(new Error(error));
-            } else if (content && contentType) {
-              clearInterval(checkContent);
-              // Close the file view
-              this.fileSystemService.closeFile();
-              resolve(content);
-            }
-          }, 100);
-
-          // Timeout after 5 seconds
-          setTimeout(() => {
-            clearInterval(checkContent);
-            reject(new Error('Timeout reading ExternalControls.xml'));
-          }, 5000);
-        }
-      }, 100);
-
-      // Timeout after 5 seconds for connection
-      setTimeout(() => {
-        clearInterval(checkConnection);
-        reject(new Error('Timeout connecting to file system'));
-      }, 5000);
-    });
+      
+      console.log('[NAMED-CONTROLS] Successfully read ExternalControls.xml from Core');
+      return result.content;
+    } catch (error) {
+      console.error('[NAMED-CONTROLS] Error reading ExternalControls.xml from Core:', error);
+      throw new Error(
+        'Failed to read ExternalControls.xml from design directory. ' +
+        'Make sure the file exists in the Q-SYS design and the secure tunnel is connected.'
+      );
+    }
   }
 
   /**

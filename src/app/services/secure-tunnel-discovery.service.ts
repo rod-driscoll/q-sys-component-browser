@@ -435,6 +435,89 @@ export class SecureTunnelDiscoveryService {
     }
   }
 
+  /**
+   * Read a file from the Q-SYS Core via the secure tunnel (json_input/json_output)
+   * @param path - File path on the Core (e.g., '/design/ExternalControls.xml')
+   * @returns Promise with file content and content type
+   */
+  async readFile(path: string): Promise<{ content: string; contentType: string }> {
+    if (!this.boundComponentName || !this.useControlBasedCommunication()) {
+      throw new Error('Secure tunnel not available for file operations');
+    }
+
+    const webSocketManager = (this.qsysService as any).qrwc?.webSocketManager;
+    if (!webSocketManager) {
+      throw new Error('QRWC WebSocket manager not available');
+    }
+
+    // Generate unique request ID
+    const requestId = `file-read-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('File read timeout (10s)'));
+      }, 10000);
+
+      // Set up one-time listener for the response
+      const checkResponse = () => {
+        const outputValue = this.lastPolledValue;
+        if (!outputValue) return;
+
+        try {
+          const response = JSON.parse(outputValue);
+          
+          // Check if this is our response
+          if (response.requestId === requestId) {
+            clearTimeout(timeout);
+            
+            if (response.type === 'fileReadResponse') {
+              console.log('[TUNNEL-FILE] Successfully read file:', path);
+              resolve({
+                content: response.content,
+                contentType: response.contentType
+              });
+            } else if (response.type === 'fileReadError') {
+              console.error('[TUNNEL-FILE] File read error:', response.error);
+              reject(new Error(response.error || 'Failed to read file'));
+            }
+          }
+        } catch (e) {
+          // Not JSON or not our response, keep waiting
+        }
+      };
+
+      // Poll json_output for response (every 100ms)
+      const pollInterval = setInterval(() => {
+        checkResponse();
+      }, 100);
+
+      // Send file read request via json_input
+      const command = {
+        type: 'readFile',
+        requestId: requestId,
+        path: path
+      };
+
+      const commandJson = JSON.stringify(command);
+      console.log('[TUNNEL-FILE] Sending file read request via json_input:', command);
+
+      webSocketManager.sendRpc('Component.Set', {
+        Name: this.boundComponentName,
+        Controls: [{
+          Name: this.INPUT_CONTROL,
+          Value: 0,
+          String: commandJson
+        }]
+      }).then(() => {
+        console.log('[TUNNEL-FILE] File read request sent, waiting for response...');
+      }).catch((e) => {
+        clearTimeout(timeout);
+        clearInterval(pollInterval);
+        reject(new Error(`Failed to send file read request: ${e}`));
+      });
+    });
+  }
+
   // Legacy stubs for backward compatibility
   disconnect(): void { this.isConnected.set(false); }
   reconnect(): void { this.connect(); }
