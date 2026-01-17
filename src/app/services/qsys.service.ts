@@ -700,32 +700,17 @@ export class QSysService {
 
   /**
    * Set control value via RPC
-   * Uses Component.Set RPC directly, or through secure tunnel if available
+   * Priority: 1) QRWC/RPC (most efficient), 2) Secure tunnel (json_input), 3) HTTP (fallback)
    */
   async setControlViaRpc(componentName: string, controlName: string, value: any): Promise<void> {
     if (!this.qrwc) {
       throw new Error('Not connected to Q-SYS Core');
     }
 
-    // Try to use secure tunnel if available
-    const secureTunnelService = this.getSecureTunnelService();
-    if (secureTunnelService) {
-      try {
-        const sentViaTunnel = await secureTunnelService.sendControlCommand(componentName, controlName, value);
-        if (sentViaTunnel) {
-          console.log(`Set ${componentName}:${controlName} = ${value} via secure tunnel`);
-          return;
-        }
-      } catch (e) {
-        // Secure tunnel failed, fall through to direct RPC
-        console.warn('[QSYS] Secure tunnel send failed, using direct RPC:', e);
-      }
-    }
-
     try {
       const webSocketManager = (this.qrwc as any).webSocketManager;
 
-      // Use Component.Set RPC to set control value
+      // Priority 1: Try QRWC/RPC first (most efficient and secure)
       await webSocketManager.sendRpc('Component.Set', {
         Name: componentName,
         Controls: [
@@ -737,40 +722,44 @@ export class QSysService {
       });
 
       console.log(`Set ${componentName}:${controlName} = ${value} via RPC`);
-    } catch (error) {
-      console.error(`Failed to set control via RPC:`, error);
+      return;
+    } catch (error: any) {
+      // If RPC fails (component not available via QRWC), try secure tunnel
+      console.log(`[QSYS] RPC failed for ${componentName}:${controlName}, trying secure tunnel...`);
+      
+      // Priority 2: Try secure tunnel (json_input) for script-only components
+      const secureTunnelService = this.getSecureTunnelService();
+      if (secureTunnelService) {
+        try {
+          const sentViaTunnel = await secureTunnelService.sendControlCommand(componentName, controlName, value);
+          if (sentViaTunnel) {
+            console.log(`Set ${componentName}:${controlName} = ${value} via secure tunnel`);
+            return;
+          }
+        } catch (e) {
+          console.warn('[QSYS] Secure tunnel send failed:', e);
+        }
+      }
+
+      // Priority 3: HTTP fallback handled by calling code if both RPC and tunnel fail
+      console.error(`Failed to set control via RPC and tunnel:`, error);
       throw error;
     }
   }
 
   /**
    * Set control position via RPC
-   * Uses Component.Set RPC with Position parameter, or through secure tunnel if available
+   * Priority: 1) QRWC/RPC (most efficient), 2) Secure tunnel (json_input), 3) HTTP (fallback)
    */
   private async setControlPositionViaRpc(componentName: string, controlName: string, position: number): Promise<void> {
     if (!this.qrwc) {
       throw new Error('Not connected to Q-SYS Core');
     }
 
-    // Try to use secure tunnel if available
-    const secureTunnelService = this.getSecureTunnelService();
-    if (secureTunnelService) {
-      try {
-        const sentViaTunnel = await secureTunnelService.sendControlCommand(componentName, controlName, undefined, position);
-        if (sentViaTunnel) {
-          console.log(`Set ${componentName}:${controlName} position = ${position} via secure tunnel`);
-          return;
-        }
-      } catch (e) {
-        // Secure tunnel failed, fall through to direct RPC
-        console.warn('[QSYS] Secure tunnel send failed, using direct RPC:', e);
-      }
-    }
-
     try {
       const webSocketManager = (this.qrwc as any).webSocketManager;
 
-      // Use Component.Set RPC to set control position
+      // Priority 1: Try QRWC/RPC first (most efficient and secure)
       await webSocketManager.sendRpc('Component.Set', {
         Name: componentName,
         Controls: [
@@ -782,8 +771,27 @@ export class QSysService {
       });
 
       console.log(`Set ${componentName}:${controlName} position = ${position} via RPC`);
-    } catch (error) {
-      console.error(`Failed to set control position via RPC:`, error);
+      return;
+    } catch (error: any) {
+      // If RPC fails (component not available via QRWC), try secure tunnel
+      console.log(`[QSYS] RPC failed for ${componentName}:${controlName}, trying secure tunnel...`);
+      
+      // Priority 2: Try secure tunnel (json_input) for script-only components
+      const secureTunnelService = this.getSecureTunnelService();
+      if (secureTunnelService) {
+        try {
+          const sentViaTunnel = await secureTunnelService.sendControlCommand(componentName, controlName, undefined, position);
+          if (sentViaTunnel) {
+            console.log(`Set ${componentName}:${controlName} position = ${position} via secure tunnel`);
+            return;
+          }
+        } catch (e) {
+          console.warn('[QSYS] Secure tunnel send failed:', e);
+        }
+      }
+
+      // Priority 3: HTTP fallback handled by calling code if both RPC and tunnel fail
+      console.error(`Failed to set control position via RPC and tunnel:`, error);
       throw error;
     }
   }
