@@ -510,7 +510,7 @@ export class SecureTunnelDiscoveryService {
         }]
       }).then(() => {
         console.log('[TUNNEL-FILE] File read request sent, waiting for response...');
-      }).catch((e) => {
+      }).catch((e: any) => {
         clearTimeout(timeout);
         clearInterval(pollInterval);
         reject(new Error(`Failed to send file read request: ${e}`));
