@@ -223,18 +223,11 @@ export class SecureTunnelDiscoveryService {
    * Sets up the secure tunnel using Direct Component Controls
    */
   private async setupSecureTunnel(componentName: string): Promise<void> {
-    // Subscribe to Control Updates for json_output (discovery data)
+    // Subscribe to Control Updates for json_output (Q-SYS → Browser)
+    // json_output: Q-SYS sends discovery data and component updates to browser
     this.qsysService.getControlUpdates().subscribe(update => {
-      // Check if update is for OUR component and output control
+      // Only listen to json_output for data FROM Q-SYS
       if (update.component === componentName && (update.control === this.OUTPUT_CONTROL || (update as any).name === this.OUTPUT_CONTROL || (update as any).Name === this.OUTPUT_CONTROL)) {
-        const val = (update as any).String || (update as any).string || update.value;
-        if (val !== undefined) {
-          this.handleTunnelData(val);
-        }
-      }
-      
-      // Also check for json_input control (component updates)
-      if (update.component === componentName && (update.control === this.INPUT_CONTROL || (update as any).name === this.INPUT_CONTROL || (update as any).Name === this.INPUT_CONTROL)) {
         const val = (update as any).String || (update as any).string || update.value;
         if (val !== undefined) {
           this.handleTunnelData(val);
@@ -242,7 +235,10 @@ export class SecureTunnelDiscoveryService {
       }
     });
 
-    // Add both json_output and json_input controls to ChangeGroup to receive automatic updates
+    // Add json_output control to ChangeGroup to receive automatic updates FROM Q-SYS
+    // json_input is for Browser → Q-SYS communication (not subscribed here)
+    // Add json_output control to ChangeGroup to receive automatic updates FROM Q-SYS
+    // json_input is for Browser → Q-SYS communication (not subscribed here)
     try {
       const webSocketManager = (this.qsysService as any).qrwc?.webSocketManager;
       const changeGroup = (this.qsysService as any).qrwc?.changeGroup;
@@ -253,12 +249,11 @@ export class SecureTunnelDiscoveryService {
           Component: {
             Name: componentName,
             Controls: [
-              { Name: this.OUTPUT_CONTROL },
-              { Name: this.INPUT_CONTROL }
+              { Name: this.OUTPUT_CONTROL }  // Only subscribe to json_output (Q-SYS → Browser)
             ]
           }
         });
-        console.log(`✓ Added ${this.OUTPUT_CONTROL} and ${this.INPUT_CONTROL} controls to ChangeGroup for automatic updates`);
+        console.log(`✓ Added ${this.OUTPUT_CONTROL} control to ChangeGroup for automatic updates from Q-SYS`);
       }
     } catch (e) {
       console.warn('Could not add controls to ChangeGroup:', e);
