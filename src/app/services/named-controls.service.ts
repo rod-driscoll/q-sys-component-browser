@@ -234,6 +234,7 @@ export class NamedControlsService {
           updatedControls[controlIndex] = {
             ...updatedControls[controlIndex],
             value: update.value,
+            position: update.position,  // Update position for knob controls
             stringValue: update.string || update.value?.toString()
           };
           
