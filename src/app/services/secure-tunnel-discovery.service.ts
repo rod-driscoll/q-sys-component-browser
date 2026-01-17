@@ -214,7 +214,7 @@ export class SecureTunnelDiscoveryService {
         }
       }
       return null;
-    } catch (e) {
+    } catch (e: any) {
       console.error('Scan failed', e);
       return null;
     }
@@ -262,7 +262,7 @@ export class SecureTunnelDiscoveryService {
       } else {
         console.warn('[TUNNEL-SETUP] Missing webSocketManager or changeGroup');
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error('[TUNNEL-SETUP] Failed to add control to ChangeGroup:', e);
     }
 
@@ -289,7 +289,7 @@ export class SecureTunnelDiscoveryService {
             }
           }
         }
-      } catch (e) {
+      } catch (e: any) {
         console.warn('[TUNNEL-POLL] Poll failed:', e);
       }
     }, 500);
@@ -309,7 +309,7 @@ export class SecureTunnelDiscoveryService {
             this.handleTunnelData(res.Controls[0].String);
           }
         }
-      } catch (e) { console.warn('Poll failed', e); }
+      } catch (e: any) { console.warn('Poll failed', e); }
     }, 500);
 
     // Component updates will arrive via the json_output control subscription above
@@ -359,7 +359,7 @@ export class SecureTunnelDiscoveryService {
           console.log('[TUNNEL-DATA] Processing as discovery data');
           this.processDiscoveryJson(data);
         }
-      } catch (e) {
+      } catch (e: any) {
         // If parsing fails, try processing as discovery data
         console.warn('[TUNNEL-DATA] JSON parse failed, trying as discovery data:', e);
         this.processDiscoveryJson(data);
@@ -387,7 +387,7 @@ export class SecureTunnelDiscoveryService {
       }
       
       this.discoveryData.set(data);
-    } catch (e) {
+    } catch (e: any) {
       console.error('Failed to parse discovery JSON', e);
       this.error.set('Invalid Data Received');
     }
@@ -429,7 +429,7 @@ export class SecureTunnelDiscoveryService {
       });
 
       return true;
-    } catch (e) {
+    } catch (e: any) {
       console.error('[TUNNEL-SEND] Failed to send command via tunnel:', e);
       return false;
     }
@@ -481,7 +481,7 @@ export class SecureTunnelDiscoveryService {
               reject(new Error(response.error || 'Failed to read file'));
             }
           }
-        } catch (e) {
+        } catch (e: any) {
           // Not JSON or not our response, keep waiting
         }
       };
