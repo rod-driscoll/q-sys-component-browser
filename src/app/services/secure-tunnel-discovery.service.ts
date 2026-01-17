@@ -468,7 +468,10 @@ export class SecureTunnelDiscoveryService {
     const requestId = `file-read-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     return new Promise((resolve, reject) => {
+      let pollInterval: any;
+      
       const timeout = setTimeout(() => {
+        if (pollInterval) clearInterval(pollInterval);
         reject(new Error('File read timeout (10s)'));
       }, 10000);
 
@@ -483,6 +486,7 @@ export class SecureTunnelDiscoveryService {
           // Check if this is our response
           if (response.requestId === requestId) {
             clearTimeout(timeout);
+            clearInterval(pollInterval);
             
             if (response.type === 'fileReadResponse') {
               console.log('[TUNNEL-FILE] Successfully read file:', path);
@@ -501,7 +505,7 @@ export class SecureTunnelDiscoveryService {
       };
 
       // Poll json_output for response (every 100ms)
-      const pollInterval = setInterval(() => {
+      pollInterval = setInterval(() => {
         checkResponse();
       }, 100);
 
@@ -537,9 +541,10 @@ export class SecureTunnelDiscoveryService {
    * This is the fallback when control-based communication isn't available
    */
   private async readFileViaWebSocket(path: string): Promise<{ content: string; contentType: string }> {
-    const coreIp = (this.qsysService as any).coreIp || 'localhost';
-    const port = (this.qsysService as any).corePort || 9091;
-    const wsUrl = `ws://${coreIp}:${port}/ws/file-system`;
+    // Use environment settings to get Core IP and port
+    const coreIp = (window as any).runtimeCoreIp || this.qsysService.getCoreIp() || 'localhost';
+    const corePort = (window as any).runtimeCorePort || 9091;
+    const wsUrl = `ws://${coreIp}:${corePort}/ws/file-system`;
 
     return new Promise((resolve, reject) => {
       console.log('[TUNNEL-FILE-WS] Connecting to file system WebSocket:', wsUrl);
