@@ -391,7 +391,7 @@ export class QsysBrowser implements OnInit, OnDestroy {
               discoveryMethod: 'websocket' as const,
             }))
           ];
-          console.log(`✓ Merged components: ${finalComponentList.length} total (${componentList.length} QRWC + ${newScriptComponents.length} WebSocket)`);
+          console.log(`✓ Merged components: ${finalComponentList.length} total (${componentList.length} QRWC + ${newScriptComponents.length} Tunnel)`);
         }
       } else {
         // Check for cached script-only components from previous discovery
@@ -502,6 +502,14 @@ export class QsysBrowser implements OnInit, OnDestroy {
   // Process secure tunnel discovery data
   private processWebSocketDiscoveryData(discoveryData: any): void {
     console.log('Processing secure tunnel discovery data...');
+    
+    // If components are still being loaded from QRWC, wait for that to complete first
+    if (this.isLoadingComponents) {
+      console.log('[QSYS-BROWSER] QRWC component loading in progress, deferring tunnel data processing...');
+      setTimeout(() => this.processWebSocketDiscoveryData(discoveryData), 100);
+      return;
+    }
+    
     this.loadingSubStage.set('Processing discovery data...');
 
     try {
@@ -509,6 +517,7 @@ export class QsysBrowser implements OnInit, OnDestroy {
       const existingComponents = this.browserService.components();
       const existingComponentNames = new Set(existingComponents.map(c => c.name));
 
+      console.log(`[QSYS-BROWSER] Current state: ${existingComponents.length} QRWC components already loaded`);
       this.loadingSubStage.set(`Analyzing ${discoveryData.components.length} discovered components...`);
 
       // Convert WebSocket data to ComponentInfo format, but only for components not already in QRWC
