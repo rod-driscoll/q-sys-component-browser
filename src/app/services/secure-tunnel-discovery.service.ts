@@ -286,74 +286,12 @@ export class SecureTunnelDiscoveryService {
       } catch (e) { console.warn('Poll failed', e); }
     }, 500);
 
-    // Connect to WebSocket updates endpoint for component updates
-    this.connectToUpdatesEndpoint(componentName);
+    // Component updates will arrive via the json_output control subscription above
+    // Do NOT open a direct WebSocket connection - use the secure tunnel instead
 
     this.isConnected.set(true);
     this.error.set(null);
     this.loadingStage.set('Secure Tunnel Established');
-  }
-
-  /**
-   * Connect to the WebSocket updates endpoint for real-time component updates
-   */
-  private connectToUpdatesEndpoint(componentName: string): void {
-    try {
-      // Extract Q-SYS Core IP from the already-connected QRWC WebSocket URL, with fallback to environment config
-      let coreIp = environment.RUNTIME_CORE_IP;
-      
-      try {
-        const qrwc = (this.qsysService as any).qrwc;
-        if (qrwc && qrwc.webSocketManager) {
-          const ws = qrwc.webSocketManager.socket;
-          if (ws && ws.url) {
-            const match = ws.url.match(/wss?:\/\/([^/:]+)/);
-            if (match && match[1]) {
-              coreIp = match[1];
-              console.log(`✓ Extracted Core IP from QRWC: ${coreIp}`);
-            }
-          }
-        }
-      } catch (e) {
-        console.warn(`Could not extract Core IP from QRWC, using environment config: ${coreIp}`);
-      }
-      
-      const corePort = environment.RUNTIME_CORE_PORT;
-      const updateUrl = `ws://${coreIp}:${corePort}/ws/updates`;
-      
-      console.log(`🔗 Connecting to component updates WebSocket: ${updateUrl}`);
-      
-      const updateWs = new WebSocket(updateUrl);
-      
-      updateWs.onopen = () => {
-        console.log('✓ Connected to /ws/updates endpoint for real-time component updates');
-      };
-      
-      updateWs.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data);
-          
-          if (message.type === 'componentUpdate') {
-            console.log('Received component update via WebSocket:', message.componentName);
-            this.componentUpdate.set(message);
-          }
-        } catch (err) {
-          console.error('Error parsing update message:', err);
-        }
-      };
-      
-      updateWs.onerror = (error) => {
-        console.error('WebSocket error on /ws/updates:', error);
-      };
-      
-      updateWs.onclose = () => {
-        console.log('Disconnected from /ws/updates endpoint');
-        // Do NOT auto-reconnect - the endpoint may not exist if Lua script is not running
-        // App will continue to function without real-time updates
-      };
-    } catch (err) {
-      console.error('Failed to connect to updates WebSocket:', err);
-    }
   }
 
   /**
@@ -422,68 +360,7 @@ export class SecureTunnelDiscoveryService {
     }
   }
 
-  // Legacy stubs
-  connectUpdates(): void {
-    try {
-      // Extract Q-SYS Core IP from the already-connected QRWC WebSocket URL
-      // The QSysService has a connected QRWC instance we can inspect
-      let coreIp = environment.RUNTIME_CORE_IP;
-      
-      try {
-        const qrwc = (this.qsysService as any).qrwc;
-        if (qrwc && qrwc.webSocketManager) {
-          // Get the URL from the WebSocket manager
-          const ws = qrwc.webSocketManager.socket;
-          if (ws && ws.url) {
-            // Extract IP from URL like "wss://192.168.104.220/qrc"
-            const match = ws.url.match(/wss?:\/\/([^/:]+)/);
-            if (match && match[1]) {
-              coreIp = match[1];
-            }
-          }
-        }
-      } catch (e) {
-        console.warn('Could not extract Core IP from QRWC, using default');
-      }
-      
-      const corePort = 9091;
-      const updateUrl = `ws://${coreIp}:${corePort}/ws/updates`;
-      
-      console.log(`Connecting to component updates WebSocket: ${updateUrl}`);
-      
-      const updateWs = new WebSocket(updateUrl);
-      
-      updateWs.onopen = () => {
-        console.log('Connected to /ws/updates WebSocket endpoint on Q-SYS Core');
-      };
-      
-      updateWs.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data);
-          
-          if (message.type === 'componentUpdate') {
-            console.log('Received component update:', message.componentName);
-            this.componentUpdate.set(message);
-          } else if (message.type === 'connected') {
-            console.log('Updates endpoint ready');
-          }
-        } catch (err) {
-          console.error('Error parsing update message:', err);
-        }
-      };
-      
-      updateWs.onerror = (error) => {
-        console.error('WebSocket error on /ws/updates:', error);
-      };
-      
-      updateWs.onclose = () => {
-        console.log('Disconnected from /ws/updates endpoint');
-        // Do NOT auto-reconnect - the endpoint may not exist if Lua script is not running
-      };
-    } catch (err) {
-      console.error('Failed to connect to updates WebSocket:', err);
-    }
-  }
+  // Legacy stubs for backward compatibility
   disconnect(): void { this.isConnected.set(false); }
   reconnect(): void { this.connect(); }
   getDiscoveryData(): DiscoveryData | null { return this.discoveryData(); }
