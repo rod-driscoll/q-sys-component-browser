@@ -6,20 +6,24 @@
       </button>
       <div class="header-left-content">
         <h1>{{ title }}</h1>
-        <div class="project-detail-item">
-          <span class="detail-label">Project:</span>
-          <span class="detail-value">{{ designName || 'Loading...' }}</span>
+        @if (!minimal) {
+          <div class="project-detail-item">
+            <span class="detail-label">Project:</span>
+            <span class="detail-value">{{ designName || 'Loading...' }}</span>
+          </div>
+        }
+      </div>
+    </div>
+    @if (!minimal) {
+      <div class="header-right">
+        <div class="connection-status" [class.connected]="isConnected">
+          {{ connectionStatus }}
         </div>
+        <div class="core-ip">{{ coreIp }}</div>
+        @if (corePlatform && coreState) {
+          <div class="core-info">{{ corePlatform }} ({{ coreState }})</div>
+        }
       </div>
-    </div>
-    <div class="header-right">
-      <div class="connection-status" [class.connected]="isConnected">
-        {{ connectionStatus }}
-      </div>
-      <div class="core-ip">{{ coreIp }}</div>
-      @if (corePlatform && coreState) {
-        <div class="core-info">{{ corePlatform }} ({{ coreState }})</div>
-      }
-    </div>
+    }
   </div>
 </header>
