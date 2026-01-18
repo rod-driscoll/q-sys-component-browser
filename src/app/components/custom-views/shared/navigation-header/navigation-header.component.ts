@@ -17,6 +17,8 @@ import { environment } from '../../../../../environments/environment';
 export class NavigationHeaderComponent implements OnInit {
   /** Title to display in the header */
   @Input() title: string = '';
+  /** Minimal mode: only back button and title */
+  @Input() minimal: boolean = false;
 
   // Q-SYS Core status information
   corePlatform = '';
