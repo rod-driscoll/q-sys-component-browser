@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { SecureTunnelDiscoveryService } from './secure-tunnel-discovery.service';
+import { AuthService } from './auth.service';
 
 /**
  * File or Directory entry from Q-SYS Core
@@ -72,7 +73,10 @@ export class FileSystemService {
   public fileContentType = signal<string | null>(null);
   public viewingFile = signal<string | null>(null);
 
-  constructor(private secureTunnelService: SecureTunnelDiscoveryService) {}
+  constructor(
+    private secureTunnelService: SecureTunnelDiscoveryService,
+    private authService: AuthService
+  ) {}
 
   /**
    * Connect to the file system endpoint
@@ -307,7 +311,8 @@ export class FileSystemService {
       console.log('[FILE-SYSTEM] Media API list request:', url);
 
       const headers: HeadersInit = {
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        ...this.authService.getAuthHeader()
       };
 
       // In dev mode, add host header for dynamic proxy target
@@ -316,10 +321,22 @@ export class FileSystemService {
       }
 
       console.log('[FILE-SYSTEM] Media API list fetch options:', { method: 'GET', url, headers });
-      const response = await fetch(url, {
-        method: 'GET',
-        headers
-      });
+
+      const doFetch = async () => fetch(url, { method: 'GET', headers });
+      let response = await doFetch();
+
+      // If unauthorized, attempt to login (protected mode) and retry once
+      if (response.status === 401) {
+        try {
+          console.warn('[FILE-SYSTEM] 401 Unauthorized. Attempting login and retry...');
+          await this.authService.login(this.authService.username(), this.authService.password());
+          // Merge new auth header
+          Object.assign(headers, this.authService.getAuthHeader());
+          response = await doFetch();
+        } catch (e) {
+          console.error('[FILE-SYSTEM] Login attempt failed:', e);
+        }
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -534,7 +551,9 @@ export class FileSystemService {
 
       console.log('[FILE-SYSTEM] Media API file request:', { url });
 
-      const headers: HeadersInit = {};
+      const headers: HeadersInit = {
+        ...this.authService.getAuthHeader()
+      };
 
       // In dev mode, add host header for dynamic proxy target
       if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
@@ -542,7 +561,21 @@ export class FileSystemService {
       }
 
       console.log('[FILE-SYSTEM] Media API file fetch options:', { url, headers });
-      const response = await fetch(url, { headers });
+
+      const doFetch = async () => fetch(url, { headers });
+      let response = await doFetch();
+
+      // If unauthorized, attempt to login (protected mode) and retry once
+      if (response.status === 401) {
+        try {
+          console.warn('[FILE-SYSTEM] 401 Unauthorized. Attempting login and retry...');
+          await this.authService.login(this.authService.username(), this.authService.password());
+          Object.assign(headers, this.authService.getAuthHeader());
+          response = await doFetch();
+        } catch (e) {
+          console.error('[FILE-SYSTEM] Login attempt failed:', e);
+        }
+      }
       console.log('[FILE-SYSTEM] Media API file response meta:', {
         status: response.status,
         statusText: response.statusText,

@@ -2,12 +2,13 @@ import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { QSysService } from '../../services/qsys.service';
 import { SecureTunnelDiscoveryService } from '../../services/secure-tunnel-discovery.service';
+import { CredentialsDialogComponent } from '../credentials-dialog/credentials-dialog.component';
 import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, CredentialsDialogComponent],
   template: `
     <header class="app-header">
       <div class="header-content">
@@ -30,6 +31,9 @@ import { environment } from '../../../environments/environment';
             <span class="status-detail">{{ coreAddress() }}</span>
             {{ showConnectionDetails ? '▼' : '▶' }}
           </button>
+          
+          <!-- Credentials Dialog -->
+          <app-credentials-dialog></app-credentials-dialog>
         </div>
       </div>
 
