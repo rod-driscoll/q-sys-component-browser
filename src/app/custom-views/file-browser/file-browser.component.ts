@@ -88,8 +88,9 @@ export class FileBrowserComponent implements OnInit, OnDestroy {
   getEntryIcon(entry: FileEntry): string {
     if (entry.type === 'directory') return '📁';
 
-    // File type icons based on extension
-    const ext = entry.name.split('.').pop()?.toLowerCase();
+    // File type icons based on extension - use full path if available
+    const nameToCheck = entry.path || entry.name;
+    const ext = nameToCheck.split('.').pop()?.toLowerCase();
     switch (ext) {
       case 'wav':
       case 'mp3':
@@ -139,7 +140,9 @@ export class FileBrowserComponent implements OnInit, OnDestroy {
    */
   openFile(entry: FileEntry): void {
     if (entry.type !== 'file') return;
-    this.fileSystemService.readFile(entry.name);
+    // Use the full path if available, otherwise use the name
+    const filePath = entry.path || entry.name;
+    this.fileSystemService.readFile(filePath);
   }
 
   /**

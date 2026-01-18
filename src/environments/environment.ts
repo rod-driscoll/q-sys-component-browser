@@ -9,14 +9,14 @@
  */
 
 // Internal state for runtime overrides
-let runtimeCoreIp = '192.168.6.21';
+let runtimeCoreIp = '192.168.104.220';
 
 export const environment = {
   production: false,
 
   // Q-SYS Core connection settings (defaults)
   // Change this IP address to match your Q-SYS Core
-  QSYS_CORE_IP: '192.168.6.21',
+  QSYS_CORE_IP: '192.168.104.220',
 
   // Runtime overrides (set via setConnectionParams)
   get RUNTIME_CORE_IP(): string {
