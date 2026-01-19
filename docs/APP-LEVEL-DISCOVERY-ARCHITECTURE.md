@@ -129,47 +129,95 @@ export class App implements OnInit {
 
 The header and loading screen are **above** the router-outlet, so they appear on all pages from the start.
 
-## Page-Level Simplification
+## Page-Level Pattern
 
-All custom view pages now have **zero initialization complexity**. They simply use the services knowing discovery is complete.
+All custom view pages **MUST** wait for app initialization to complete before accessing Q-SYS components or services that depend on QRWC connection or discovery.
 
-### Example: File Browser Component
-**Before:**
+### Required Pattern for All Custom Views
+
+Every custom view component should follow this pattern:
+
 ```typescript
-ngOnInit(): void {
-  // Wait for QRWC connection
-  await this.waitForQRWCConnection();
-  // Wait for discovery
-  await this.ensureDiscoveryComplete();
-  // Load Lua scripts
-  await this.loadLuaScripts();
-  // Finally connect to file system
-  this.fileSystemService.connect();
+import { AppInitializationService } from '../../services/app-initialization.service';
+
+export class MyCustomViewComponent implements OnInit {
+  private appInit = inject(AppInitializationService);
+
+  ngOnInit(): void {
+    console.log('[MY-VIEW] Waiting for app initialization...');
+    
+    this.waitForAppInit().then(() => {
+      console.log('[MY-VIEW] App initialization complete, loading data');
+      // Now safe to use Q-SYS services
+      this.loadData();
+    }).catch((error) => {
+      console.error('[MY-VIEW] App initialization failed:', error);
+    });
+  }
+
+  /**
+   * Wait for app-level initialization to complete
+   * Required to ensure QRWC connection, discovery, and Lua scripts are ready
+   */
+  private waitForAppInit(): Promise<void> {
+    return new Promise((resolve) => {
+      if (this.appInit.initializationComplete()) {
+        resolve();
+        return;
+      }
+
+      const checkInterval = setInterval(() => {
+        if (this.appInit.initializationComplete()) {
+          clearInterval(checkInterval);
+          resolve();
+        }
+      }, 100);
+    });
+  }
 }
-// +100 lines of helper methods duplicated in every page
 ```
 
-**After:**
-```typescript
-ngOnInit(): void {
-  // App-level initialization is complete
-  // Discovery service is ready
-  // Lua scripts are loaded
-  // Just connect to file system
-  console.log('[FILE-BROWSER] Connecting to file system (app init complete)');
-  this.fileSystemService.connect();
-}
-```
+### Why This Is Required
 
-### Updated Components:
+Without waiting for initialization:
+- ❌ QRWC connection may not be established
+- ❌ ChangeGroup polling may not be active
+- ❌ Component discovery may be incomplete
+- ❌ Controls won't receive feedback updates
+- ❌ Secure tunnel may not be available
+- ❌ Lua scripts may not be loaded
+
+With proper initialization wait:
+- ✅ QRWC connection is guaranteed
+- ✅ ChangeGroup polling is active
+- ✅ All components are discovered
+- ✅ Controls receive real-time feedback
+- ✅ Secure tunnel is available (if configured)
+- ✅ Lua scripts are loaded and ready
+
+### Updated Components
+
+All custom views now follow this pattern:
+
 1. **FileBrowserComponent** - [src/app/custom-views/file-browser/file-browser.component.ts](src/app/custom-views/file-browser/file-browser.component.ts)
-   - Removed: LuaScriptService, QSysService, WebSocketDiscoveryService injections
-   - Removed: waitForQRWCConnection(), ensureDiscoveryComplete(), loadLuaScripts() methods
-   - Simplified: ngOnInit() just calls `fileSystemService.connect()`
+   - Waits for initialization before connecting to file system
+   - Previously had duplicate initialization logic
 
 2. **NamedControlsComponent** - [src/app/custom-views/named-controls/named-controls.component.ts](src/app/custom-views/named-controls/named-controls.component.ts)
-   - Removed: All the duplicated initialization logic
-   - Simplified: ngOnInit() just calls `namedControlsService.loadNamedControls()`
+   - Waits for initialization before loading named controls
+   - Previously had duplicate initialization logic
+
+3. **MediaPlaylistsComponent** - [src/app/custom-views/media-playlists/media-playlists.component.ts](src/app/custom-views/media-playlists/media-playlists.component.ts)
+   - Waits for initialization before discovering audio player
+   - Ensures control feedback works correctly
+
+### Simple Views (No Wait Required)
+
+Some views don't need to wait because they don't use Q-SYS services:
+
+- **QSysBrowserComponent** - Uses its own initialization logic with polling
+- **RoomControlsComponent** - Static component, uses ComponentWrapper pattern
+- **QSysExampleComponent** - Demo component, waits for connection inline
 
 ## State Management
 
@@ -252,12 +300,13 @@ Pages now follow the complete hierarchy:
 
 ## Benefits
 
-1. **No Race Conditions:** Discovery guaranteed complete before pages load
-2. **Consistent UX:** All pages show same loading screen and header
-3. **DRY Code:** Initialization logic in one place, not duplicated in every page
-4. **Security Visibility:** Header clearly shows if using secure or fallback communication
-5. **Debugging:** Connection details button provides instant diagnostics
-6. **Scalability:** New pages automatically inherit proper initialization
+1. **Guaranteed Initialization Order:** Discovery completes before pages load, eliminating race conditions
+2. **Control Feedback Works:** QRWC polling is active when controls are created
+3. **Consistent UX:** All pages show same loading screen and header
+4. **DRY Code:** Initialization logic in one place, `waitForAppInit()` helper is simple and reusable
+5. **Security Visibility:** Header clearly shows if using secure or fallback communication
+6. **Debugging:** Connection details button provides instant diagnostics
+7. **Scalability:** New pages automatically inherit proper initialization by following the pattern
 
 ## Testing
 
@@ -267,6 +316,34 @@ The refactoring has been verified to:
 - ✅ Show connection details in header
 - ✅ Display security status (Secure vs Fallback)
 - ✅ File-browser connects with secure tunnel available
+- ✅ Media-playlists receives control feedback correctly
+- ✅ All custom views wait for initialization before loading
+
+## Creating New Custom Views
+
+When creating a new custom view:
+
+1. **Inject AppInitializationService:**
+   ```typescript
+   private appInit = inject(AppInitializationService);
+   ```
+
+2. **Add waitForAppInit() helper method** (copy from any existing custom view)
+
+3. **Wait in ngOnInit():**
+   ```typescript
+   ngOnInit(): void {
+     this.waitForAppInit().then(() => {
+       // Your initialization code here
+     });
+   }
+   ```
+
+4. **Test thoroughly:**
+   - Hard refresh the page (Ctrl+Shift+R)
+   - Navigate away and back
+   - Test with slow network conditions
+   - Verify control feedback works
 - ✅ Named-controls loads without duplicate initialization
 
 ## Future Improvements

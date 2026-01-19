@@ -118,7 +118,7 @@ end
 ```
 
 ### Real Example from Project
-**File:** `lua/WebSocketComponentDiscovery.lua`
+**File:** `lua/TunnelDiscovery.lua`
 
 **WRONG (Initial Implementation):**
 ```lua
@@ -215,7 +215,7 @@ local dataLength = #payload  -- Safe: payload is guaranteed to be non-nil
 ```
 
 ### Real Example from Project
-**File:** `lua/WebSocketComponentDiscovery.lua` (line 1326)
+**File:** `lua/TunnelDiscovery.lua` (line 1326)
 
 **WRONG (Initial Implementation):**
 ```lua
@@ -299,7 +299,7 @@ When writing Q-SYS Lua scripts:
 
 - [Q-SYS Control Scripting Documentation](https://help.qsys.com/q-sys_9.13/#Control_Scripting/Using_Lua_in_Q-Sys/Control_Scripting.htm)
 - [Timer Object API](https://help.qsys.com/q-sys_9.13/#Control_Scripting/Using_Lua_in_Q-Sys/Timer.htm?Highlight=timer)
-- Project File: `lua/WebSocketComponentDiscovery.lua`
+- Project File: `lua/TunnelDiscovery.lua`
 
 ---
 

@@ -6,7 +6,7 @@ import { QSysService } from '../../../services/qsys.service';
  * Simple Component wrapper that mimics QRWC's Component interface
  * but uses direct RPC calls to fetch and update controls
  */
-class ComponentWrapper {
+export class ComponentWrapper {
   public controls: Record<string, ControlWrapper> = {};
   private qsysService?: QSysService;
 
@@ -99,12 +99,57 @@ class ComponentWrapper {
     // Use QSysService's method to ensure polling is started and intercepted
     await (this.qsysService as any).ensureChangeGroupPollingAndInterception();
   }
+
+  /**
+   * Refresh choices for specific controls by re-fetching component data
+   * Useful when choices depend on other control values (like file lists based on directory)
+   */
+  async refreshControlChoices(controlNames: string[]): Promise<void> {
+    if (!this.qsysService) {
+      console.warn('Cannot refresh control choices - no QSysService reference');
+      return;
+    }
+
+    try {
+      console.log(`[ComponentWrapper] Refreshing choices for ${this.name} controls:`, controlNames);
+      
+      // Re-fetch component controls from Q-SYS
+      const controlsList = await this.qsysService.getComponentControls(this.name);
+      
+      // Update only the specified controls with new data
+      for (const controlName of controlNames) {
+        const freshData = controlsList.find((c: any) => c.name === controlName);
+        if (freshData && this.controls[controlName]) {
+          const control = this.controls[controlName];
+          // Create a completely new state object to trigger change detection
+          // Use fresh data values, not the old state values
+          const newState = {
+            ...control.state,
+            String: freshData.string !== undefined ? freshData.string : control.state.String,
+            Value: freshData.value !== undefined ? freshData.value : control.state.Value,
+            Choices: freshData.choices ? [...freshData.choices] : control.state.Choices,
+          };
+          control.state = newState;
+          console.log(`[ComponentWrapper] Updated ${controlName}:`, {
+            string: newState.String,
+            value: newState.Value,
+            choices: newState.Choices
+          });
+          
+          // Notify listeners of the state change
+          (control as any).updateListeners?.forEach((listener: any) => listener(newState));
+        }
+      }
+    } catch (error) {
+      console.error(`Failed to refresh control choices for ${this.name}:`, error);
+    }
+  }
 }
 
 /**
  * Simple Control wrapper that mimics QRWC's Control interface
  */
-class ControlWrapper {
+export class ControlWrapper {
   public state: IControlState;
   private updateListeners: Array<(state: IControlState) => void> = [];
 
@@ -140,14 +185,35 @@ class ControlWrapper {
     this.qsysService.getControlUpdates().subscribe(update => {
       // Check if this update is for our control
       if (update.component === this.componentName && update.control === this.name) {
-        // Update our state with the new values
+        // Cast to access extended properties
+        const updateWithChoices = update as any;
+        
+        // Log root control updates for debugging
+        if (this.name === 'root' && this.componentName === 'Audio_Player') {
+          console.log(`[CONTROL-UPDATE] ${this.componentName}.${this.name} = "${update.string}" (Value: ${update.value})`);
+        }
+        
+        // Log file control updates for debugging
+        if (this.name === 'filename' && this.componentName === 'Audio_Player') {
+          console.log(`[CONTROL-UPDATE] ${this.componentName}.${this.name} = "${update.string}" (Value: ${update.value}, Choices:`, updateWithChoices.Choices);
+          console.log(`[CONTROL-UPDATE] Previous state.Choices:`, this.state.Choices);
+        }
+        
+        // Update our state with the new values - create entirely new object to trigger change detection
+        const newChoices = updateWithChoices.Choices !== undefined ? updateWithChoices.Choices : this.state.Choices;
         this.state = {
           ...this.state,
           Value: update.value,
           Position: update.position ?? this.state.Position,
           String: update.string ?? this.state.String,
+          Choices: newChoices,
           Bool: update.Bool ?? (update.value === 1 || update.value === true),
         };
+        
+        if (this.name === 'filename' && this.componentName === 'Audio_Player') {
+          console.log(`[CONTROL-UPDATE] New state.Choices:`, this.state.Choices);
+        }
+        
         // Notify all our listeners
         this.updateListeners.forEach(listener => listener(this.state));
       }
@@ -177,6 +243,11 @@ class ControlWrapper {
   // Alias for set() to match QRWC Control interface
   async update(value: any): Promise<void> {
     await this.set(value);
+  }
+
+  // Trigger method for button/trigger controls - sets value to 1
+  async trigger(): Promise<void> {
+    await this.set(1);
   }
 }
 
