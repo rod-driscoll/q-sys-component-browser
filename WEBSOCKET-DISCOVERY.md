@@ -16,7 +16,7 @@ The WebSocket approach provides several advantages:
 
 In your Q-SYS design, update the `code` control in the `webserver` component with the contents of:
 ```
-lua/WebSocketComponentDiscovery.lua
+lua/TunnelDiscovery.lua
 ```
 
 This script:

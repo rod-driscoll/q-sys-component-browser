@@ -2,17 +2,41 @@
 
 This directory contains technical documentation for the Q-SYS Component Browser application.
 
-## Documents
+## Core Documentation
+
+### [APP-LEVEL-DISCOVERY-ARCHITECTURE.md](./APP-LEVEL-DISCOVERY-ARCHITECTURE.md) ⭐
+**REQUIRED READING for all custom view development.**
+
+Learn how app-level initialization works and the **mandatory pattern** for all custom views:
+- Why `waitForAppInit()` is required for control feedback to work
+- Complete code pattern with examples
+- Updated components: file-browser, named-controls, media-playlists
+- Creating new custom views with proper initialization
+
+**Critical:** All custom views MUST wait for `initializationComplete` before accessing Q-SYS services.
+
+### [ARCHITECTURE.md](./ARCHITECTURE.md)
+**Understanding the system architecture.**
+
+Complete architectural overview:
+- ChangeGroup polling system and QRWC integration
+- Component lifecycle management
+- Connection and reconnection flows
+- Design decisions and rationale (callback vs effects, poll interception)
+- Performance and security considerations
+- Testing strategies
+
+Essential for understanding how QRWC automatic polling works and why manual polling is prohibited.
 
 ### [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
 **Start here if you're experiencing issues.**
 
 Quick reference guide for common problems:
 - "Change group does not exist" errors
-- Controls not updating
+- Controls not updating (feedback not working)
 - Component not found warnings
 - Network disconnection issues
-- RPC errors
+- RPC errors and timeouts
 
 Includes debugging tips, log patterns, and solutions.
 
@@ -21,49 +45,106 @@ Includes debugging tips, log patterns, and solutions.
 
 Comprehensive documentation covering:
 - Problem overview and symptoms
-- Root cause analysis
-- Complete solution with code examples
+- Root cause analysis (why ChangeGroup UUID changes)
+- Complete solution with re-registration mechanism
 - Testing procedures
 - Prevention guidelines and best practices
 
-Read this to understand why the reconnection mechanism exists and how it works.
+Read this to understand the reconnection mechanism and ComponentWrapper pattern.
 
-### [ARCHITECTURE.md](./ARCHITECTURE.md)
-**Understanding the system architecture.**
+## Feature Documentation
 
-Complete architectural overview:
-- ChangeGroup polling system
-- Component lifecycle management
-- Connection and reconnection flows
-- Design decisions and rationale
-- Performance and security considerations
-- Testing strategies
+### [SECURE_DISCOVERY_WALKTHROUGH.md](./SECURE_DISCOVERY_WALKTHROUGH.md)
+**Secure component discovery via control-based communication.**
 
-Read this to understand the overall system design and implementation details.
+Covers:
+- Dual-mode Lua script architecture (TunnelDiscovery.lua)
+- Zero-config client discovery via json_input/json_output controls
+- Configuration steps for secure tunnel
+- Verification and testing
+
+### [Q-SYS-COMBO-BOX-PATTERN.md](./Q-SYS-COMBO-BOX-PATTERN.md)
+**How Q-SYS combo boxes work with choices.**
+
+Explains:
+- Choice-based control updates
+- String vs Position vs Value
+- Control metadata handling
+
+## Development Guides
+
+### [LUA-SCRIPTING-BEST-PRACTICES.md](./LUA-SCRIPTING-BEST-PRACTICES.md)
+**Writing effective Lua scripts for Q-SYS.**
+
+Best practices for:
+- Function declaration order
+- Avoiding forward reference errors
+- Timer management
+- Error handling patterns
+
+### [CRESTRON-DEBUGGING.md](./CRESTRON-DEBUGGING.md)
+**Debugging Q-SYS control issues.**
+
+Tips for diagnosing control communication problems.
+
+### [ERUDA-DEBUG-CONSOLE.md](./ERUDA-DEBUG-CONSOLE.md)
+**Using Eruda mobile debug console.**
+
+How to enable and use the Eruda console for mobile debugging.
+
+### [IMPLEMENTATION-LOG.md](./IMPLEMENTATION-LOG.md)
+**Historical log of major changes.**
+
+Chronological record of significant features and fixes.
 
 ## Quick Start
 
-### For Developers
+### For New Developers
 
-1. **First time working with the codebase?**
-   - Read [ARCHITECTURE.md](./ARCHITECTURE.md) to understand the system
-   - Focus on "ChangeGroup Polling System" and "Architecture Layers" sections
+1. **Creating a new custom view?**
+   - Read [APP-LEVEL-DISCOVERY-ARCHITECTURE.md](./APP-LEVEL-DISCOVERY-ARCHITECTURE.md) first
+   - Copy the `waitForAppInit()` pattern from existing views
+   - Test control feedback thoroughly
 
-2. **Experiencing an issue?**
-   - Check [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) first
-   - Look for your specific error message or symptom
-   - Follow the suggested solutions
+2. **Understanding the architecture?**
+   - Start with [ARCHITECTURE.md](./ARCHITECTURE.md)
+   - Focus on "ChangeGroup Polling System" section
+   - Learn why manual polling is prohibited
 
-3. **Working on ChangeGroup-related code?**
+3. **Experiencing control issues?**
+   - Check [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
+   - Look for "Controls not updating" section
+   - Verify `waitForAppInit()` is being called
+
+### For Existing Developers
+
+1. **"Controls not updating" or "no feedback"?**
+   - Ensure component uses `waitForAppInit()` pattern
+   - Check console for initialization complete log
+   - See [APP-LEVEL-DISCOVERY-ARCHITECTURE.md](./APP-LEVEL-DISCOVERY-ARCHITECTURE.md)
+
+2. **"Change group does not exist" errors?**
    - Read [changegroup-reconnection-fix.md](./changegroup-reconnection-fix.md)
-   - Follow the "Prevention Guidelines" section
-   - Review "Code Patterns to Follow"
+   - Check if ComponentWrapper re-registration is working
+   - See [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
+
+3. **Adding Q-SYS component integration?**
+   - Read [ARCHITECTURE.md](./ARCHITECTURE.md) section on ComponentWrapper vs QSysComponent
+   - Never create manual ChangeGroup polling loops
+   - Use QRWC's automatic polling mechanism
 
 ### For QA/Testing
 
-1. **Testing reconnection scenarios:**
-   - See [changegroup-reconnection-fix.md § Testing the Fix](./changegroup-reconnection-fix.md#testing-the-fix)
-   - Follow "How to Verify It Works" checklist
+1. **Testing new custom views:**
+   - Verify `waitForAppInit()` is implemented
+   - Test hard refresh (Ctrl+Shift+R)
+   - Navigate away and back to the view
+   - Confirm control feedback works in all scenarios
+
+2. **Testing reconnection scenarios:**
+   - See [changegroup-reconnection-fix.md](./changegroup-reconnection-fix.md)
+   - Follow testing procedures
+   - Check console for re-registration logs
    - Compare logs against "What Success Looks Like"
 
 2. **Investigating reported issues:**
@@ -90,62 +171,68 @@ When updating documentation:
 
 ## Common Scenarios
 
+### Scenario: Creating a new custom view
+
+**Required steps:**
+1. Read [APP-LEVEL-DISCOVERY-ARCHITECTURE.md § Creating New Custom Views](./APP-LEVEL-DISCOVERY-ARCHITECTURE.md)
+2. Copy `waitForAppInit()` pattern from existing view (file-browser, named-controls, or media-playlists)
+3. Inject `AppInitializationService`
+4. Call `waitForAppInit()` in `ngOnInit()` before any Q-SYS service calls
+5. Test control feedback thoroughly
+
+**Time investment:** ~10-15 minutes (plus your feature implementation)
+
 ### Scenario: New developer joining the team
 
 **Recommended reading order:**
 1. This README (you are here)
-2. [ARCHITECTURE.md](./ARCHITECTURE.md) - Overview of system
-3. [changegroup-reconnection-fix.md](./changegroup-reconnection-fix.md) - Key implementation detail
-4. [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) - Common issues to be aware of
+2. [APP-LEVEL-DISCOVERY-ARCHITECTURE.md](./APP-LEVEL-DISCOVERY-ARCHITECTURE.md) - **Critical for custom view development**
+3. [ARCHITECTURE.md](./ARCHITECTURE.md) - System overview and ChangeGroup polling
+4. [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) - Common issues
 
 **Time investment:** ~30-45 minutes total
 
-### Scenario: User reports "controls not updating"
+### Scenario: User reports "controls not updating" or "no feedback"
 
 **Troubleshooting steps:**
-1. Check [TROUBLESHOOTING.md § Controls Not Updating](./TROUBLESHOOTING.md#controls-not-updating)
-2. Review console logs (see Debugging Tips section)
-3. Verify component registration in Q-SYS Design
-4. If ChangeGroup errors appear, see [changegroup-reconnection-fix.md](./changegroup-reconnection-fix.md)
+1. Verify component has `waitForAppInit()` - see [APP-LEVEL-DISCOVERY-ARCHITECTURE.md](./APP-LEVEL-DISCOVERY-ARCHITECTURE.md)
+2. Check console for "App initialization complete" log
+3. Review [TROUBLESHOOTING.md § Controls Not Updating](./TROUBLESHOOTING.md#controls-not-updating)
+4. Verify QRWC connection is established
+5. Check if ChangeGroup polling is active
 
 **Time investment:** ~5-10 minutes
 
-### Scenario: Implementing a new component type
+### Scenario: "Change group does not exist" errors flooding console
 
-**Implementation guidance:**
-1. Review [ARCHITECTURE.md § Component Loading](./ARCHITECTURE.md#2-component-loading)
-2. Follow existing patterns in `ComponentWrapper`
-3. Add to `requiredComponents` or `optionalComponents`
-4. Test reconnection scenario (see changegroup-reconnection-fix.md § Testing)
-5. Update TROUBLESHOOTING.md if new issues arise
+**Troubleshooting steps:**
+1. Check [TROUBLESHOOTING.md § Change group does not exist](./TROUBLESHOOTING.md)
+2. Review [changegroup-reconnection-fix.md](./changegroup-reconnection-fix.md) for detailed explanation
+3. Verify re-registration is happening (check console logs)
+4. Confirm ComponentWrapper pattern is used correctly
 
-**Time investment:** Implementation varies, testing ~15 minutes
-
-### Scenario: Investigating reconnection failures
-
-**Investigation steps:**
-1. Capture full console logs (see [TROUBLESHOOTING.md § Debugging Tips](./TROUBLESHOOTING.md#debugging-tips))
-2. Compare against "Healthy operation" and "Successful reconnection" log patterns
-3. Check if "Detected reconnection #N" message appears
-4. Review [changegroup-reconnection-fix.md § Solution](./changegroup-reconnection-fix.md#solution)
-5. Verify callback is registered (see [ARCHITECTURE.md § Reconnection Lifecycle](./ARCHITECTURE.md#reconnection-lifecycle))
-
-**Time investment:** ~15-30 minutes
+**Time investment:** ~10-15 minutes
 
 ## Key Concepts
 
+### App-Level Initialization
+All Q-SYS services (QRWC, discovery, Lua scripts) initialize at the application level before any page loads. Custom views **must** wait for `initializationComplete` to ensure services are ready.
+
+**Learn more:** [APP-LEVEL-DISCOVERY-ARCHITECTURE.md](./APP-LEVEL-DISCOVERY-ARCHITECTURE.md)
+
 ### ChangeGroup
-Q-SYS's mechanism for efficiently receiving control value updates. A ChangeGroup has a UUID and tracks which controls are registered. Only changed values are returned when polling.
+Q-SYS's mechanism for efficiently receiving control value updates. A ChangeGroup has a UUID and tracks which controls are registered. Only changed values are returned when polling. QRWC handles polling automatically - never create manual polling loops.
 
 **Learn more:** [ARCHITECTURE.md § What is a ChangeGroup?](./ARCHITECTURE.md#what-is-a-changegroup)
 
 ### Poll Interception
-We override QRWC's internal `poll()` method to intercept and distribute control updates to all subscribers.
+We override QRWC's internal `poll()` method to intercept and distribute control updates to all subscribers without interfering with QRWC's automatic polling loop.
 
 **Learn more:** [ARCHITECTURE.md § Why Poll Interception?](./ARCHITECTURE.md#why-poll-interception)
 
-### ComponentWrapper
-Custom wrapper around QRWC components that provides re-registration capability and control over component lifecycle.
+### ComponentWrapper vs QSysComponent
+- **ComponentWrapper**: Used for components that need re-registration on reconnection (room-controls pattern)
+- **QSysComponent**: Simpler pattern for basic control access without lifecycle management (media-playlists pattern)
 
 **Learn more:** [ARCHITECTURE.md § Why ComponentWrapper?](./ARCHITECTURE.md#why-componentwrapper)
 
@@ -153,6 +240,45 @@ Custom wrapper around QRWC components that provides re-registration capability a
 When QRWC creates a new ChangeGroup (during reconnection), all components must re-register their controls with the new ChangeGroup ID. This is handled automatically via callback mechanism.
 
 **Learn more:** [changegroup-reconnection-fix.md § Solution](./changegroup-reconnection-fix.md#solution)
+
+## Best Practices
+
+### For Custom View Development
+
+1. **Always wait for app initialization**
+   - Inject `AppInitializationService`
+   - Call `waitForAppInit()` in `ngOnInit()`
+   - Never access Q-SYS services before initialization completes
+   - See [APP-LEVEL-DISCOVERY-ARCHITECTURE.md](./APP-LEVEL-DISCOVERY-ARCHITECTURE.md)
+
+2. **Never create manual polling loops**
+   - QRWC handles ChangeGroup polling automatically (350ms default)
+   - Use poll interception for control updates
+   - Q-SYS recommends 30-60s for typical UIs
+   - See [ARCHITECTURE.md § Polling Interval](./ARCHITECTURE.md)
+
+3. **Use the correct component pattern**
+   - **QSysComponent**: Simple control access (media-playlists pattern)
+   - **ComponentWrapper**: Full lifecycle with re-registration (room-controls pattern)
+   - See [ARCHITECTURE.md § ComponentWrapper](./ARCHITECTURE.md)
+
+4. **Test thoroughly**
+   - Hard refresh (Ctrl+Shift+R)
+   - Navigate away and back
+   - Test with slow network conditions
+   - Verify control feedback works in all scenarios
+
+## Related Files
+
+### Critical Source Files
+- [src/app/services/app-initialization.service.ts](../src/app/services/app-initialization.service.ts) - App-level initialization
+- [src/app/services/qsys.service.ts](../src/app/services/qsys.service.ts) - QRWC connection and ChangeGroup
+- [src/app/models/qsys-components.ts](../src/app/models/qsys-components.ts) - QSysComponent and controls
+
+### Reference Implementations
+- [src/app/custom-views/file-browser/](../src/app/custom-views/file-browser/) - With app init wait
+- [src/app/custom-views/named-controls/](../src/app/custom-views/named-controls/) - With app init wait
+- [src/app/custom-views/media-playlists/](../src/app/custom-views/media-playlists/) - With app init wait
 
 ## Contributing to Documentation
 
@@ -182,32 +308,11 @@ When QRWC creates a new ChangeGroup (during reconnection), all components must r
 - **Links:** Use relative links between docs
 - **Tone:** Professional but approachable
 
-## Related Files
-
-### Source Code
-- `src/app/services/qsys.service.ts` - Main Q-SYS connection service
-- `src/app/custom-views/room-controls/services/qrwc-adapter.service.ts` - Component adapter
-- `src/app/components/qsys-browser/qsys-browser.ts` - Component browser
-
-### Configuration
-- `src/environments/environment.ts` - Environment configuration
-- `.claude/settings.local.json` - Claude Code settings
-
-## Version History
-
-| Date | Version | Changes |
-|------|---------|---------|
-| 2026-01-10 | 1.0.0 | Initial documentation creation<br>- Added TROUBLESHOOTING.md<br>- Added changegroup-reconnection-fix.md<br>- Added ARCHITECTURE.md |
-
 ## Feedback
 
-If you find issues with the documentation or have suggestions for improvement:
+Found issues or have suggestions?
 
-1. Check if the issue is already documented
-2. Verify the information is actually incorrect/outdated
+1. Check if already documented
+2. Verify information is incorrect/outdated
 3. Propose specific improvements
-4. Submit via pull request or issue tracker
-
-## License
-
-This documentation is part of the Q-SYS Component Browser project and follows the same license as the main project.
+4. Consider which document should be updated

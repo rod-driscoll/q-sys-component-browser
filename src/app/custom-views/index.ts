@@ -20,6 +20,7 @@ import { QSYS_CAMERAS_METADATA } from './qsys-cameras/qsys-cameras.metadata';
 import { ROOM_CONTROLS_METADATA } from './room-controls/room-controls.metadata';
 import { FILE_BROWSER_METADATA } from './file-browser/file-browser.metadata';
 import { NAMED_CONTROLS_METADATA } from './named-controls/named-controls.metadata';
+import { MEDIA_PLAYLISTS_METADATA } from './media-playlists/media-playlists.metadata';
 
 /**
  * Array of all custom view metadata
@@ -33,6 +34,7 @@ export const CUSTOM_VIEW_METADATA = [
   QSYS_CAMERAS_METADATA,
   ROOM_CONTROLS_METADATA,
   FILE_BROWSER_METADATA,
+  MEDIA_PLAYLISTS_METADATA,
   NAMED_CONTROLS_METADATA,
 ];
 
@@ -75,6 +77,11 @@ export const CUSTOM_VIEW_ROUTES: Routes = [
     path: FILE_BROWSER_METADATA.route,
     loadComponent: () => import('./file-browser/file-browser.component').then(m => m.FileBrowserComponent),
     title: FILE_BROWSER_METADATA.title
+  },
+  {
+    path: MEDIA_PLAYLISTS_METADATA.route,
+    loadComponent: () => import('./media-playlists/media-playlists.component').then(m => m.MediaPlaylistsComponent),
+    title: MEDIA_PLAYLISTS_METADATA.title
   },
   {
     path: NAMED_CONTROLS_METADATA.route,

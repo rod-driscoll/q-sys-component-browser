@@ -6,7 +6,9 @@ import { QSysService } from '../services/qsys.service';
  */
 export abstract class QSysControlBase<T> {
   protected _value = signal<T | undefined>(undefined);
+  protected _string = signal<string>('');
   public readonly value: Signal<T | undefined> = this._value.asReadonly();
+  public readonly string: Signal<string> = this._string.asReadonly();
 
   constructor(
     protected qsysService: QSysService,
@@ -21,6 +23,10 @@ export abstract class QSysControlBase<T> {
     this.qsysService.getControlUpdates().subscribe((update) => {
       if (update.component === this.componentName && update.control === this.controlName) {
         this.updateValue(update.value);
+        // Update string representation if provided by Q-SYS
+        if (update.string !== undefined) {
+          this._string.set(update.string);
+        }
       }
     });
   }
@@ -30,11 +36,31 @@ export abstract class QSysControlBase<T> {
 
 /**
  * Text/String control
+ * For combo boxes, use string() to get the selected choice text
+ * Choices are populated from ChangeGroup updates for combo box controls
  */
 export class TextControl extends QSysControlBase<string> {
-  public readonly string = computed(() => this.value() || '');
+  // Choices array for combo box controls
+  private _choices = signal<string[]>([]);
+  public readonly choices: Signal<string[]> = this._choices.asReadonly();
 
-  protected updateValue(value: any): void {
+  protected override initialize(): void {
+    super.initialize();
+    
+    // Subscribe to control updates for choices (combo boxes)
+    this.qsysService.getControlUpdates().subscribe((update) => {
+      if (update.component === this.componentName && update.control === this.controlName) {
+        // Update choices if provided (for combo box controls)
+        // Note: choices come from Component.Get RPC, not from ChangeGroup
+        const updateWithChoices = update as any;
+        if (updateWithChoices.choices && Array.isArray(updateWithChoices.choices)) {
+          this._choices.set(updateWithChoices.choices);
+        }
+      }
+    });
+  }
+
+  protected override updateValue(value: any): void {
     this._value.set(String(value));
   }
 
@@ -49,7 +75,7 @@ export class TextControl extends QSysControlBase<string> {
 export class BooleanControl extends QSysControlBase<boolean> {
   public readonly state = computed(() => this.value() || false);
 
-  protected updateValue(value: any): void {
+  protected override updateValue(value: any): void {
     this._value.set(Boolean(value));
   }
 
@@ -96,12 +122,10 @@ export class TriggerControl {
  */
 export class KnobControl extends QSysControlBase<number> {
   private _position = signal<number | undefined>(undefined);
-  private _string = signal<string>('');
 
   public readonly position = this._position.asReadonly();
-  public readonly string = this._string.asReadonly();
 
-  protected updateValue(value: any): void {
+  protected override updateValue(value: any): void {
     this._value.set(Number(value));
   }
 
@@ -120,7 +144,7 @@ export class KnobControl extends QSysControlBase<number> {
  * Integer control
  */
 export class IntegerControl extends QSysControlBase<number> {
-  protected updateValue(value: any): void {
+  protected override updateValue(value: any): void {
     this._value.set(Math.floor(Number(value)));
   }
 

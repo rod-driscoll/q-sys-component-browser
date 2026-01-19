@@ -259,7 +259,7 @@ async checkForDiscoveryScriptAndConnect(componentList: QsysComponent[]) {
 
 **Files Modified:**
 - `src/app/components/qsys-browser/qsys-browser.ts`
-- `src/app/services/websocket-discovery.service.ts`
+- `src/app/services/secure-tunnel-discovery.service.ts`
 
 **Changes:**
 - Exposed `useControlBasedCommunication` as public signal
@@ -315,7 +315,7 @@ async checkForDiscoveryScriptAndConnect(componentList: QsysComponent[]) {
 | File | Changes |
 |------|---------|
 | `qsys.service.ts` | • Added component caching system<br/>• Added 60-second time-based cache invalidation<br/>• Added separate script component cache<br/>• Reduced keepalive from 30s to 15s<br/>• Added Promise.race() timeout protection<br/>• Enhanced logging with actual responses |
-| `websocket-discovery.service.ts` | • Exposed `useControlBasedCommunication` as public signal<br/>• Added control-based communication detection |
+| `secure-tunnel-discovery.service.ts` | • Exposed `useControlBasedCommunication` as public signal<br/>• Added control-based communication detection |
 | `qsys-browser.ts` | • Added `checkForDiscoveryScriptAndConnect()` method<br/>• Implemented security-aware pre-checks<br/>• Added script component cache restoration<br/>• Enhanced logging before discovery |
 | `qsys-browser.html` | • Removed manual "Refresh" button<br/>• Removed manual "Discover Script only" button<br/>• Added explanatory comment |
 
@@ -325,7 +325,7 @@ async checkForDiscoveryScriptAndConnect(componentList: QsysComponent[]) {
 |------|---------|
 | `file-browser.component.ts` | Minor updates for consistency |
 | `environment.ts` | Configuration updates |
-| `lua/WebSocketComponentDiscovery.lua` | Existing Lua improvements (from prior work) |
+| `lua/TunnelDiscovery.lua` | Existing Lua improvements (from prior work) |
 
 ---
 
@@ -429,6 +429,6 @@ feat: implement smart component caching and security-aware discovery
 ## References
 
 - [Q-SYS QRWC Documentation](docs/ARCHITECTURE.md)
-- [WebSocket Discovery Architecture](lua/WebSocketComponentDiscovery.lua)
+- [WebSocket Discovery Architecture](lua/TunnelDiscovery.lua)
 - [Component Browser Implementation](src/app/components/qsys-browser/)
 - [Service Architecture](src/app/services/)
