@@ -1,0 +1,43 @@
+{
+  "name": "@anthropic-demo/qsys-angular-core",
+  "version": "0.1.0",
+  "description": "Angular services and models for Q-SYS Core communication via QRWC protocol",
+  "author": "Rod Driscoll",
+  "license": "MIT",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "keywords": [
+    "angular",
+    "qsys",
+    "qrwc",
+    "qsc",
+    "audio",
+    "video",
+    "control",
+    "websocket"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rod-driscoll/q-sys-component-browser"
+  },
+  "peerDependencies": {
+    "@angular/common": "^20.0.0",
+    "@angular/core": "^20.0.0",
+    "@q-sys/qrwc": "^1.0.0",
+    "rxjs": "^7.8.0"
+  },
+  "peerDependenciesMeta": {
+    "@angular/common": {
+      "optional": false
+    },
+    "@angular/core": {
+      "optional": false
+    },
+    "@q-sys/qrwc": {
+      "optional": false
+    },
+    "rxjs": {
+      "optional": false
+    }
+  }
+}

@@ -29,6 +29,30 @@ Crestron touchpanels run a Chromium-based browser. You can access the developer 
 
 **Note:** If you don't see the Eruda icon, the app may have failed to load. Check the touchpanel's system logs or try Method B below.
 
+#### Eruda Implementation Details
+
+Eruda is **automatically enabled for all Crestron builds**:
+
+```bash
+npm run ch5-build    # Builds with Eruda enabled
+npm run ch5-archive  # Builds and packages with Eruda enabled
+```
+
+The implementation consists of:
+
+- `public/eruda.js` - The Eruda library (from `node_modules/eruda/eruda.js`)
+- `public/eruda-init.js` - Initialization script that loads and configures Eruda
+- `enable-eruda.js` - Post-build script that uncomments Eruda in index.html
+
+**Updating Eruda:**
+
+```bash
+npm install eruda@latest --save-dev
+cp node_modules/eruda/eruda.js public/eruda.js
+```
+
+**Disabling Eruda:** Remove `&& node enable-eruda.js` from the `ch5-build` script in package.json.
+
 ### Method B: Remote Debugging via Chrome DevTools
 
 1. Enable remote debugging on the touchpanel:
