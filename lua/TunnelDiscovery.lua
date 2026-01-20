@@ -1154,7 +1154,9 @@ HttpServer = (function()
 
   local function endChunked(sock)
     sock:Write('0\r\n\r\n');
-    Timer.CallAfter(function() sock:Disconnect(); end, 1);
+    -- Increased delay to ensure the terminating chunk is fully flushed to the network
+    -- before disconnecting. Non-blocking writes may queue data that hasn't been sent yet.
+    Timer.CallAfter(function() sock:Disconnect(); end, 2);
   end;
 
   local function defaultHandler(req, res)
@@ -1438,6 +1440,7 @@ HttpServer = (function()
   }
 
   local function dataHandler(Sock)
+    print('dataHandler: Starting request processing');
 
     local function read()
       while(Sock:Search('\r\n') == 1) do Sock:Read(2); end;
@@ -1445,6 +1448,7 @@ HttpServer = (function()
     end;
     for line in read do
       local verb, resource, proto, headerString = line:match('^(%u+) ([^ ]+) HTTP/(%d%.%d)\r\n(.*)');
+      print(('dataHandler: %s %s HTTP/%s'):format(verb or 'nil', resource or 'nil', proto or 'nil'));
 
       -- Parse headers
       local headers = {};
@@ -1516,18 +1520,30 @@ HttpServer = (function()
         socket = Sock
       });
 
-      for _,middleware in ipairs(Server._middleware) do
+      print(('dataHandler: Processing path=%s, middleware count=%d'):format(request.path, #Server._middleware));
+
+      for i,middleware in ipairs(Server._middleware) do
+        print(('dataHandler: Checking middleware %d, path pattern=%s'):format(i, middleware.path));
         if(request.path:match('^' .. middleware.path)) then
-          local handled = middleware.fn(request, response);
-          if(handled) then return; end;
+          print(('dataHandler: Middleware %d matched, calling handler'):format(i));
+          local ok, result = pcall(middleware.fn, request, response);
+          if not ok then
+            print(('dataHandler: Middleware %d ERROR: %s'):format(i, tostring(result)));
+          elseif result then
+            print(('dataHandler: Middleware %d handled request'):format(i));
+            return;
+          else
+            print(('dataHandler: Middleware %d passed, continuing'):format(i));
+          end;
         end;
       end;
 
-      -- print(verb, host, resource, proto, (body and #body), require('rapidjson').encode(headers));
+      print('dataHandler: No middleware handled, checking routes');
 
       for fn, handler in pairs(Server._routes) do
         local params = fn(request);
-        if(params) then 
+        if(params) then
+          print('dataHandler: Route matched, calling handler');
           request.params = params;
           local ok, err = pcall(handler, request, response);
           if(not ok) then
@@ -1538,6 +1554,7 @@ HttpServer = (function()
         end;
       end;
 
+      print('dataHandler: No route matched, sending 404');
       defaultHandler(request, response);
 
     end;
@@ -1546,10 +1563,23 @@ HttpServer = (function()
 
   Server._server.EventHandler = function(Sock)
 
-    print('CONNECTION'); 
-    Sock.EventHandler = print;
+    print('HTTP CONNECTION from ' .. (Sock.PeerAddress or 'unknown'));
+
+    -- Set socket-level timeouts for this connection
+    Sock.ReadTimeout = 30;
+    Sock.WriteTimeout = 30;
+
+    -- Better event handler with diagnostic information
+    Sock.EventHandler = function(sock, event, err)
+      print(('HTTP Socket event: %s, error: %s, peer: %s'):format(
+        tostring(event),
+        tostring(err or 'none'),
+        sock.PeerAddress or 'unknown'
+      ));
+    end;
 
     Sock.Data = function()
+      print(('HTTP Data received, buffer length: %d'):format(Sock.BufferLength or 0));
 
       local function setupCoroutine()
         Server._dataCoroutines[Sock] = coroutine.create(dataHandler);
@@ -1726,46 +1756,87 @@ HttpServer = (function()
       if(root:match('^/')) then root = root:sub(2); end;
       options = options or {};
       local chunkSize = options.chunkSize or 8192; -- 8KB default chunk size
-      local maxBufferSize = options.maxBufferSize or 65536; -- 64KB threshold for automatic chunking
+      -- Increased buffer threshold - avoid chunked transfer for most files since it causes
+      -- NS_ERROR_NET_PARTIAL_TRANSFER in browsers when socket closes before terminating chunk is sent
+      local maxBufferSize = options.maxBufferSize or 524288; -- 512KB threshold for automatic chunking
       local useChunkedTransfer = options.chunked; -- nil = auto-detect, true = force chunked, false = force buffered
 
       return function(req, res)
-        local fh = io.open(root .. req.path, 'r');
-        if(not fh) then return; end;
+        local filePath = root .. req.path;
+        local fh = io.open(filePath, 'rb'); -- Use binary mode for all files
+        if(not fh) then
+          print(('Static: File not found: %s'):format(filePath));
+          return;
+        end;
 
         -- Set MIME type based on file extension
+        local extension = req.path:match("^.+%.(.+)$");
         if not res.get('Content-Type') then
-          local extension = req.path:match("^.+%.(.+)$")
           if MIME_HEADERS[extension] then res.set('Content-Type', MIME_HEADERS[extension]); end
         end;
 
-        -- Auto-detect file size and determine chunking strategy if not explicitly set
+        -- Get file size
+        local currentPos = fh:seek();
+        local fileSize = fh:seek('end');
+        fh:seek('set', currentPos);
+
+        print(('Static: Serving %s (%d bytes, ext=%s)'):format(req.path, fileSize, extension or 'none'));
+
+        -- Auto-detect chunking strategy if not explicitly set
         local shouldUseChunked = useChunkedTransfer;
         if(shouldUseChunked == nil) then
-          local currentPos = fh:seek(); -- Save current position
-          local fileSize = fh:seek('end'); -- Get file size
-          fh:seek('set', currentPos); -- Restore position
           shouldUseChunked = fileSize > maxBufferSize;
         end;
 
-        -- For chunked transfer, stream the file
+        -- For chunked transfer, stream the file with flow control
         if(shouldUseChunked) then
+          print(('Static: Using chunked transfer for %s'):format(req.path));
           -- Set chunked flag and send headers BEFORE writing data
           res._chunked = true;
           res.writeHead();
 
+          -- Read and send chunks with small delays to allow socket to flush
+          local chunkCount = 0;
+          local totalSent = 0;
           local chunk = fh:read(chunkSize);
-          while(chunk) do
-            res.write(chunk);
-            chunk = fh:read(chunkSize);
+
+          -- Use a timer-based approach to send chunks with flow control
+          local function sendNextChunk()
+            if chunk then
+              chunkCount = chunkCount + 1;
+              totalSent = totalSent + #chunk;
+              res.write(chunk);
+              chunk = fh:read(chunkSize);
+
+              if chunk then
+                -- Schedule next chunk with small delay to allow socket to flush
+                Timer.CallAfter(sendNextChunk, 0.001); -- 1ms delay between chunks
+              else
+                -- No more chunks, finalize with a delay to ensure previous chunks are flushed
+                fh:close();
+                -- Add delay before sending terminating chunk to allow socket buffer to flush
+                Timer.CallAfter(function()
+                  res['end']();
+                  print(('Static: Completed %s (%d chunks, %d bytes sent)'):format(req.path, chunkCount, totalSent));
+                end, 0.05); -- 50ms delay to ensure data is flushed before terminating
+              end;
+            else
+              -- No initial chunk (empty file)
+              fh:close();
+              res['end']();
+              print(('Static: Completed %s (empty file)'):format(req.path));
+            end;
           end;
-          fh:close();
-          res['end']();
+
+          -- Start sending chunks
+          sendNextChunk();
         else
-          -- For non-chunked transfer, read entire file
+          -- For non-chunked transfer, read entire file and send with Content-Length
+          print(('Static: Using buffered transfer for %s'):format(req.path));
           local data = fh:read('*all');
           fh:close();
           res.send(data);
+          print(('Static: Completed %s (%d bytes)'):format(req.path, #data));
         end;
 
         return true; -- handled

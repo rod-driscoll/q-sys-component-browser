@@ -44,4 +44,5 @@ __screenshots__/
 Thumbs.db
 
 # Deployment configuration (contains credentials)
+.env.deploy
 .env.deploy.local
