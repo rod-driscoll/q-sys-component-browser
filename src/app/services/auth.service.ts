@@ -81,17 +81,16 @@ export class AuthService {
 
     try {
       const coreIp = environment.RUNTIME_CORE_IP;
-      const url = `/api/v0/logon`;
-      
+      // Use absolute URL to Q-SYS Core for cross-origin hosting scenarios
+      const url = `https://${coreIp}/api/v0/logon`;
+
       console.log('[AUTH] Requesting bearer token from:', url);
-      
+
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Host': coreIp,
-          'X-Qsys-Host': coreIp
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ username, password })
       });
@@ -157,13 +156,12 @@ export class AuthService {
     if (currentToken) {
       try {
         const coreIp = environment.RUNTIME_CORE_IP;
-        await fetch(`/api/v0/logoff`, {
+        // Use absolute URL for cross-origin hosting scenarios
+        await fetch(`https://${coreIp}/api/v0/logoff`, {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
-            'Authorization': `Bearer ${currentToken}`,
-            'Host': coreIp,
-            'X-Qsys-Host': coreIp
+            'Authorization': `Bearer ${currentToken}`
           }
         });
         console.log('[AUTH] Token revoked on server');

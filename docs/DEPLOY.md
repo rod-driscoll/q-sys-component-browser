@@ -5,7 +5,7 @@ This project includes a deployment script that automatically uploads the compile
 ## Prerequisites
 
 - Q-SYS Core with network access
-- Bearer token (if Access Control is enabled on the Core)
+- Username/password credentials (if Access Control is enabled on the Core)
 - Sufficient storage space on the Core
 
 ## Setup
@@ -25,8 +25,13 @@ This project includes a deployment script that automatically uploads the compile
    # Q-SYS Core IP address or hostname
    QSYS_CORE_IP=192.168.1.100
 
-   # Bearer token for API authentication (leave empty for open access cores)
-   QSYS_BEARER_TOKEN=your-bearer-token-here
+   # Authentication credentials (if Core requires authentication)
+   # The script will automatically login and obtain a Bearer token
+   QSYS_USERNAME=admin
+   QSYS_PASSWORD=admin
+
+   # Or provide a Bearer token directly (optional, takes precedence)
+   QSYS_BEARER_TOKEN=
 
    # Target directory path on the Q-SYS Core
    # This is the path within the Core's media folder structure
@@ -39,14 +44,21 @@ This project includes a deployment script that automatically uploads the compile
 
    > **Note:** The `.env.deploy.local` file is gitignored to protect your credentials.
 
-3. **Get a Bearer Token (if needed)**
+3. **Authentication Options**
 
-   If your Q-SYS Core has Access Control enabled:
+   The deploy script supports two authentication methods:
 
-   - Log into the Core's web interface
-   - Navigate to the Access Control settings
-   - Generate an API bearer token with appropriate permissions
-   - Copy the token to your `.env.deploy.local` file
+   **Option A: Username/Password (Recommended)**
+
+   Set `QSYS_USERNAME` and `QSYS_PASSWORD` in your environment file. The script will automatically login to the Q-SYS Core's `/api/v0/logon` endpoint and obtain a Bearer token.
+
+   **Option B: Direct Bearer Token**
+
+   If you have a pre-generated Bearer token, set `QSYS_BEARER_TOKEN` directly. This takes precedence over username/password.
+
+   **Open Access Cores**
+
+   If your Q-SYS Core does not have Access Control enabled, leave all authentication fields empty - the script will detect this automatically.
 
 ## Deployment
 
@@ -95,9 +107,10 @@ Access at: `https://192.168.1.100/media/web/index.html`
 ### Authentication Errors
 
 If you get 401 Unauthorized errors:
-- Verify your bearer token is correct
-- Check that the token has appropriate permissions
-- For open access Cores, try leaving `QSYS_BEARER_TOKEN` empty
+- Verify your username and password are correct
+- Check that the user has appropriate permissions for the Media API
+- Try logging into the Q-SYS Core web interface with the same credentials to verify they work
+- For open access Cores, leave all authentication fields empty
 
 ### SSL Certificate Errors
 

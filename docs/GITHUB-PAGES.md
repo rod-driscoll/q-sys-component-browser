@@ -82,6 +82,54 @@ The `github-pages` configuration in `angular.json` includes:
 > [!NOTE]
 > The service worker is disabled for GitHub Pages builds because Angular's service worker doesn't properly handle the subdirectory base href. The service worker will still function correctly when deploying to Q-SYS Core.
 
+## Cross-Origin Limitations (CORS)
+
+> [!IMPORTANT]
+> When hosted on an external website (like GitHub Pages), the browser enforces **same-origin policy** which blocks direct API requests to the Q-SYS Core.
+
+### What Works
+
+- **WebSocket connections**: The QRWC WebSocket connection to the Core typically works because WebSockets have different CORS rules
+- **Component browsing**: Reading component data via WebSocket works normally
+
+### What Doesn't Work
+
+- **Management API authentication**: The `/api/v0/logon` endpoint for obtaining Bearer tokens is blocked by CORS
+- **Media Resources API**: File uploads, playlist management, and other REST API calls are blocked
+- **Any HTTP/HTTPS fetch requests**: Direct API calls to `https://<core-ip>/api/...` will fail
+
+### Error Symptoms
+
+In the browser console, you'll see errors like:
+
+```text
+Access to fetch at 'https://192.168.x.x/api/v0/logon' from origin 'https://rod-driscoll.github.io'
+has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present
+```
+
+Or the authentication may fail with HTTP 405 if the request doesn't reach the Core at all.
+
+### Solutions
+
+1. **Deploy to Q-SYS Core** (Recommended): Host the app directly on the Core using the deploy script. This eliminates CORS issues entirely.
+2. **Use a CORS proxy**: Set up a server-side proxy that forwards requests to the Q-SYS Core and adds CORS headers.
+3. **Browser extension**: For development only, use a CORS-unblocking browser extension (not for production).
+4. **Configure Q-SYS Core**: If QSC adds CORS header support in future firmware, enable it on the Core.
+
+### Recommended Workflow
+
+Use GitHub Pages for:
+
+- Demonstrating the UI without a live Core
+- Development and testing with mock data
+- Documentation and screenshots
+
+Use Q-SYS Core deployment for:
+
+- Production control systems
+- Full functionality including authentication and file management
+- Any feature requiring the Management API
+
 ## Troubleshooting
 
 ### Assets Not Loading (404 Errors)

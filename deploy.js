@@ -90,6 +90,85 @@ function loadEnv() {
   return env;
 }
 
+// Login to Q-SYS Core and obtain a Bearer token
+async function login(coreIp, username, password) {
+  return new Promise((resolve, reject) => {
+    const payload = JSON.stringify({ username, password });
+
+    const options = {
+      hostname: coreIp,
+      port: 443,
+      path: '/api/v0/logon',
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload),
+      },
+      rejectUnauthorized: false,
+    };
+
+    const req = https.request(options, (res) => {
+      let responseData = '';
+
+      res.on('data', (chunk) => {
+        responseData += chunk;
+      });
+
+      res.on('end', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          try {
+            const data = JSON.parse(responseData);
+            if (data.token) {
+              resolve(data.token);
+            } else {
+              reject(new Error('No token in login response'));
+            }
+          } catch (e) {
+            reject(new Error(`Failed to parse login response: ${e.message}`));
+          }
+        } else if (res.statusCode === 401) {
+          reject(new Error('Authentication failed: Invalid username or password'));
+        } else {
+          reject(new Error(`Login failed: HTTP ${res.statusCode} - ${responseData}`));
+        }
+      });
+    });
+
+    req.on('error', (err) => {
+      reject(new Error(`Login request failed: ${err.message}`));
+    });
+
+    req.write(payload);
+    req.end();
+  });
+}
+
+// Check if authentication is required by testing the API
+async function checkAuthRequired(coreIp) {
+  return new Promise((resolve) => {
+    const options = {
+      hostname: coreIp,
+      port: 443,
+      path: '/api/v0/cores/self/media',
+      method: 'HEAD',
+      rejectUnauthorized: false,
+    };
+
+    const req = https.request(options, (res) => {
+      // 401 means auth is required, 200 means open access
+      resolve(res.statusCode === 401);
+    });
+
+    req.on('error', () => {
+      // On error, assume auth might be required
+      resolve(true);
+    });
+
+    req.end();
+  });
+}
+
 // Get all files recursively from a directory
 function getFiles(dir, baseDir = dir) {
   const files = [];
@@ -291,7 +370,9 @@ async function deploy() {
   // Load configuration
   const env = loadEnv();
   const coreIp = env.QSYS_CORE_IP;
-  const bearerToken = env.QSYS_BEARER_TOKEN || '';
+  let bearerToken = env.QSYS_BEARER_TOKEN || '';
+  const username = env.QSYS_USERNAME || '';
+  const password = env.QSYS_PASSWORD || '';
   const webRoot = env.QSYS_WEB_ROOT || 'web';
   const buildDir = path.join(__dirname, env.BUILD_DIR);
 
@@ -305,7 +386,32 @@ async function deploy() {
   info(`Core IP: ${coreIp}`);
   info(`Target path: /media/${webRoot}`);
   info(`Build directory: ${buildDir}`);
-  info(`Authentication: ${bearerToken ? 'Bearer token provided' : 'Open access mode'}\n`);
+
+  // Check if authentication is required
+  const authRequired = await checkAuthRequired(coreIp);
+
+  if (authRequired) {
+    if (bearerToken) {
+      info('Authentication: Using provided Bearer token');
+    } else if (username && password) {
+      info(`Authentication: Logging in with username: ${username} and password:********`);
+      try {
+        bearerToken = await login(coreIp, username, password);
+        success('Authentication successful - token obtained');
+      } catch (err) {
+        error(`Authentication failed: ${err.message}`);
+        error('Please check QSYS_USERNAME and QSYS_PASSWORD in your .env.deploy file');
+        process.exit(1);
+      }
+    } else {
+      error('Authentication required but no credentials provided');
+      error('Please set QSYS_USERNAME and QSYS_PASSWORD (or QSYS_BEARER_TOKEN) in your .env.deploy file');
+      process.exit(1);
+    }
+  } else {
+    info('Authentication: Open access mode (no auth required)');
+  }
+  log('');
 
   // Get all files to upload
   const files = getFiles(buildDir);
