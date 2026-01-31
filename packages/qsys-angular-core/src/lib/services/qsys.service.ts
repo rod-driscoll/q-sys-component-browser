@@ -1,6 +1,6 @@
 import { Injectable, signal, inject, Injector, Optional, Inject } from '@angular/core';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
-import { QrwcConnectionOptions } from '../models/qsys-control.model';
+import { QrwcConnectionOptions, DEFAULT_POLL_INTERVAL } from '../models/qsys-control.model';
 import { Qrwc } from '@q-sys/qrwc';
 import { QSYS_CONFIG, QSysConfig, DEFAULT_QSYS_CONFIG } from '../models/qsys-config.model';
 import type { SecureTunnelDiscoveryService } from './secure-tunnel-discovery.service';
@@ -120,10 +120,13 @@ export class QSysService {
       this.options = {
         coreIp: optionsOrIp,
         secure: true,
-        pollInterval: 350,
+        pollInterval: DEFAULT_POLL_INTERVAL,
       };
     } else {
-      this.options = optionsOrIp;
+      this.options = {
+        ...optionsOrIp,
+        pollInterval: optionsOrIp.pollInterval ?? DEFAULT_POLL_INTERVAL,
+      };
     }
 
     const protocol = this.options.secure ? 'wss' : 'ws';
@@ -159,7 +162,7 @@ export class QSysService {
       // Use componentFilter to prevent loading ANY components initially (avoids timeout errors)
       this.qrwc = await Qrwc.createQrwc({
         socket,
-        pollingInterval: this.options.pollInterval || 350,
+        pollingInterval: this.options.pollInterval,
         componentFilter: () => false, // Don't load any components during initialization
         logger: {
           debug: () => { }, // Suppress debug messages (polling spam)
@@ -1156,7 +1159,7 @@ export class QSysService {
 
   /**
    * Start manual ChangeGroup polling if not already started
-   * Uses setInterval to call ChangeGroup.Poll RPC every 50ms
+   * Uses setInterval to call ChangeGroup.Poll RPC at the configured poll interval
    */
   private async startChangeGroupPolling(): Promise<void> {
     const changeGroup = (this.qrwc as any).changeGroup;
@@ -1167,7 +1170,8 @@ export class QSysService {
       return;
     }
 
-    console.log('Starting ChangeGroup polling (50ms interval)...');
+    const pollInterval = this.options?.pollInterval ?? DEFAULT_POLL_INTERVAL;
+    console.log(`Starting ChangeGroup polling (${pollInterval}ms interval)...`);
 
     // Start polling with setInterval
     (changeGroup as any).pollingInterval = setInterval(async () => {
@@ -1190,9 +1194,9 @@ export class QSysService {
         }
         console.error('ChangeGroup.Poll error:', error);
       }
-    }, 50); // 50ms = 20 polls per second
+    }, pollInterval);
 
-    console.log('✓ ChangeGroup polling started (50ms interval)');
+    console.log(`✓ ChangeGroup polling started (${pollInterval}ms interval)`);
   }
 
   /**

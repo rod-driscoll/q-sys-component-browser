@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../../environments/environment';
 import { QSysService } from '../../services/qsys.service';
+import { DEFAULT_POLL_INTERVAL } from '../../models/qsys-control.model';
 
 @Component({
   selector: 'app-settings-dialog',
@@ -120,7 +121,7 @@ export class SettingsDialogComponent {
       await this.qsysService.connect({
         coreIp: environment.RUNTIME_CORE_IP,
         secure: true,
-        pollInterval: 350,
+        pollInterval: DEFAULT_POLL_INTERVAL,
       });
 
       console.log('✓ Successfully reconnected to Q-SYS Core');

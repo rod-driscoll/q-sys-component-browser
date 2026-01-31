@@ -18,6 +18,7 @@ export {
   QSysConfig,
   QSYS_CONFIG,
   DEFAULT_QSYS_CONFIG,
+  DEFAULT_POLL_INTERVAL,
 
   // Control types
   ControlType,

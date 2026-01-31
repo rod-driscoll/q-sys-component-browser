@@ -1,4 +1,5 @@
 import { InjectionToken } from '@angular/core';
+import { DEFAULT_POLL_INTERVAL } from './qsys-control.model';
 
 /**
  * Configuration for Q-SYS Angular Core services
@@ -19,7 +20,7 @@ export interface QSysConfig {
   /** Use secure WebSocket (wss://) */
   secure?: boolean;
 
-  /** Polling interval in ms (default: 350) */
+  /** Polling interval in ms (default: DEFAULT_POLL_INTERVAL) */
   pollingInterval?: number;
 }
 
@@ -34,5 +35,5 @@ export const QSYS_CONFIG = new InjectionToken<QSysConfig>('QSYS_CONFIG');
 export const DEFAULT_QSYS_CONFIG: Partial<QSysConfig> = {
   corePort: 9091,
   secure: false,
-  pollingInterval: 350
+  pollingInterval: DEFAULT_POLL_INTERVAL
 };

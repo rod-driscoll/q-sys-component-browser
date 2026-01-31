@@ -8,7 +8,8 @@ export {
   QSysControl,
   QSysComponent as QSysComponentInterface,
   QrwcMessage,
-  QrwcConnectionOptions
+  QrwcConnectionOptions,
+  DEFAULT_POLL_INTERVAL
 } from './qsys-control.model';
 
 // Control wrapper classes

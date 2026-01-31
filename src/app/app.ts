@@ -2,6 +2,7 @@ import { Component, signal, OnInit, ViewChild } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { environment } from '../environments/environment';
 import { QSysService } from './services/qsys.service';
+import { DEFAULT_POLL_INTERVAL } from './models/qsys-control.model';
 import { AppInitializationService } from './services/app-initialization.service';
 import { PwaInstallPromptComponent } from './components/pwa-install-prompt/pwa-install-prompt.component';
 import { SettingsDialogComponent } from './components/settings-dialog/settings-dialog.component';
@@ -43,7 +44,7 @@ export class App implements OnInit {
     this.qsysService.connect({
       coreIp: environment.RUNTIME_CORE_IP,
       secure: true,
-      pollInterval: 350,
+      pollInterval: DEFAULT_POLL_INTERVAL,
     }).catch((error) => {
       console.error('Failed to connect to Q-SYS Core:', error);
     });

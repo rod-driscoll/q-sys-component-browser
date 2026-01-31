@@ -9,6 +9,7 @@ import {
   KnobControl,
 } from '../../models/qsys-components';
 import { environment } from '../../../environments/environment';
+import { DEFAULT_POLL_INTERVAL } from '../../models/qsys-control.model';
 
 @Component({
   selector: 'app-qsys-example',
@@ -48,7 +49,7 @@ export class QsysExample implements OnInit, OnDestroy {
     this.qsysService.connect({
       coreIp: environment.RUNTIME_CORE_IP,
       secure: true, // Use wss:// for secure connections
-      pollInterval: 350
+      pollInterval: DEFAULT_POLL_INTERVAL
     });
 
     // Wait for connection before setting up components

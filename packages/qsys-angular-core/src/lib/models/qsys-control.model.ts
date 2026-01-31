@@ -24,6 +24,12 @@ export interface QrwcMessage {
   error?: any;
 }
 
+/**
+ * Default poll interval in milliseconds for QRWC ChangeGroup polling.
+ * This is the canonical source - all poll intervals should reference this constant.
+ */
+export const DEFAULT_POLL_INTERVAL = 350;
+
 export interface QrwcConnectionOptions {
   coreIp: string;
   redundantCoreIp?: string;
