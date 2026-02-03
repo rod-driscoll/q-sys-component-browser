@@ -14,8 +14,8 @@ const FAVICON_SIZES = [16, 32, 48, 64];
 const APPLE_SIZES = [120, 152, 167, 180];
 
 async function generateIcons() {
-  const inputPath = path.join(__dirname, 'public', 'A-ALPHA.png');
-  const outputDir = path.join(__dirname, 'public');
+  const inputPath = path.join(__dirname, 'public', 'images', 'A-ALPHA.png');
+  const outputDir = path.join(__dirname, 'public', 'images');
 
   console.log('Generating PWA icons from A-ALPHA.png...\n');
 

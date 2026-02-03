@@ -15,6 +15,8 @@
     "icons": "node create-pwa-icons.js",
     "build:pwa": "npm run icons && ng build --configuration production",
     "deploy:pwa": "npm run build:pwa && npm run deploy",
+    "deploy:pwa:no-public": "npm run build:pwa && npm run deploy -- --no-public",
+    "deploy:pwa:retry": "npm run deploy -- --retry",
     "ch5-build": "ng build --configuration=crestron && node enable-eruda.js",
     "ch5-archive": "npm run ch5-build && npx ch5-cli archive -p q-sys-component-browser -d dist/q-sys-component-browser/browser -o dist",
     "ch5-deploy": "npx ch5-cli deploy -H 192.168.104.239 -t touchscreen -p dist/q-sys-component-browser.ch5z"

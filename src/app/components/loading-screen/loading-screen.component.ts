@@ -1,11 +1,12 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppInitializationService } from '../../services/app-initialization.service';
+import { PwaInstallPromptComponent } from '../pwa-install-prompt/pwa-install-prompt.component';
 
 @Component({
   selector: 'app-loading-screen',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, PwaInstallPromptComponent],
   template: `
     <div class="loading-overlay" *ngIf="!appInit.initializationComplete()">
       <div class="loading-container">
@@ -15,6 +16,7 @@ import { AppInitializationService } from '../../services/app-initialization.serv
         <div class="progress-bar">
           <div class="progress-fill"></div>
         </div>
+        <app-pwa-install-prompt></app-pwa-install-prompt>
       </div>
     </div>
   `,

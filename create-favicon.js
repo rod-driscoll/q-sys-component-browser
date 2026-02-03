@@ -10,8 +10,8 @@ const fs = require('fs');
 const path = require('path');
 
 async function createFavicon() {
-  const inputPath = path.join(__dirname, 'public', 'A-ALPHA.png');
-  const outputDir = path.join(__dirname, 'public');
+  const inputPath = path.join(__dirname, 'public', 'images', 'A-ALPHA.png');
+  const outputDir = path.join(__dirname, 'public', 'images');
 
   console.log('Converting A-ALPHA.png to favicon.ico...');
 
@@ -58,11 +58,11 @@ async function createFavicon() {
 
     console.log('\n✓ Favicon generation complete!');
     console.log('\nGenerated files:');
-    console.log('  - public/favicon.ico (32x32)');
-    console.log('  - public/favicon-16x16.png');
-    console.log('  - public/favicon-32x32.png');
-    console.log('  - public/favicon-48x48.png');
-    console.log('  - public/favicon-64x64.png');
+    console.log('  - public/images/favicon.ico (32x32)');
+    console.log('  - public/images/favicon-16x16.png');
+    console.log('  - public/images/favicon-32x32.png');
+    console.log('  - public/images/favicon-48x48.png');
+    console.log('  - public/images/favicon-64x64.png');
 
   } catch (error) {
     console.error('Error creating favicon:', error);

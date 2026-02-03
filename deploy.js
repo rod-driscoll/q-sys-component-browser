@@ -13,6 +13,8 @@ const fs = require('fs');
 const path = require('path');
 const https = require('https');
 
+const FAILED_FILES_PATH = path.join(__dirname, '.deploy-failed.json');
+
 // Color output helpers
 const colors = {
   reset: '\x1b[0m',
@@ -170,20 +172,76 @@ async function checkAuthRequired(coreIp) {
 }
 
 // Get all files recursively from a directory
-function getFiles(dir, baseDir = dir) {
+// Save failed files to a JSON file
+function saveFailedFiles(failedFiles) {
+  try {
+    fs.writeFileSync(FAILED_FILES_PATH, JSON.stringify(failedFiles, null, 2));
+    info(`\nFailed files saved to ${path.basename(FAILED_FILES_PATH)}`);
+    info('To retry only failed files, run: npm run deploy:pwa -- --retry');
+  } catch (err) {
+    warning(`Failed to save failed files list: ${err.message}`);
+  }
+}
+
+// Load failed files from JSON file
+function loadFailedFiles() {
+  try {
+    if (fs.existsSync(FAILED_FILES_PATH)) {
+      const data = fs.readFileSync(FAILED_FILES_PATH, 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (err) {
+    warning(`Failed to load failed files list: ${err.message}`);
+  }
+  return null;
+}
+
+// Clear failed files list
+function clearFailedFiles() {
+  try {
+    if (fs.existsSync(FAILED_FILES_PATH)) {
+      fs.unlinkSync(FAILED_FILES_PATH);
+    }
+  } catch (err) {
+    // Ignore errors
+  }
+}
+
+function getFiles(dir, baseDir = dir, excludePublicFolder = false) {
   const files = [];
   const items = fs.readdirSync(dir);
 
+  // Patterns for files that come from the public folder
+  const publicFilePatterns = [
+    /^apple-touch-icon/,
+    /^icon-\d+x\d+\.png$/,
+    /^favicon/,
+    /^eruda/,
+    /^manifest\.webmanifest$/,
+    /^fonts\//,
+    /^images\//,
+  ];
+
   for (const item of items) {
     const fullPath = path.join(dir, item);
+    const relativePath = path.relative(baseDir, fullPath);
     const stat = fs.statSync(fullPath);
 
+    // Skip files from public folder if excludePublicFolder is true
+    if (excludePublicFolder) {
+      const normalizedPath = relativePath.replace(/\\/g, '/');
+      const shouldExclude = publicFilePatterns.some(pattern => pattern.test(normalizedPath));
+      if (shouldExclude) {
+        continue;
+      }
+    }
+
     if (stat.isDirectory()) {
-      files.push(...getFiles(fullPath, baseDir));
+      files.push(...getFiles(fullPath, baseDir, excludePublicFolder));
     } else {
       files.push({
         fullPath,
-        relativePath: path.relative(baseDir, fullPath),
+        relativePath,
       });
     }
   }
@@ -367,6 +425,10 @@ async function deploy() {
   log('Q-SYS Core Deployment Script', colors.bright);
   log('='.repeat(60) + '\n', colors.bright);
 
+  // Check for command line flags
+  const retryMode = process.argv.includes('--retry');
+  const noPublicFlag = process.argv.includes('--no-public');
+
   // Load configuration
   const env = loadEnv();
   const coreIp = env.QSYS_CORE_IP;
@@ -375,6 +437,7 @@ async function deploy() {
   const password = env.QSYS_PASSWORD || '';
   const webRoot = env.QSYS_WEB_ROOT || 'web';
   const buildDir = path.join(__dirname, env.BUILD_DIR);
+  const excludePublicFolder = env.EXCLUDE_PUBLIC_FOLDER === 'true' || noPublicFlag;
 
   // Validate build directory exists
   if (!fs.existsSync(buildDir)) {
@@ -386,6 +449,9 @@ async function deploy() {
   info(`Core IP: ${coreIp}`);
   info(`Target path: /media/${webRoot}`);
   info(`Build directory: ${buildDir}`);
+  if (excludePublicFolder) {
+    info('Excluding public folder from deployment');
+  }
 
   // Check if authentication is required
   const authRequired = await checkAuthRequired(coreIp);
@@ -414,14 +480,25 @@ async function deploy() {
   log('');
 
   // Get all files to upload
-  const files = getFiles(buildDir);
-
-  if (files.length === 0) {
-    warning('No files found to deploy');
-    process.exit(0);
+  let files;
+  if (retryMode) {
+    info('Retry mode: Loading failed files from previous deployment\n');
+    const failedFiles = loadFailedFiles();
+    if (!failedFiles || failedFiles.length === 0) {
+      warning('No failed files found to retry');
+      info('Run a normal deployment first, then use --retry to retry failed uploads');
+      process.exit(0);
+    }
+    files = failedFiles;
+    log(`Retrying ${files.length} failed file(s)\n`, colors.bright);
+  } else {
+    files = getFiles(buildDir, buildDir, excludePublicFolder);
+    if (files.length === 0) {
+      warning('No files found to deploy');
+      process.exit(0);
+    }
+    log(`Found ${files.length} file(s) to deploy\n`, colors.bright);
   }
-
-  log(`Found ${files.length} file(s) to deploy\n`, colors.bright);
 
   // Collect unique directories
   const directories = new Set();
@@ -447,6 +524,7 @@ async function deploy() {
   // Upload files
   let successCount = 0;
   let errorCount = 0;
+  const failedFiles = [];
 
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
@@ -468,6 +546,7 @@ async function deploy() {
     } catch (err) {
       error(`✗ ${err.message}`);
       errorCount++;
+      failedFiles.push(file);
     }
   }
 
@@ -484,10 +563,12 @@ async function deploy() {
 
   if (errorCount === 0) {
     success('✓ Deployment completed successfully!');
+    clearFailedFiles();
     log('');
     info(`Access your app at: https://${coreIp}/media/${webRoot}/index.html`);
   } else {
     error('✗ Deployment completed with errors');
+    saveFailedFiles(failedFiles);
     process.exit(1);
   }
 }
