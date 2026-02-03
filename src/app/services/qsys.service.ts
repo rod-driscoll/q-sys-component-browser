@@ -57,6 +57,24 @@ export class QSysService {
   // Track whether poll interceptor has been set up
   private pollInterceptorSetup = false;
 
+  // Store polling interval ID separately (not tied to changeGroup object)
+  private pollingIntervalId: ReturnType<typeof setInterval> | null = null;
+
+  // Track subscribed components for re-registration after reconnection
+  private subscribedComponents: Set<string> = new Set();
+
+  // Adaptive polling - adjusts polling rate based on network latency
+  private latencyMeasurements: number[] = [];
+  private readonly LATENCY_SAMPLE_SIZE = 10;
+  private readonly MIN_POLL_INTERVAL = 350;   // Base minimum in ms
+  private readonly MAX_POLL_INTERVAL = 5000;  // Maximum poll interval in ms
+  private readonly LATENCY_MULTIPLIER = 2.5;  // Poll interval = latency * this
+  private currentPollInterval: number = 350;
+  private adaptivePollingEnabled = true;
+
+  // Track last ChangeGroup error time to avoid spam logging
+  private lastChangeGroupErrorTime: number | null = null;
+
   // Reconnection counter - increments on each successful reconnection
   // Components can watch this to re-register with new ChangeGroup
   public reconnectionCount = signal(0);
@@ -612,6 +630,7 @@ export class QSysService {
   /**
    * Start keepalive timer to prevent WebSocket connection timeout
    * Sends StatusGet RPC every 15 seconds to keep connection alive
+   * Also measures RTT for adaptive polling
    */
   private startKeepalive(webSocketManager: any): void {
     // Clear any existing timer
@@ -626,15 +645,20 @@ export class QSysService {
     // Send StatusGet RPC every 15 seconds to keep connection alive
     this.keepaliveTimer = setInterval(async () => {
       keepaliveCount++;
+      const startTime = Date.now();
       try {
-        console.log(`[KEEPALIVE] Sending StatusGet (attempt ${keepaliveCount})...`);
         const result = await Promise.race([
           webSocketManager.sendRpc('StatusGet', undefined),
-          new Promise((_, reject) => 
+          new Promise((_, reject) =>
             setTimeout(() => reject(new Error('Keepalive timeout after 5s')), 5000)
           )
         ]);
-        console.log(`[KEEPALIVE] StatusGet succeeded (attempt ${keepaliveCount}):`, result);
+
+        // Measure RTT and update adaptive polling
+        const rtt = Date.now() - startTime;
+        this.updatePollingInterval(rtt);
+
+        console.log(`[KEEPALIVE] StatusGet OK (${keepaliveCount}) RTT: ${rtt}ms, poll interval: ${this.currentPollInterval}ms`);
       } catch (error) {
         console.warn(`[KEEPALIVE] StatusGet failed (attempt ${keepaliveCount}):`, error);
       }
@@ -1441,6 +1465,39 @@ export class QSysService {
     } catch (error) {
       console.error('Failed to get Core status:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Get current polling interval (for debugging/display)
+   */
+  getCurrentPollInterval(): number {
+    return this.currentPollInterval;
+  }
+
+  /**
+   * Get current average latency (for debugging/display)
+   */
+  getAverageLatency(): number {
+    if (this.latencyMeasurements.length === 0) {
+      return 0;
+    }
+    return this.latencyMeasurements.reduce((a, b) => a + b, 0) / this.latencyMeasurements.length;
+  }
+
+  /**
+   * Update polling interval based on measured network latency
+   * Uses a rolling average of recent RTT measurements to determine optimal polling rate
+   */
+  private updatePollingInterval(rttMs: number): void {
+    if (!this.adaptivePollingEnabled) {
+      return;
+    }
+
+    // Track last N measurements
+    this.latencyMeasurements.push(rttMs);
+    if (this.latencyMeasurements.length > this.LATENCY_SAMPLE_SIZE) {
+      this.latencyMeasurements.shift();
     }
   }
 }

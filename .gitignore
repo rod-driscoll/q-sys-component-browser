@@ -44,5 +44,13 @@ __screenshots__/
 Thumbs.db
 
 # Deployment configuration (contains credentials)
-.env.deploy
-.env.deploy.local
+.env.*
+!.env.deploy.example
+!.env.example
+.deploy-failed.json
+
+# Generated icons (created by npm run icons / npm run favicon)
+public/images/icon-*.png
+public/images/apple-touch-icon*.png
+public/images/favicon*.png
+public/images/favicon.ico

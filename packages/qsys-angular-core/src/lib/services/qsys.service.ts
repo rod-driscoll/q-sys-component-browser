@@ -57,6 +57,10 @@ export class QSysService {
   // Track whether poll interceptor has been set up
   private pollInterceptorSetup = false;
 
+  // Store polling interval ID separately (not tied to changeGroup object)
+  // This ensures we can always stop it even after QRWC instance is replaced
+  private pollingIntervalId: ReturnType<typeof setInterval> | null = null;
+
   // Reconnection counter - increments on each successful reconnection
   // Components can watch this to re-register with new ChangeGroup
   public reconnectionCount = signal(0);
@@ -64,8 +68,23 @@ export class QSysService {
   // Track the current ChangeGroup ID to detect when it changes
   private currentChangeGroupId: string | null = null;
 
+  // Track last ChangeGroup error time to avoid spam logging
+  private lastChangeGroupErrorTime: number | null = null;
+
   // Callback to notify when ChangeGroup changes (for component re-registration)
   private changeGroupChangedCallback: (() => Promise<void>) | null = null;
+
+  // Track subscribed components for re-registration after reconnection
+  private subscribedComponents: Set<string> = new Set();
+
+  // Adaptive polling - adjusts polling rate based on network latency
+  private latencyMeasurements: number[] = [];
+  private readonly LATENCY_SAMPLE_SIZE = 10;
+  private readonly MIN_POLL_INTERVAL = 350;   // Base minimum in ms
+  private readonly MAX_POLL_INTERVAL = 5000;  // Maximum poll interval in ms
+  private readonly LATENCY_MULTIPLIER = 2.5;  // Poll interval = latency * this
+  private currentPollInterval: number = 350;
+  private adaptivePollingEnabled = true;
 
   // Lazy-loaded reference to SecureTunnelDiscoveryService to avoid circular dependency
   private secureTunnelService?: any;
@@ -128,6 +147,10 @@ export class QSysService {
         pollInterval: optionsOrIp.pollInterval ?? DEFAULT_POLL_INTERVAL,
       };
     }
+
+    // Initialize adaptive polling with configured interval
+    this.currentPollInterval = this.options.pollInterval || DEFAULT_POLL_INTERVAL;
+    this.latencyMeasurements = []; // Reset latency measurements on new connection
 
     const protocol = this.options.secure ? 'wss' : 'ws';
     //const url = `${protocol}://${this.options.coreIp}/qrc-public-api/v0`;
@@ -211,6 +234,10 @@ export class QSysService {
         this.isConnected.set(false);
         this.connectionStatus$.next(false);
 
+        // Stop ChangeGroup polling immediately on disconnect
+        // Polling will fail anyway without a connection
+        this.stopChangeGroupPolling();
+
         // Attempt to reconnect automatically
         this.attemptReconnect();
       });
@@ -239,30 +266,33 @@ export class QSysService {
       if (this.currentChangeGroupId && newChangeGroupId && this.currentChangeGroupId !== newChangeGroupId) {
         console.log(`ChangeGroup ID changed from ${this.currentChangeGroupId} to ${newChangeGroupId} - triggering re-registration`);
 
-        // CRITICAL: Stop ChangeGroup polling immediately after reconnection
+        // CRITICAL: Stop all ChangeGroup polling immediately after reconnection
         // The new ChangeGroup ID exists on the client but doesn't exist on Q-SYS Core yet
         // (no controls have been added to it). Polling with this ID will fail with
         // "Change group does not exist" until components re-register and add controls.
-        // We must stop polling now and let component re-registration restart it.
+        this.stopChangeGroupPolling();
+
+        // Also stop QRWC's internal polling if it started
         if ((changeGroup as any).intervalRef) {
-          console.log('⚠ Stopping ChangeGroup polling (new ChangeGroup not yet created on Q-SYS Core)');
+          console.log('⚠ Stopping QRWC internal polling (new ChangeGroup not yet created on Q-SYS Core)');
           clearInterval((changeGroup as any).intervalRef);
           (changeGroup as any).intervalRef = null;
         }
 
         this.currentChangeGroupId = newChangeGroupId;
-        this.reconnectionCount.update(count => count + 1);
-        console.log(`ChangeGroup changed - reconnection #${this.reconnectionCount()}`);
 
-        // Clear the old polling interval
-        const oldChangeGroup = (this.qrwc as any).changeGroup;
-        if (oldChangeGroup?.pollingInterval) {
-          clearInterval(oldChangeGroup.pollingInterval);
-          oldChangeGroup.pollingInterval = null;
-        }
+        // CRITICAL: Clear subscribedComponents so components can re-register
+        // Without this, subscribeToComponent() will skip re-registration
+        console.log(`Clearing ${this.subscribedComponents.size} subscribed components for re-registration`);
+        this.subscribedComponents.clear();
 
         // Reset poll callback flag so it gets set up again on the new ChangeGroup
         this.pollInterceptorSetup = false;
+
+        // Increment reconnection counter AFTER clearing state
+        // This signals to watching components that they should re-register
+        this.reconnectionCount.update(count => count + 1);
+        console.log(`ChangeGroup changed - reconnection #${this.reconnectionCount()}`);
 
         // Invoke callback to re-register components with new ChangeGroup
         // This will add controls to the new ChangeGroup and restart polling
@@ -309,15 +339,18 @@ export class QSysService {
     if (this.qrwc) {
       // CRITICAL: Stop ChangeGroup polling BEFORE disconnecting
       // This prevents the old polling interval from continuing to run after disconnect/reconnect
+      this.stopChangeGroupPolling();
+
+      // Also stop QRWC's internal polling if it exists
       try {
         const changeGroup = (this.qrwc as any).changeGroup;
         if (changeGroup && (changeGroup as any).intervalRef) {
-          console.log('Stopping ChangeGroup polling before disconnect');
+          console.log('Stopping QRWC internal polling before disconnect');
           clearInterval((changeGroup as any).intervalRef);
           (changeGroup as any).intervalRef = null;
         }
       } catch (error) {
-        console.warn('Error stopping ChangeGroup polling:', error);
+        console.warn('Error stopping QRWC polling:', error);
       }
 
       // Try to disconnect the QRWC instance
@@ -628,6 +661,7 @@ export class QSysService {
   /**
    * Start keepalive timer to prevent WebSocket connection timeout
    * Sends StatusGet RPC every 15 seconds to keep connection alive
+   * Also measures RTT for adaptive polling
    */
   private startKeepalive(webSocketManager: any): void {
     // Clear any existing timer
@@ -642,15 +676,20 @@ export class QSysService {
     // Send StatusGet RPC every 15 seconds to keep connection alive
     this.keepaliveTimer = setInterval(async () => {
       keepaliveCount++;
+      const startTime = Date.now();
       try {
-        console.log(`[KEEPALIVE] Sending StatusGet (attempt ${keepaliveCount})...`);
         const result = await Promise.race([
           webSocketManager.sendRpc('StatusGet', undefined),
-          new Promise((_, reject) => 
+          new Promise((_, reject) =>
             setTimeout(() => reject(new Error('Keepalive timeout after 5s')), 5000)
           )
         ]);
-        console.log(`[KEEPALIVE] StatusGet succeeded (attempt ${keepaliveCount}):`, result);
+
+        // Measure RTT and update adaptive polling
+        const rtt = Date.now() - startTime;
+        this.updatePollingInterval(rtt);
+
+        console.log(`[KEEPALIVE] StatusGet OK (${keepaliveCount}) RTT: ${rtt}ms, poll interval: ${this.currentPollInterval}ms`);
       } catch (error) {
         console.warn(`[KEEPALIVE] StatusGet failed (attempt ${keepaliveCount}):`, error);
       }
@@ -1096,9 +1135,10 @@ export class QSysService {
     try {
       console.log(`Subscribing to component: ${componentName} via ChangeGroup`);
 
-      // Unsubscribe from current component if any
-      if (this.currentComponentListener) {
-        await this.unsubscribeFromComponent();
+      // Check if already subscribed
+      if (this.subscribedComponents.has(componentName)) {
+        console.log(`Component ${componentName} is already subscribed`);
+        return;
       }
 
       // Get controls for the component
@@ -1140,10 +1180,14 @@ export class QSysService {
         }
       });
 
-      // Store the component name for unsubscribe
+      // Store the component name for tracking
       this.currentComponentListener = componentName;
+      this.subscribedComponents.add(componentName);
 
       console.log(`✓ Subscribed to ${componentName} with ${controls.length} controls via ChangeGroup`);
+
+      // Reset error tracking since we successfully registered controls
+      this.lastChangeGroupErrorTime = null;
 
       // Set up callback to receive updates
       this.setupChangeGroupCallback();
@@ -1158,45 +1202,247 @@ export class QSysService {
   }
 
   /**
+   * Stop ChangeGroup polling
+   * Clears both our managed polling interval and any QRWC internal polling
+   */
+  private stopChangeGroupPolling(): void {
+    // Stop our managed polling interval
+    if (this.pollingIntervalId) {
+      console.log('[ChangeGroup] Stopping managed polling interval');
+      clearInterval(this.pollingIntervalId);
+      this.pollingIntervalId = null;
+    }
+
+    // Also clean up any reference on the changeGroup object (legacy cleanup)
+    if (this.qrwc) {
+      const changeGroup = (this.qrwc as any).changeGroup;
+      if (changeGroup?.pollingInterval) {
+        clearInterval(changeGroup.pollingInterval);
+        changeGroup.pollingInterval = null;
+      }
+    }
+  }
+
+  /**
+   * Update polling interval based on measured network latency
+   * Uses a rolling average of recent RTT measurements to determine optimal polling rate
+   */
+  private updatePollingInterval(rttMs: number): void {
+    if (!this.adaptivePollingEnabled) {
+      return;
+    }
+
+    // Track last N measurements
+    this.latencyMeasurements.push(rttMs);
+    if (this.latencyMeasurements.length > this.LATENCY_SAMPLE_SIZE) {
+      this.latencyMeasurements.shift();
+    }
+
+    // Need at least 3 measurements before adjusting
+    if (this.latencyMeasurements.length < 3) {
+      return;
+    }
+
+    // Calculate average latency
+    const avgLatency = this.latencyMeasurements.reduce((a, b) => a + b, 0)
+                       / this.latencyMeasurements.length;
+
+    // New interval: at least LATENCY_MULTIPLIER times the average latency
+    // Clamped between MIN and MAX poll intervals
+    const newInterval = Math.min(
+      this.MAX_POLL_INTERVAL,
+      Math.max(
+        this.MIN_POLL_INTERVAL,
+        Math.round(avgLatency * this.LATENCY_MULTIPLIER)
+      )
+    );
+
+    // Only adjust if change is significant (>20%) to avoid constant restarts
+    const changeRatio = Math.abs(newInterval - this.currentPollInterval) / this.currentPollInterval;
+    if (changeRatio > 0.2) {
+      console.log(`[ADAPTIVE] Latency avg: ${avgLatency.toFixed(0)}ms → Poll interval: ${this.currentPollInterval}ms → ${newInterval}ms`);
+      this.restartPollingWithInterval(newInterval);
+    }
+  }
+
+  /**
+   * Restart ChangeGroup polling with a new interval
+   * Used by adaptive polling to adjust rate based on network conditions
+   */
+  private restartPollingWithInterval(newInterval: number): void {
+    // Don't restart if not currently polling
+    if (!this.pollingIntervalId) {
+      this.currentPollInterval = newInterval;
+      return;
+    }
+
+    // Stop current polling
+    this.stopChangeGroupPolling();
+
+    // Update interval
+    this.currentPollInterval = newInterval;
+
+    // Restart with new interval
+    this.startChangeGroupPolling().catch(error => {
+      console.error('[ADAPTIVE] Failed to restart polling:', error);
+    });
+  }
+
+  /**
+   * Get current polling interval (for debugging/display)
+   */
+  getCurrentPollInterval(): number {
+    return this.currentPollInterval;
+  }
+
+  /**
+   * Get current average latency (for debugging/display)
+   */
+  getAverageLatency(): number {
+    if (this.latencyMeasurements.length === 0) {
+      return 0;
+    }
+    return this.latencyMeasurements.reduce((a, b) => a + b, 0) / this.latencyMeasurements.length;
+  }
+
+  /**
+   * Enable or disable adaptive polling
+   */
+  setAdaptivePolling(enabled: boolean): void {
+    this.adaptivePollingEnabled = enabled;
+    console.log(`[ADAPTIVE] Adaptive polling ${enabled ? 'enabled' : 'disabled'}`);
+
+    if (!enabled) {
+      // Reset to default interval when disabled
+      this.latencyMeasurements = [];
+      if (this.currentPollInterval !== this.MIN_POLL_INTERVAL) {
+        this.restartPollingWithInterval(this.MIN_POLL_INTERVAL);
+      }
+    }
+  }
+
+  /**
    * Start manual ChangeGroup polling if not already started
-   * Uses setInterval to call ChangeGroup.Poll RPC at the configured poll interval
+   * Uses setInterval to call ChangeGroup.Poll RPC
+   * Interval is managed by adaptive polling based on network latency
    */
   private async startChangeGroupPolling(): Promise<void> {
-    const changeGroup = (this.qrwc as any).changeGroup;
-
-    // Check if polling is already started
-    if ((changeGroup as any).pollingInterval) {
+    // Check if polling is already started using our managed interval ID
+    if (this.pollingIntervalId) {
       console.log('ChangeGroup polling already started');
       return;
     }
 
-    const pollInterval = this.options?.pollInterval ?? DEFAULT_POLL_INTERVAL;
-    console.log(`Starting ChangeGroup polling (${pollInterval}ms interval)...`);
+    const changeGroup = (this.qrwc as any).changeGroup;
+    if (!changeGroup) {
+      console.error('Cannot start polling - no ChangeGroup available');
+      return;
+    }
 
-    // Start polling with setInterval
-    (changeGroup as any).pollingInterval = setInterval(async () => {
+    // Use adaptive poll interval (will be adjusted based on latency)
+    const pollInterval = this.currentPollInterval;
+    console.log(`Starting ChangeGroup polling (${pollInterval}ms interval, adaptive: ${this.adaptivePollingEnabled})...`);
+
+    // Start polling with setInterval and store the ID
+    let pollCount = 0;
+    this.pollingIntervalId = setInterval(async () => {
+      // Safety check - stop polling if no longer connected
+      if (!this.isConnected() || !this.qrwc) {
+        console.log('[ChangeGroup.Poll] Not connected - stopping polling');
+        this.stopChangeGroupPolling();
+        return;
+      }
+
       try {
         const webSocketManager = (this.qrwc as any).webSocketManager;
-        const changeGroupId = (changeGroup as any).id;
+        const currentChangeGroup = (this.qrwc as any).changeGroup;
+        const changeGroupId = currentChangeGroup?.id;
+
+        if (!changeGroupId) {
+          console.warn('[ChangeGroup.Poll] No ChangeGroup ID - stopping polling');
+          this.stopChangeGroupPolling();
+          return;
+        }
+
+        // Measure RTT for adaptive polling (every 10th poll to reduce overhead)
+        const measureRtt = this.adaptivePollingEnabled && (++pollCount % 10 === 0);
+        const startTime = measureRtt ? Date.now() : 0;
 
         const result = await webSocketManager.sendRpc('ChangeGroup.Poll', {
           Id: changeGroupId
         });
 
+        // Update adaptive polling with measured RTT
+        if (measureRtt) {
+          const rtt = Date.now() - startTime;
+          this.updatePollingInterval(rtt);
+        }
+
         // If there are changes, call the onPoll callback
-        if (result.Changes && result.Changes.length > 0 && this.qrwc.onPoll) {
-          this.qrwc.onPoll(result.Changes);
+        if (result.Changes && result.Changes.length > 0) {
+          console.log('[ChangeGroup.Poll] Received changes:', result.Changes.length);
+          if (this.qrwc.onPoll) {
+            this.qrwc.onPoll(result.Changes);
+          }
         }
       } catch (error: any) {
-        // Silently handle "does not exist" errors during reconnection
+        // Handle "does not exist" errors - ChangeGroup expired or was invalidated
+        // This happens after prolonged inactivity or Core restart
         if (error?.message?.includes('does not exist')) {
+          // Stop polling immediately to prevent continued errors
+          this.stopChangeGroupPolling();
+
+          // Only attempt recovery once per minute to avoid spam
+          const now = Date.now();
+          if (!this.lastChangeGroupErrorTime || now - this.lastChangeGroupErrorTime > 60000) {
+            console.warn('[ChangeGroup.Poll] ChangeGroup expired - attempting to recreate');
+            this.lastChangeGroupErrorTime = now;
+
+            // Attempt to recreate ChangeGroup by re-subscribing components
+            this.resubscribeAllComponents().catch(err => {
+              console.error('[ChangeGroup.Poll] Failed to recreate ChangeGroup:', err);
+            });
+          }
           return;
         }
         console.error('ChangeGroup.Poll error:', error);
       }
     }, pollInterval);
 
-    console.log(`✓ ChangeGroup polling started (${pollInterval}ms interval)`);
+    // Also store on changeGroup for backwards compatibility
+    (changeGroup as any).pollingInterval = this.pollingIntervalId;
+
+    console.log(`✓ ChangeGroup polling started (${pollInterval}ms interval, adaptive: ${this.adaptivePollingEnabled})`);
+  }
+
+  /**
+   * Resubscribe all previously subscribed components after ChangeGroup expiration
+   * This recreates the ChangeGroup and re-registers all components
+   */
+  private async resubscribeAllComponents(): Promise<void> {
+    if (this.subscribedComponents.size === 0) {
+      console.log('[ChangeGroup] No components to resubscribe');
+      return;
+    }
+
+    console.log(`[ChangeGroup] Resubscribing ${this.subscribedComponents.size} components`);
+
+    // Create a copy of subscribed components to iterate over
+    const componentsToResubscribe = Array.from(this.subscribedComponents);
+
+    // Clear the set - subscribeToComponent will add them back
+    this.subscribedComponents.clear();
+
+    // Resubscribe each component
+    for (const componentName of componentsToResubscribe) {
+      try {
+        await this.subscribeToComponent(componentName);
+      } catch (error) {
+        console.error(`[ChangeGroup] Failed to resubscribe component ${componentName}:`, error);
+      }
+    }
+
+    console.log('[ChangeGroup] Component resubscription complete');
   }
 
   /**
@@ -1285,6 +1531,8 @@ export class QSysService {
         Component: this.currentComponentListener
       });
 
+      // Remove from tracking
+      this.subscribedComponents.delete(this.currentComponentListener);
       this.currentComponentListener = null;
 
       console.log('✓ Unsubscribed from component');
