@@ -79,9 +79,9 @@ export class NavigationHeaderComponent implements OnInit {
   }
 
   /**
-   * Get Core port
+   * Get Lua server port (TunnelDiscovery.lua HTTP/WebSocket port)
    */
-  get corePort(): number {
-    return environment.RUNTIME_CORE_PORT || 0;
+  get luaServerPort(): number {
+    return environment.LUA_SERVER_PORT || 0;
   }
 }

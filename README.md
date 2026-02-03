@@ -29,15 +29,29 @@ npm install
 
 ### Configuration
 
-Update the Q-SYS Core IP address in [src/environments/environment.ts](src/environments/environment.ts):
+Update the Q-SYS Core settings in [src/environments/environment.ts](src/environments/environment.ts):
 
 ```typescript
 export const environment = {
   production: false,
   QSYS_CORE_IP: '192.168.104.220',  // Your Q-SYS Core IP
-  QSYS_CORE_PORT: 9091,
+  QRWC_USE_SECURE: true,            // true = wss:// (port 443), false = ws:// (port 80)
 };
 ```
+
+> **SSL Certificate Issues?** If you get connection errors with self-signed certificates, set `QRWC_USE_SECURE: false` to use unencrypted WebSocket, or accept the certificate in your browser by visiting `https://[CORE_IP]` first.
+
+### Network Connections
+
+This app uses **two separate WebSocket connections** to Q-SYS Core:
+
+| Connection | URL | Purpose |
+|------------|-----|---------|
+| **QRWC** | `wss://[IP]/qrc` or `ws://[IP]/qrc` | Q-SYS Remote WebSocket Control - main protocol for control updates and RPC |
+| **Lua Server** | `ws://[IP]:9091` | TunnelDiscovery.lua HTTP API and legacy WebSocket for file browser |
+
+- **QRWC**: Controlled by `QRWC_USE_SECURE` setting. Uses port 443 for `wss://` or port 80 for `ws://`.
+- **Lua Server**: Port 9091 (configurable via `LUA_SERVER_PORT`). Requires `TunnelDiscovery.lua` loaded on a Script component.
 
 ### Development
 

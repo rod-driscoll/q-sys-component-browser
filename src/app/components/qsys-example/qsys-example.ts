@@ -48,7 +48,7 @@ export class QsysExample implements OnInit, OnDestroy {
     // Uses runtime IP which can be overridden via URL parameters
     this.qsysService.connect({
       coreIp: environment.RUNTIME_CORE_IP,
-      secure: true, // Use wss:// for secure connections
+      secure: environment.QRWC_USE_SECURE,
       pollInterval: DEFAULT_POLL_INTERVAL
     });
 

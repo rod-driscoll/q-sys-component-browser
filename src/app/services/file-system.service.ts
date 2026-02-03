@@ -36,9 +36,10 @@ export class FileSystemService {
   private useMediaApi = false;  // Flag to use Media API instead of WebSocket
 
   // Get WebSocket URL from environment (uses runtime overrides if set)
+  // Note: This connects to the Lua server (TunnelDiscovery.lua), not QRWC
   private get wsUrl(): string {
     const coreIp = environment.RUNTIME_CORE_IP;
-    const port = environment.RUNTIME_CORE_PORT;
+    const port = environment.LUA_SERVER_PORT;
     return `ws://${coreIp}:${port}/ws/file-system`;
   }
 

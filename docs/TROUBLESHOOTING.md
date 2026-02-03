@@ -2,6 +2,41 @@
 
 ## Common Issues
 
+### QRWC Connection Fails: "QRC initial status check failed"
+
+**Symptoms:**
+
+- WebSocket connects successfully (101 Switching Protocols in browser Network tab)
+- But immediately fails with: `Error: QRC initial status check failed. Q-SYS core might be shutting down or booting up.`
+- App shows "Connection timeout" error
+
+**Cause:**
+The WebSocket transport layer connects, but the QRWC protocol `StatusGet` RPC command fails. This is usually caused by one of:
+
+1. **External Control Protocol authentication is enabled** (most common)
+2. QRWC service is disabled
+3. Q-SYS Core is still booting or in an error state
+
+**Solution:**
+
+1. **Disable External Control Protocol authentication** (if not needed):
+   - Open **Q-SYS Core Manager** (`https://[CORE_IP]`)
+   - Go to **Security > Access Control**
+   - Find **External Control Protocol** section
+   - **Disable authentication** or configure credentials
+
+2. **Or enable QRWC service**:
+   - Go to **Network > Services > Management**
+   - Ensure **Q-SYS Remote WebSocket Control** is **enabled**
+
+3. **Verify the design is running**:
+   - Check Q-SYS Designer - design should be "Running", not just "Loaded"
+   - Look for errors in the Core's status
+
+**Note:** The piehost.com WebSocket tester may show a successful connection because it only tests the transport layer - it doesn't send QRWC protocol messages that require authentication.
+
+---
+
 ### "Change group does not exist" Errors
 
 **Symptoms:**
@@ -286,6 +321,7 @@ If issues persist after following this guide:
 
 | Issue | Check For | Solution |
 |-------|-----------|----------|
+| QRWC "status check failed" | WS connects but RPC fails | Disable External Control Protocol auth in Core Manager |
 | ChangeGroup errors | Re-registration logs | See [ChangeGroup fix doc](./changegroup-reconnection-fix.md) |
 | Controls not updating | Poll interceptor logs | Verify component registration |
 | Component not found | Component name in Designer | Check spelling, case-sensitivity |

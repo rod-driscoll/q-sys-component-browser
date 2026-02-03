@@ -43,7 +43,7 @@ export class App implements OnInit {
   private connectToQSys(): void {
     this.qsysService.connect({
       coreIp: environment.RUNTIME_CORE_IP,
-      secure: true,
+      secure: environment.QRWC_USE_SECURE,
       pollInterval: DEFAULT_POLL_INTERVAL,
     }).catch((error) => {
       console.error('Failed to connect to Q-SYS Core:', error);
@@ -104,12 +104,12 @@ export class App implements OnInit {
       }
 
       // Log the active connection settings
-      console.log(`Active Q-SYS Core Tunnel IP: ${environment.RUNTIME_CORE_IP}`);
-      console.log(`Active Q-SYS Core Tunnel Port: ${environment.RUNTIME_CORE_PORT}`);
-      // console.log(`WebSocket Discovery URL: ${environment.QSYS_WS_DISCOVERY_URL}`); 
-      // console.log(`HTTP API URL: ${environment.QSYS_HTTP_API_URL}`);
+      console.log(`Active Q-SYS Core IP: ${environment.RUNTIME_CORE_IP}`);
+      console.log(`Active Lua Server Port: ${environment.LUA_SERVER_PORT}`);
+      // console.log(`WebSocket Discovery URL: ${environment.QSYS_WS_DISCOVERY_URL}`);
+      // console.log(`Lua HTTP API URL: ${environment.LUA_HTTP_API_URL}`);
     } else {
-      console.log(`Using default Q-SYS Core connection: ${environment.RUNTIME_CORE_IP}:${environment.RUNTIME_CORE_PORT}`);
+      console.log(`Using default Q-SYS Core connection: ${environment.RUNTIME_CORE_IP}`);
     }
   }
 }

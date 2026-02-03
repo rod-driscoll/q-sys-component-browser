@@ -285,10 +285,10 @@ export class MenuComponent implements OnInit {
   }
 
   /**
-   * Get Q-SYS Core port
+   * Get Lua server port (TunnelDiscovery.lua HTTP/WebSocket port)
    */
-  get corePort(): number {
-    return environment.RUNTIME_CORE_PORT;
+  get luaServerPort(): number {
+    return environment.LUA_SERVER_PORT;
   }
 
   /**

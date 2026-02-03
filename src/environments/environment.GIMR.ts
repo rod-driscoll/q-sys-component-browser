@@ -9,7 +9,7 @@
  */
 
 // Internal state for runtime overrides
-let runtimeCoreIp = '192.168.104.220';
+let runtimeCoreIp = '192.168.230.10';
 let runtimeUsername = 'admin';
 let runtimePassword = 'admin';
 
@@ -18,7 +18,7 @@ export const environment = {
 
   // Q-SYS Core connection settings (defaults)
   // Change this IP address to match your Q-SYS Core
-  QSYS_CORE_IP: '192.168.104.220',
+  QSYS_CORE_IP: '192.168.230.10',
 
   // QRWC WebSocket security setting
   // true  = wss://[IP]/qrc (port 443, requires valid SSL certificate)

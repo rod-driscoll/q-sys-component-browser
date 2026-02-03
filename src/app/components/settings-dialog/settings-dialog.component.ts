@@ -23,7 +23,7 @@ export class SettingsDialogComponent {
   open(): void {
     // Load current settings from localStorage or environment
     const savedHost = localStorage.getItem('qsys-host') || environment.RUNTIME_CORE_IP;
-    const savedPort = localStorage.getItem('qsys-port') || environment.RUNTIME_CORE_PORT.toString();
+    const savedPort = localStorage.getItem('qsys-port') || environment.LUA_SERVER_PORT.toString();
 
     this.coreIp.set(savedHost);
     this.corePort.set(savedPort);
@@ -64,13 +64,13 @@ export class SettingsDialogComponent {
 
     console.log('Settings saved:');
     console.log(`Core IP: ${environment.RUNTIME_CORE_IP}`);
-    console.log(`Core Port: ${environment.RUNTIME_CORE_PORT}`);
+    console.log(`Core Port: ${environment.LUA_SERVER_PORT}`);
 
     // Check if the app is running as a PWA or from a different host than the target Core
     const currentHost = window.location.hostname;
     const currentPort = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
     const targetHost = environment.RUNTIME_CORE_IP;
-    const targetPort = environment.RUNTIME_CORE_PORT.toString();
+    const targetPort = environment.LUA_SERVER_PORT.toString();
 
     // Check if running as PWA (standalone mode)
     const isPWA = window.matchMedia('(display-mode: standalone)').matches ||
@@ -116,11 +116,11 @@ export class SettingsDialogComponent {
 
       // Reconnect to new Q-SYS Core
       console.log('Reconnecting to Q-SYS Core with new settings...');
-      console.log(`Target: ${environment.RUNTIME_CORE_IP}:${environment.RUNTIME_CORE_PORT}`);
+      console.log(`Target: ${environment.RUNTIME_CORE_IP}:${environment.LUA_SERVER_PORT}`);
 
       await this.qsysService.connect({
         coreIp: environment.RUNTIME_CORE_IP,
-        secure: true,
+        secure: environment.QRWC_USE_SECURE,
         pollInterval: DEFAULT_POLL_INTERVAL,
       });
 
@@ -133,7 +133,7 @@ export class SettingsDialogComponent {
       console.error('Error details:', error);
 
       // Keep dialog open on error so user can try again
-      alert(`Failed to reconnect to Q-SYS Core at ${environment.RUNTIME_CORE_IP}:${environment.RUNTIME_CORE_PORT}\n\nError: ${error instanceof Error ? error.message : String(error)}\n\nPlease check the IP address and port.`);
+      alert(`Failed to reconnect to Q-SYS Core at ${environment.RUNTIME_CORE_IP}:${environment.LUA_SERVER_PORT}\n\nError: ${error instanceof Error ? error.message : String(error)}\n\nPlease check the IP address and port.`);
     } finally {
       this.isReconnecting.set(false);
     }

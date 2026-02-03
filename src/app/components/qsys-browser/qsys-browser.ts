@@ -82,8 +82,8 @@ export class QsysBrowser implements OnInit, OnDestroy {
   get coreIp(): string {
     return environment.RUNTIME_CORE_IP;
   }
-  get corePort(): number {
-    return environment.RUNTIME_CORE_PORT;
+  get luaServerPort(): number {
+    return environment.LUA_SERVER_PORT;
   }
   corePlatform = '';
   coreState = '';
@@ -605,9 +605,10 @@ export class QsysBrowser implements OnInit, OnDestroy {
     }
   }
 
-  // Fetch controls via HTTP API (for WebSocket-discovered components)
+  // Fetch controls via Lua HTTP API (for WebSocket-discovered components)
+  // Note: This uses the TunnelDiscovery.lua HTTP server, not the Q-SYS Core's native API
   private async fetchControlsViaHTTP(componentName: string): Promise<any[]> {
-    const url = `${environment.QSYS_HTTP_API_URL}/components/${encodeURIComponent(componentName)}/controls`;
+    const url = `${environment.LUA_HTTP_API_URL}/components/${encodeURIComponent(componentName)}/controls`;
     const response = await fetch(url);
 
     if (!response.ok) {

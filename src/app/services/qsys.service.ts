@@ -103,7 +103,7 @@ export class QSysService {
     if (typeof optionsOrIp === 'string') {
       this.options = {
         coreIp: optionsOrIp,
-        secure: true,
+        secure: environment.QRWC_USE_SECURE,
         pollInterval: DEFAULT_POLL_INTERVAL,
       };
     } else {
@@ -1279,11 +1279,12 @@ export class QSysService {
   }
 
   /**
-   * Get component controls via HTTP API (for components not loaded by QRWC)
+   * Get component controls via Lua HTTP API (for components not loaded by QRWC)
    * Some Script components are not populated by QRWC due to lazy loading, so we fetch via HTTP API
+   * Note: This uses the TunnelDiscovery.lua HTTP server, not the Q-SYS Core's native API
    */
   private async getComponentControlsViaHTTP(componentName: string): Promise<any[]> {
-    const url = `${environment.QSYS_HTTP_API_URL}/components/${encodeURIComponent(componentName)}/controls`;
+    const url = `${environment.LUA_HTTP_API_URL}/components/${encodeURIComponent(componentName)}/controls`;
 
     console.log(`Fetching controls via HTTP API: ${url}`);
 
@@ -1347,10 +1348,11 @@ export class QSysService {
   }
 
   /**
-   * Set a control value via HTTP API (for WebSocket-discovered components)
+   * Set a control value via Lua HTTP API (for WebSocket-discovered components)
+   * Note: This uses the TunnelDiscovery.lua HTTP server, not the Q-SYS Core's native API
    */
   async setControlViaHTTP(componentName: string, controlName: string, value: any): Promise<void> {
-    const url = `${environment.QSYS_HTTP_API_URL}/components/${encodeURIComponent(componentName)}/controls/${encodeURIComponent(controlName)}`;
+    const url = `${environment.LUA_HTTP_API_URL}/components/${encodeURIComponent(componentName)}/controls/${encodeURIComponent(controlName)}`;
 
     const response = await fetch(url, {
       method: 'POST',
