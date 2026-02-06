@@ -3,12 +3,13 @@ import { CommonModule } from '@angular/common';
 import { QSysService } from '../../services/qsys.service';
 import { SecureTunnelDiscoveryService } from '../../services/secure-tunnel-discovery.service';
 import { CredentialsDialogComponent } from '../credentials-dialog/credentials-dialog.component';
+import { ConnectionStatusComponent } from '../connection-status/connection-status.component';
 import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, CredentialsDialogComponent],
+  imports: [CommonModule, CredentialsDialogComponent, ConnectionStatusComponent],
   template: `
     <header class="app-header">
       <div class="header-content">
@@ -18,22 +19,26 @@ import { environment } from '../../../environments/environment';
         </div>
         
         <div class="header-status">
-          <!-- Unified Connection Status Button -->
-          <button class="ws-status-button" 
-                  [class.secure]="secureTunnelService.useControlBasedCommunication()"
-                  [class.fallback]="!secureTunnelService.useControlBasedCommunication() && secureTunnelService.isConnected()"
-                  [class.disconnected]="!secureTunnelService.isConnected()"
-                  (click)="toggleConnectionDetails()"
-                  [title]="connectionStatusTooltip()">
-            <span class="status-indicator"></span>
-            <span class="ws-icon">{{ connectionIcon() }}</span>
-            <span class="ws-text">{{ connectionStatusText() }}</span>
-            <span class="status-detail">{{ coreAddress() }}</span>
-            {{ showConnectionDetails ? '▼' : '▶' }}
-          </button>
-          
-          <!-- Credentials Dialog -->
-          <app-credentials-dialog></app-credentials-dialog>
+          <!-- Connection button group (status + credentials) -->
+          <div class="connection-group">
+            <button class="ws-status-button"
+                    [class.secure]="secureTunnelService.useControlBasedCommunication()"
+                    [class.fallback]="!secureTunnelService.useControlBasedCommunication() && secureTunnelService.isConnected()"
+                    [class.disconnected]="!secureTunnelService.isConnected()"
+                    (click)="toggleConnectionDetails()"
+                    [title]="connectionStatusTooltip()">
+              <span class="status-indicator"></span>
+              <span class="ws-icon">{{ connectionIcon() }}</span>
+              <span class="ws-text">{{ connectionStatusText() }}</span>
+              <span class="status-detail">{{ coreAddress() }}</span>
+              {{ showConnectionDetails ? '▼' : '▶' }}
+            </button>
+            <!-- Credentials Dialog -->
+            <app-credentials-dialog></app-credentials-dialog>
+          </div>
+
+          <!-- Connection Status (latency indicator & settings) -->
+          <app-connection-status></app-connection-status>
         </div>
       </div>
 
@@ -70,11 +75,11 @@ import { environment } from '../../../environments/environment';
       color: white;
       padding: 0;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      position: sticky;
+      position: fixed;
       top: 0;
+      left: 0;
+      right: 0;
       z-index: 100;
-      position: relative;
-      overflow: visible;
     }
 
     .header-content {
@@ -111,6 +116,12 @@ import { environment } from '../../../environments/environment';
       gap: 12px;
       align-items: center;
       flex-wrap: wrap;
+    }
+
+    .connection-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
 
     .status-item {
@@ -339,12 +350,12 @@ import { environment } from '../../../environments/environment';
 
       .header-status {
         width: 100%;
-        flex-direction: column;
+        justify-content: center;
       }
 
-      .status-item, .ws-status-button {
-        width: 100%;
-        justify-content: space-between;
+      .connection-group {
+        flex: 1;
+        justify-content: center;
       }
 
       .connection-details {

@@ -27,12 +27,6 @@ export class ConnectionStatusComponent implements OnInit, OnDestroy {
   protected latency = signal(0);
   protected pollInterval = signal(350);
 
-  // Dragging state
-  protected isDragging = signal(false);
-  protected position = signal({ x: 0, y: 10 }); // Top right by default (x: 0 means right-aligned)
-  private dragStartPos = { x: 0, y: 0 };
-  private elementStartPos = { x: 0, y: 0 };
-
   // Latency quality indicator (green/yellow/orange/red)
   protected latencyQuality = computed(() => {
     const lat = this.latency();
@@ -89,40 +83,12 @@ export class ConnectionStatusComponent implements OnInit, OnDestroy {
     this.formPassword.set((event.target as HTMLInputElement).value);
   }
 
-  // Drag handlers
-  onDragStart(event: MouseEvent): void {
-    this.isDragging.set(true);
-    this.dragStartPos = { x: event.clientX, y: event.clientY };
-    this.elementStartPos = { ...this.position() };
-    event.preventDefault();
-  }
-
-  onDragMove(event: MouseEvent): void {
-    if (!this.isDragging()) return;
-
-    const deltaX = this.dragStartPos.x - event.clientX;
-    const deltaY = event.clientY - this.dragStartPos.y;
-
-    this.position.set({
-      x: Math.max(0, this.elementStartPos.x + deltaX),
-      y: Math.max(0, this.elementStartPos.y + deltaY)
-    });
-  }
-
-  onDragEnd(): void {
-    this.isDragging.set(false);
-  }
-
   ngOnInit(): void {
     // Update latency display every 2 seconds
     this.latencyUpdateInterval = setInterval(() => {
       this.latency.set(Math.round(this.qsysService.getAverageLatency()));
       this.pollInterval.set(this.qsysService.getCurrentPollInterval());
     }, 2000);
-
-    // Add global mouse listeners for dragging
-    document.addEventListener('mousemove', this.handleGlobalMouseMove);
-    document.addEventListener('mouseup', this.handleGlobalMouseUp);
   }
 
   ngOnDestroy(): void {
@@ -130,16 +96,5 @@ export class ConnectionStatusComponent implements OnInit, OnDestroy {
       clearInterval(this.latencyUpdateInterval);
       this.latencyUpdateInterval = null;
     }
-    // Remove global mouse listeners
-    document.removeEventListener('mousemove', this.handleGlobalMouseMove);
-    document.removeEventListener('mouseup', this.handleGlobalMouseUp);
   }
-
-  private handleGlobalMouseMove = (event: MouseEvent) => {
-    this.onDragMove(event);
-  };
-
-  private handleGlobalMouseUp = () => {
-    this.onDragEnd();
-  };
 }
