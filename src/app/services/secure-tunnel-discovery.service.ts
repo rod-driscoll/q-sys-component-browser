@@ -62,6 +62,15 @@ export class SecureTunnelDiscoveryService {
   private lastPolledValue = '';
   private jsonInputCounter = 0;  // Counter to ensure json_input EventHandler triggers on each call
 
+  // Circuit breaker for tunnel polling
+  private tunnelPollInterval: ReturnType<typeof setInterval> | null = null;
+  private tunnelPollFailures = 0;
+  private readonly TUNNEL_POLL_FAILURE_THRESHOLD = 5;
+  private tunnelPollPaused = false;
+  private tunnelPollBackoffTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private readonly TUNNEL_POLL_BACKOFF_BASE_MS = 2000;
+  private readonly TUNNEL_POLL_BACKOFF_MAX_MS = 30000;
+
   constructor() { }
 
   /**
@@ -271,9 +280,24 @@ export class SecureTunnelDiscoveryService {
     // Using existing public accessor
     await this.qsysService.setControlViaRpc(componentName, this.TRIGGER_CONTROL, 1);
 
+    // Reset circuit breaker state
+    this.tunnelPollFailures = 0;
+    this.tunnelPollPaused = false;
+
+    // Clear any existing poll interval
+    if (this.tunnelPollInterval) {
+      clearInterval(this.tunnelPollInterval);
+    }
+
     // Set up manual polling for json_output since String controls may not trigger ChangeGroup updates
     // Poll every 500ms to check for component updates
-    const pollInterval = setInterval(async () => {
+    // Implements circuit breaker pattern to pause on repeated failures
+    this.tunnelPollInterval = setInterval(async () => {
+      // Skip polling if circuit breaker is open
+      if (this.tunnelPollPaused) {
+        return;
+      }
+
       try {
         const webSocketManager = (this.qsysService as any).qrwc?.webSocketManager;
         if (webSocketManager) {
@@ -281,6 +305,13 @@ export class SecureTunnelDiscoveryService {
             Name: componentName,
             Controls: [{ Name: this.OUTPUT_CONTROL }]
           });
+
+          // Success - reset failure count
+          if (this.tunnelPollFailures > 0) {
+            console.log(`[TUNNEL-POLL] Connection recovered after ${this.tunnelPollFailures} failures`);
+          }
+          this.tunnelPollFailures = 0;
+
           if (res && res.Controls && res.Controls.length > 0) {
             const currentValue = res.Controls[0].String;
             if (currentValue && currentValue !== this.lastPolledValue) {
@@ -291,7 +322,17 @@ export class SecureTunnelDiscoveryService {
           }
         }
       } catch (e: any) {
-        console.warn('[TUNNEL-POLL] Poll failed:', e);
+        this.tunnelPollFailures++;
+
+        // Only log every 5th failure to reduce spam
+        if (this.tunnelPollFailures % 5 === 1) {
+          console.warn(`[TUNNEL-POLL] Poll failed (failure ${this.tunnelPollFailures}/${this.TUNNEL_POLL_FAILURE_THRESHOLD}):`, e.message || e);
+        }
+
+        // Check if we should pause polling
+        if (this.tunnelPollFailures >= this.TUNNEL_POLL_FAILURE_THRESHOLD) {
+          this.pauseTunnelPolling();
+        }
       }
     }, 500);
 
@@ -576,8 +617,66 @@ export class SecureTunnelDiscoveryService {
     });
   }
 
+  /**
+   * Pause tunnel polling due to repeated failures
+   * Uses exponential backoff before resuming
+   */
+  private pauseTunnelPolling(): void {
+    if (this.tunnelPollPaused) {
+      return; // Already paused
+    }
+
+    this.tunnelPollPaused = true;
+
+    // Calculate backoff time with exponential growth, capped at max
+    const backoffTime = Math.min(
+      this.TUNNEL_POLL_BACKOFF_BASE_MS * Math.pow(2, Math.floor(this.tunnelPollFailures / this.TUNNEL_POLL_FAILURE_THRESHOLD)),
+      this.TUNNEL_POLL_BACKOFF_MAX_MS
+    );
+
+    console.warn(`[TUNNEL-POLL] Pausing after ${this.tunnelPollFailures} failures. Resuming in ${backoffTime / 1000}s`);
+
+    // Clear any existing backoff timeout
+    if (this.tunnelPollBackoffTimeoutId) {
+      clearTimeout(this.tunnelPollBackoffTimeoutId);
+    }
+
+    // Schedule resume
+    this.tunnelPollBackoffTimeoutId = setTimeout(() => {
+      this.resumeTunnelPolling();
+    }, backoffTime);
+  }
+
+  /**
+   * Resume tunnel polling after backoff period
+   */
+  private resumeTunnelPolling(): void {
+    console.log('[TUNNEL-POLL] Resuming polling...');
+    this.tunnelPollPaused = false;
+    // Don't reset failure count - let next success do that
+  }
+
+  /**
+   * Stop tunnel polling completely
+   */
+  private stopTunnelPolling(): void {
+    if (this.tunnelPollInterval) {
+      clearInterval(this.tunnelPollInterval);
+      this.tunnelPollInterval = null;
+    }
+    if (this.tunnelPollBackoffTimeoutId) {
+      clearTimeout(this.tunnelPollBackoffTimeoutId);
+      this.tunnelPollBackoffTimeoutId = null;
+    }
+    this.tunnelPollFailures = 0;
+    this.tunnelPollPaused = false;
+  }
+
   // Legacy stubs for backward compatibility
-  disconnect(): void { this.isConnected.set(false); }
+  disconnect(): void {
+    this.stopTunnelPolling();
+    this.isConnected.set(false);
+  }
   reconnect(): void { this.connect(); }
   getDiscoveryData(): DiscoveryData | null { return this.discoveryData(); }
 }

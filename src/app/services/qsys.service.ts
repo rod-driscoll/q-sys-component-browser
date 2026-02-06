@@ -75,6 +75,15 @@ export class QSysService {
   // Track last ChangeGroup error time to avoid spam logging
   private lastChangeGroupErrorTime: number | null = null;
 
+  // Circuit breaker for ChangeGroup polling
+  // Tracks consecutive failures and pauses polling when threshold is exceeded
+  private pollConsecutiveFailures = 0;
+  private readonly POLL_FAILURE_THRESHOLD = 5;  // Stop polling after 5 consecutive failures
+  private readonly POLL_BACKOFF_BASE_MS = 1000; // Base backoff time
+  private readonly POLL_BACKOFF_MAX_MS = 30000; // Max backoff time (30s)
+  private pollCircuitOpen = false;  // True when polling is paused due to errors
+  private pollBackoffTimeoutId: ReturnType<typeof setTimeout> | null = null;
+
   // Reconnection counter - increments on each successful reconnection
   // Components can watch this to re-register with new ChangeGroup
   public reconnectionCount = signal(0);
@@ -232,6 +241,14 @@ export class QSysService {
         this.reconnectTimer = null;
       }
 
+      // Reset circuit breaker state on successful connection
+      this.pollConsecutiveFailures = 0;
+      this.pollCircuitOpen = false;
+      if (this.pollBackoffTimeoutId) {
+        clearTimeout(this.pollBackoffTimeoutId);
+        this.pollBackoffTimeoutId = null;
+      }
+
       // Reset poll interceptor flag so it gets set up fresh when components register
       this.pollInterceptorSetup = false;
 
@@ -308,6 +325,14 @@ export class QSysService {
     // Stop keepalive timer
     this.stopKeepalive();
 
+    // Clear circuit breaker state
+    this.pollConsecutiveFailures = 0;
+    this.pollCircuitOpen = false;
+    if (this.pollBackoffTimeoutId) {
+      clearTimeout(this.pollBackoffTimeoutId);
+      this.pollBackoffTimeoutId = null;
+    }
+
     if (this.qrwc) {
       // CRITICAL: Stop ChangeGroup polling BEFORE disconnecting
       // This prevents the old polling interval from continuing to run after disconnect/reconnect
@@ -317,6 +342,11 @@ export class QSysService {
           console.log('Stopping ChangeGroup polling before disconnect');
           clearInterval((changeGroup as any).intervalRef);
           (changeGroup as any).intervalRef = null;
+        }
+        // Also stop the manual polling interval
+        if ((changeGroup as any).pollingInterval) {
+          clearInterval((changeGroup as any).pollingInterval);
+          (changeGroup as any).pollingInterval = null;
         }
       } catch (error) {
         console.warn('Error stopping ChangeGroup polling:', error);
@@ -631,6 +661,10 @@ export class QSysService {
    * Start keepalive timer to prevent WebSocket connection timeout
    * Sends StatusGet RPC every 15 seconds to keep connection alive
    * Also measures RTT for adaptive polling
+   *
+   * Implements circuit breaker for keepalive:
+   * - Tracks consecutive keepalive failures
+   * - Triggers reconnection after 3 consecutive failures
    */
   private startKeepalive(webSocketManager: any): void {
     // Clear any existing timer
@@ -642,6 +676,9 @@ export class QSysService {
     console.log('Starting keepalive timer (StatusGet every 15s)...');
 
     let keepaliveCount = 0;
+    let keepaliveFailures = 0;
+    const KEEPALIVE_FAILURE_THRESHOLD = 3;
+
     // Send StatusGet RPC every 15 seconds to keep connection alive
     this.keepaliveTimer = setInterval(async () => {
       keepaliveCount++;
@@ -654,13 +691,39 @@ export class QSysService {
           )
         ]);
 
+        // Success - reset failure count
+        if (keepaliveFailures > 0) {
+          console.log(`[KEEPALIVE] Connection recovered after ${keepaliveFailures} failures`);
+        }
+        keepaliveFailures = 0;
+
         // Measure RTT and update adaptive polling
         const rtt = Date.now() - startTime;
         this.updatePollingInterval(rtt);
 
         console.log(`[KEEPALIVE] StatusGet OK (${keepaliveCount}) RTT: ${rtt}ms, poll interval: ${this.currentPollInterval}ms`);
       } catch (error) {
-        console.warn(`[KEEPALIVE] StatusGet failed (attempt ${keepaliveCount}):`, error);
+        keepaliveFailures++;
+        console.warn(`[KEEPALIVE] StatusGet failed (attempt ${keepaliveCount}, failure ${keepaliveFailures}/${KEEPALIVE_FAILURE_THRESHOLD}):`, error);
+
+        // Check if we should trigger reconnection
+        if (keepaliveFailures >= KEEPALIVE_FAILURE_THRESHOLD) {
+          console.error(`[KEEPALIVE] ${KEEPALIVE_FAILURE_THRESHOLD} consecutive failures - connection appears dead`);
+
+          // Update connection status
+          this.isConnected.set(false);
+          this.connectionStatus$.next(false);
+
+          // Stop keepalive timer (will be restarted on reconnection)
+          this.stopKeepalive();
+
+          // Record disconnection time
+          this.lastDisconnectionTime = Date.now();
+
+          // Trigger reconnection
+          console.log('[KEEPALIVE] Triggering automatic reconnection...');
+          this.attemptReconnect();
+        }
       }
     }, 15000); // 15 seconds
 
@@ -1168,6 +1231,12 @@ export class QSysService {
   /**
    * Start manual ChangeGroup polling if not already started
    * Uses setInterval to call ChangeGroup.Poll RPC at the configured poll interval
+   *
+   * Implements circuit breaker pattern:
+   * - Tracks consecutive poll failures
+   * - Pauses polling after POLL_FAILURE_THRESHOLD consecutive failures
+   * - Uses exponential backoff before retrying
+   * - Triggers reconnection when circuit is open
    */
   private async startChangeGroupPolling(): Promise<void> {
     const changeGroup = (this.qrwc as any).changeGroup;
@@ -1181,8 +1250,17 @@ export class QSysService {
     const pollInterval = this.options?.pollInterval ?? DEFAULT_POLL_INTERVAL;
     console.log(`Starting ChangeGroup polling (${pollInterval}ms interval)...`);
 
+    // Reset circuit breaker state when starting fresh
+    this.pollConsecutiveFailures = 0;
+    this.pollCircuitOpen = false;
+
     // Start polling with setInterval
     (changeGroup as any).pollingInterval = setInterval(async () => {
+      // Skip polling if circuit breaker is open
+      if (this.pollCircuitOpen) {
+        return;
+      }
+
       try {
         const webSocketManager = (this.qrwc as any).webSocketManager;
         const changeGroupId = (changeGroup as any).id;
@@ -1190,6 +1268,12 @@ export class QSysService {
         const result = await webSocketManager.sendRpc('ChangeGroup.Poll', {
           Id: changeGroupId
         });
+
+        // Success - reset failure count
+        if (this.pollConsecutiveFailures > 0) {
+          console.log(`[POLL] Connection recovered after ${this.pollConsecutiveFailures} failures`);
+        }
+        this.pollConsecutiveFailures = 0;
 
         // If there are changes, call the onPoll callback
         if (result.Changes && result.Changes.length > 0 && this.qrwc.onPoll) {
@@ -1200,11 +1284,76 @@ export class QSysService {
         if (error?.message?.includes('does not exist')) {
           return;
         }
-        console.error('ChangeGroup.Poll error:', error);
+
+        // Track consecutive failures
+        this.pollConsecutiveFailures++;
+
+        // Only log errors periodically to reduce spam
+        const now = Date.now();
+        if (!this.lastChangeGroupErrorTime || (now - this.lastChangeGroupErrorTime) > 5000) {
+          console.error(`ChangeGroup.Poll error (failure ${this.pollConsecutiveFailures}/${this.POLL_FAILURE_THRESHOLD}):`, error);
+          this.lastChangeGroupErrorTime = now;
+        }
+
+        // Check if we should open the circuit breaker
+        if (this.pollConsecutiveFailures >= this.POLL_FAILURE_THRESHOLD) {
+          this.openPollCircuitBreaker();
+        }
       }
     }, pollInterval);
 
     console.log(`✓ ChangeGroup polling started (${pollInterval}ms interval)`);
+  }
+
+  /**
+   * Open the circuit breaker to pause polling
+   * Uses exponential backoff before attempting to resume
+   */
+  private openPollCircuitBreaker(): void {
+    if (this.pollCircuitOpen) {
+      return; // Already open
+    }
+
+    this.pollCircuitOpen = true;
+
+    // Calculate backoff time with exponential growth, capped at max
+    const backoffTime = Math.min(
+      this.POLL_BACKOFF_BASE_MS * Math.pow(2, Math.floor(this.pollConsecutiveFailures / this.POLL_FAILURE_THRESHOLD)),
+      this.POLL_BACKOFF_MAX_MS
+    );
+
+    console.warn(`[CIRCUIT-BREAKER] Pausing ChangeGroup polling after ${this.pollConsecutiveFailures} failures. Retrying in ${backoffTime / 1000}s`);
+
+    // Update connection status to reflect unhealthy state
+    this.isConnected.set(false);
+    this.connectionStatus$.next(false);
+
+    // Clear any existing backoff timeout
+    if (this.pollBackoffTimeoutId) {
+      clearTimeout(this.pollBackoffTimeoutId);
+    }
+
+    // Schedule circuit breaker reset
+    this.pollBackoffTimeoutId = setTimeout(() => {
+      this.closePollCircuitBreaker();
+    }, backoffTime);
+
+    // Trigger reconnection attempt if we've failed too many times
+    if (this.pollConsecutiveFailures >= this.POLL_FAILURE_THRESHOLD * 2) {
+      console.warn('[CIRCUIT-BREAKER] Too many failures, triggering reconnection');
+      this.attemptReconnect();
+    }
+  }
+
+  /**
+   * Close the circuit breaker to resume polling
+   * Called after backoff period expires
+   */
+  private closePollCircuitBreaker(): void {
+    console.log('[CIRCUIT-BREAKER] Resuming ChangeGroup polling...');
+    this.pollCircuitOpen = false;
+    // Don't reset failure count - let the next successful poll do that
+    // This way if the connection is still dead, we'll quickly open the circuit again
   }
 
   /**

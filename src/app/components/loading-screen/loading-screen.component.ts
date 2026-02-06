@@ -1,7 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppInitializationService } from '../../services/app-initialization.service';
 import { PwaInstallPromptComponent } from '../pwa-install-prompt/pwa-install-prompt.component';
+import { QSysService } from '../../services/qsys.service';
 
 @Component({
   selector: 'app-loading-screen',
@@ -12,6 +13,7 @@ import { PwaInstallPromptComponent } from '../pwa-install-prompt/pwa-install-pro
       <div class="loading-container">
         <div class="spinner"></div>
         <h2>Initializing Q-SYS Component Browser</h2>
+        <p class="core-address">Connecting to: {{ coreAddress() }}</p>
         <p class="status-text">{{ appInit.loadingStage() }}</p>
         <div class="progress-bar">
           <div class="progress-fill"></div>
@@ -61,6 +63,13 @@ import { PwaInstallPromptComponent } from '../pwa-install-prompt/pwa-install-pro
       font-weight: 600;
     }
 
+    .core-address {
+      margin: 0 0 10px 0;
+      font-size: 13px;
+      opacity: 0.75;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+    }
+
     .status-text {
       margin: 0 0 20px 0;
       font-size: 14px;
@@ -93,4 +102,10 @@ import { PwaInstallPromptComponent } from '../pwa-install-prompt/pwa-install-pro
 })
 export class LoadingScreenComponent {
   appInit = inject(AppInitializationService);
+  private qsys = inject(QSysService);
+
+  coreAddress = computed(() => {
+    const ip = this.qsys.getCoreIp();
+    return ip ? ip : 'Not configured';
+  });
 }
