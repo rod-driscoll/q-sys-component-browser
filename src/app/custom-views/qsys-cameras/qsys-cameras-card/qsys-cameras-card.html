@@ -28,18 +28,22 @@
           }
 
           <div class="video-overlay">
-            <!-- Top Left Arrow -->
-            <button
-              class="arrow-button arrow-up-left"
-              (mousedown)="activateControl(camera.componentName, 'pan.left.tilt.up')"
-              (mouseup)="deactivateControl(camera.componentName, 'pan.left.tilt.up')"
-              (mouseleave)="deactivateControl(camera.componentName, 'pan.left.tilt.up')"
-              (touchstart)="activateControl(camera.componentName, 'pan.left.tilt.up')"
-              (touchend)="deactivateControl(camera.componentName, 'pan.left.tilt.up')"
-              title="Pan Left & Tilt Up"
-            >
-              ↖
-            </button>
+            <!-- Top Left Arrow (only if camera supports diagonal) -->
+            @if (camera.hasUpLeft) {
+              <button
+                class="arrow-button arrow-up-left"
+                (mousedown)="activateControl(camera.componentName, 'pan.left.tilt.up')"
+                (mouseup)="deactivateControl(camera.componentName, 'pan.left.tilt.up')"
+                (mouseleave)="deactivateControl(camera.componentName, 'pan.left.tilt.up')"
+                (touchstart)="activateControl(camera.componentName, 'pan.left.tilt.up')"
+                (touchend)="deactivateControl(camera.componentName, 'pan.left.tilt.up')"
+                title="Pan Left & Tilt Up"
+              >
+                ↖
+              </button>
+            } @else {
+              <div class="arrow-spacer"></div>
+            }
 
             <!-- Up Arrow -->
             <button
@@ -54,18 +58,22 @@
               ↑
             </button>
 
-            <!-- Top Right Arrow -->
-            <button
-              class="arrow-button arrow-up-right"
-              (mousedown)="activateControl(camera.componentName, 'pan.right.tilt.up')"
-              (mouseup)="deactivateControl(camera.componentName, 'pan.right.tilt.up')"
-              (mouseleave)="deactivateControl(camera.componentName, 'pan.right.tilt.up')"
-              (touchstart)="activateControl(camera.componentName, 'pan.right.tilt.up')"
-              (touchend)="deactivateControl(camera.componentName, 'pan.right.tilt.up')"
-              title="Pan Right & Tilt Up"
-            >
-              ↗
-            </button>
+            <!-- Top Right Arrow (only if camera supports diagonal) -->
+            @if (camera.hasUpRight) {
+              <button
+                class="arrow-button arrow-up-right"
+                (mousedown)="activateControl(camera.componentName, 'pan.right.tilt.up')"
+                (mouseup)="deactivateControl(camera.componentName, 'pan.right.tilt.up')"
+                (mouseleave)="deactivateControl(camera.componentName, 'pan.right.tilt.up')"
+                (touchstart)="activateControl(camera.componentName, 'pan.right.tilt.up')"
+                (touchend)="deactivateControl(camera.componentName, 'pan.right.tilt.up')"
+                title="Pan Right & Tilt Up"
+              >
+                ↗
+              </button>
+            } @else {
+              <div class="arrow-spacer"></div>
+            }
 
             <!-- Left Arrow -->
             <button
@@ -96,18 +104,22 @@
               →
             </button>
 
-            <!-- Bottom Left Arrow -->
-            <button
-              class="arrow-button arrow-down-left"
-              (mousedown)="activateControl(camera.componentName, 'pan.left.tilt.down')"
-              (mouseup)="deactivateControl(camera.componentName, 'pan.left.tilt.down')"
-              (mouseleave)="deactivateControl(camera.componentName, 'pan.left.tilt.down')"
-              (touchstart)="activateControl(camera.componentName, 'pan.left.tilt.down')"
-              (touchend)="deactivateControl(camera.componentName, 'pan.left.tilt.down')"
-              title="Pan Left & Tilt Down"
-            >
-              ↙
-            </button>
+            <!-- Bottom Left Arrow (only if camera supports diagonal) -->
+            @if (camera.hasDownLeft) {
+              <button
+                class="arrow-button arrow-down-left"
+                (mousedown)="activateControl(camera.componentName, 'pan.left.tilt.down')"
+                (mouseup)="deactivateControl(camera.componentName, 'pan.left.tilt.down')"
+                (mouseleave)="deactivateControl(camera.componentName, 'pan.left.tilt.down')"
+                (touchstart)="activateControl(camera.componentName, 'pan.left.tilt.down')"
+                (touchend)="deactivateControl(camera.componentName, 'pan.left.tilt.down')"
+                title="Pan Left & Tilt Down"
+              >
+                ↙
+              </button>
+            } @else {
+              <div class="arrow-spacer"></div>
+            }
 
             <!-- Down Arrow -->
             <button
@@ -122,18 +134,22 @@
               ↓
             </button>
 
-            <!-- Bottom Right Arrow -->
-            <button
-              class="arrow-button arrow-down-right"
-              (mousedown)="activateControl(camera.componentName, 'pan.right.tilt.down')"
-              (mouseup)="deactivateControl(camera.componentName, 'pan.right.tilt.down')"
-              (mouseleave)="deactivateControl(camera.componentName, 'pan.right.tilt.down')"
-              (touchstart)="activateControl(camera.componentName, 'pan.right.tilt.down')"
-              (touchend)="deactivateControl(camera.componentName, 'pan.right.tilt.down')"
-              title="Pan Right & Tilt Down"
-            >
-              ↘
-            </button>
+            <!-- Bottom Right Arrow (only if camera supports diagonal) -->
+            @if (camera.hasDownRight) {
+              <button
+                class="arrow-button arrow-down-right"
+                (mousedown)="activateControl(camera.componentName, 'pan.right.tilt.down')"
+                (mouseup)="deactivateControl(camera.componentName, 'pan.right.tilt.down')"
+                (mouseleave)="deactivateControl(camera.componentName, 'pan.right.tilt.down')"
+                (touchstart)="activateControl(camera.componentName, 'pan.right.tilt.down')"
+                (touchend)="deactivateControl(camera.componentName, 'pan.right.tilt.down')"
+                title="Pan Right & Tilt Down"
+              >
+                ↘
+              </button>
+            } @else {
+              <div class="arrow-spacer"></div>
+            }
           </div>
         </div>
 

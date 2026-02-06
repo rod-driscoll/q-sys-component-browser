@@ -7,6 +7,11 @@ interface CameraCard {
   displayName: string;
   previewUrl: string | null;
   privacyOn: boolean;
+  // Track which controls are available
+  hasUpLeft: boolean;
+  hasUpRight: boolean;
+  hasDownLeft: boolean;
+  hasDownRight: boolean;
 }
 
 @Component({
@@ -61,7 +66,11 @@ export class QsysCamerasCard {
             componentName: componentName,
             displayName: componentName,
             previewUrl: null,
-            privacyOn: false
+            privacyOn: false,
+            hasUpLeft: !!component.controls['pan.left.tilt.up'],
+            hasUpRight: !!component.controls['pan.right.tilt.up'],
+            hasDownLeft: !!component.controls['pan.left.tilt.down'],
+            hasDownRight: !!component.controls['pan.right.tilt.down'],
           };
 
           // Set initial privacy state
