@@ -410,6 +410,15 @@ export class QrwcAdapterService {
 
       // Also discover and load all ONVIF camera components
       console.log('Discovering ONVIF camera components...');
+      // Log all component types to help debug
+      const allTypes = [...new Set(cachedComponents.map(c => c.type))];
+      console.log('[QrwcAdapter] Available component types:', allTypes);
+      const cameraTypes = cachedComponents.filter(c =>
+        c.type.toLowerCase().includes('camera') ||
+        c.type.toLowerCase().includes('onvif')
+      );
+      console.log('[QrwcAdapter] Camera-related components:', cameraTypes.map(c => ({ name: c.name, type: c.type })));
+
       for (const cachedComponent of cachedComponents) {
         if (cachedComponent.type === 'onvif_camera_operative' && !components[cachedComponent.name]) {
           try {

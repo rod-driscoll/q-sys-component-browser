@@ -22,6 +22,12 @@ export class QsysCamerasCard {
   constructor() {
     // Discover ONVIF cameras and create camera cards
     effect(() => {
+      // Wait for QrwcAdapterService to finish loading components
+      if (!this.qrwc.initialised()) {
+        console.log('[QsysCamerasCard] Waiting for QRWC to initialize...');
+        return;
+      }
+
       const components = this.qrwc.components();
       console.log('[QsysCamerasCard] Checking for ONVIF camera components...', {
         hasComponents: !!components,
@@ -34,6 +40,13 @@ export class QsysCamerasCard {
       }
 
       const cards: CameraCard[] = [];
+
+      // Log details about each loaded component for debugging
+      for (const componentName in components) {
+        const component = components[componentName];
+        const controlNames = Object.keys(component.controls);
+        console.log(`[QsysCamerasCard] Component "${componentName}" has ${controlNames.length} controls:`, controlNames.slice(0, 10), controlNames.length > 10 ? '...' : '');
+      }
 
       // Find all components of type 'onvif_camera_operative'
       for (const componentName in components) {

@@ -1,5 +1,9 @@
-<app-navigation-header [title]="metadata.title"></app-navigation-header>
+<div class="view-container">
+  <!-- Navigation Header -->
+  <app-navigation-header [title]="metadata.title"></app-navigation-header>
 
-<div class="qsys-cameras-view">
-  <app-qsys-cameras-card></app-qsys-cameras-card>
+  <!-- Main Content -->
+  <main class="view-content">
+    <app-qsys-cameras-card></app-qsys-cameras-card>
+  </main>
 </div>

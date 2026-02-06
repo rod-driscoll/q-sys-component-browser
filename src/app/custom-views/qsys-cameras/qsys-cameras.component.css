@@ -1,4 +1,11 @@
-.qsys-cameras-view {
+.view-container {
+  min-height: 100vh;
+  background: #1a1a1a;
+  display: flex;
+  flex-direction: column;
+}
+
+.view-content {
   flex: 1;
   padding: 2rem;
   max-width: 1400px;
@@ -8,13 +15,13 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .qsys-cameras-view {
+  .view-content {
     padding: 1.5rem 1rem;
   }
 }
 
 @media (max-width: 480px) {
-  .qsys-cameras-view {
+  .view-content {
     padding: 1rem;
   }
 }
